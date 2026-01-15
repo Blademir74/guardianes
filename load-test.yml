@@ -1,0 +1,46 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 10
+      name: Load test
+    - duration: 60
+      arrivalRate: 20
+      name: Stress test
+
+scenarios:
+  - name: Health check
+    weight: 30
+    flow:
+      - get:
+          url: '/api/health'
+
+  - name: Request code
+    weight: 40
+    flow:
+      - post:
+          url: '/api/auth/request-code'
+          json:
+            phone: '5512345678'
+
+  - name: Verify code (with prior request)
+    weight: 20
+    flow:
+      - post:
+          url: '/api/auth/request-code'
+          json:
+            phone: '5512345678'
+      - post:
+          url: '/api/auth/verify-code'
+          json:
+            phone: '5512345678'
+            code: '1234'  # This will fail but tests rate limiting
+
+  - name: Get municipios
+    weight: 10
+    flow:
+      - get:
+          url: '/api/data/municipios'

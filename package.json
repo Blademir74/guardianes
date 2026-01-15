@@ -1,0 +1,55 @@
+{
+  "name": "guardianes-project",
+  "version": "1.0.1",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dev": "nodemon src/server.js",
+    "build": "echo 'Build completed'",
+    "seed-admin": "node src/seed-admin.js",
+    "reset-production": "node scripts/reset-production.js",
+    "vercel-deploy": "vercel --prod",
+    "pre-deploy": "node scripts/pre-deploy.js",
+    "post-deploy": "node scripts/post-deploy.js",
+    "setup-vercel-env": "node scripts/setup-vercel-env.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --config jest.integration.config.js",
+    "test:load": "artillery run load-test.yml"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
+    "twilio": "^5.11.1"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.27",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.11",
+    "supertest": "^7.2.2"
+  }
+}

@@ -1,0 +1,187 @@
+#!/bin/bash
+
+# Script de Deployment para Pulso Guerrero
+# Autor: Guardianes de Guerrero
+# Fecha: Enero 2026
+
+echo "🚀 =================================="
+echo "🚀  PULSO GUERRERO - DEPLOYMENT"
+echo "🚀 =================================="
+echo ""
+
+# Colores
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Función para imprimir con color
+print_step() {
+    echo -e "${BLUE}📋 $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+# Verificar que estamos en el directorio correcto
+if [ ! -f "package.json" ]; then
+    print_error "No se encuentra package.json. Asegúrate de estar en la raíz del proyecto."
+    exit 1
+fi
+
+print_success "Directorio correcto detectado"
+
+# Paso 1: Verificar archivos críticos
+print_step "Verificando archivos críticos..."
+
+REQUIRED_FILES=("src/server.js" "vercel.json" "package.json" ".env")
+for file in "${REQUIRED_FILES[@]}"; do
+    if [ -f "$file" ]; then
+        print_success "$file existe"
+    else
+        print_error "$file NO EXISTE"
+        exit 1
+    fi
+done
+
+# Paso 2: Verificar carpeta public
+print_step "Verificando carpeta public/..."
+
+if [ -d "public" ]; then
+    print_success "Carpeta public/ existe"
+    
+    HTML_FILES=("index.html" "admin.html")
+    for file in "${HTML_FILES[@]}"; do
+        if [ -f "public/$file" ]; then
+            print_success "public/$file existe"
+        else
+            print_warning "public/$file NO EXISTE"
+        fi
+    done
+else
+    print_error "Carpeta public/ NO EXISTE"
+    exit 1
+fi
+
+# Paso 3: Verificar variables de entorno
+print_step "Verificando variables de entorno..."
+
+if [ -f ".env" ]; then
+    source .env
+    
+    if [ -z "$DATABASE_URL" ]; then
+        print_error "DATABASE_URL no está configurada en .env"
+        exit 1
+    else
+        print_success "DATABASE_URL configurada"
+    fi
+    
+    if [ -z "$JWT_SECRET" ]; then
+        print_warning "JWT_SECRET no está configurada"
+    else
+        print_success "JWT_SECRET configurada"
+    fi
+    
+    if [ -z "$ADMIN_JWT_SECRET" ]; then
+        print_warning "ADMIN_JWT_SECRET no está configurada"
+    else
+        print_success "ADMIN_JWT_SECRET configurada"
+    fi
+fi
+
+# Paso 4: Instalar dependencias
+print_step "Instalando dependencias..."
+npm install --legacy-peer-deps
+
+if [ $? -eq 0 ]; then
+    print_success "Dependencias instaladas correctamente"
+else
+    print_error "Error al instalar dependencias"
+    exit 1
+fi
+
+# Paso 5: Test de build local
+print_step "Ejecutando build local..."
+npm run build
+
+if [ $? -eq 0 ]; then
+    print_success "Build local exitoso"
+else
+    print_error "Build local falló"
+    exit 1
+fi
+
+# Paso 6: Confirmar deployment
+echo ""
+print_warning "¿Deseas continuar con el deployment a Vercel? (y/n)"
+read -r response
+
+if [[ "$response" != "y" && "$response" != "Y" ]]; then
+    print_warning "Deployment cancelado por el usuario"
+    exit 0
+fi
+
+# Paso 7: Verificar Vercel CLI
+print_step "Verificando Vercel CLI..."
+
+if ! command -v vercel &> /dev/null; then
+    print_error "Vercel CLI no está instalado"
+    print_step "Instalando Vercel CLI globalmente..."
+    npm install -g vercel
+fi
+
+print_success "Vercel CLI disponible"
+
+# Paso 8: Login a Vercel (si es necesario)
+print_step "Verificando autenticación en Vercel..."
+vercel whoami &> /dev/null
+
+if [ $? -ne 0 ]; then
+    print_warning "No estás autenticado en Vercel"
+    print_step "Ejecuta: vercel login"
+    exit 1
+fi
+
+print_success "Autenticado en Vercel"
+
+# Paso 9: Desplegar a Vercel
+echo ""
+print_step "🚀 Desplegando a Vercel (Producción)..."
+echo ""
+
+vercel --prod
+
+if [ $? -eq 0 ]; then
+    echo ""
+    print_success "======================================"
+    print_success "  DEPLOYMENT EXITOSO! 🎉"
+    print_success "======================================"
+    echo ""
+    print_step "Próximos pasos:"
+    echo "  1. Verifica las variables de entorno en Vercel Dashboard"
+    echo "  2. Visita: https://pulsoguerrero.vercel.app/api/health"
+    echo "  3. Verifica: https://pulsoguerrero.vercel.app/api/db-test"
+    echo "  4. Accede a: https://pulsoguerrero.vercel.app/"
+    echo ""
+else
+    print_error "======================================"
+    print_error "  DEPLOYMENT FALLÓ"
+    print_error "======================================"
+    echo ""
+    print_step "Troubleshooting:"
+    echo "  1. Revisa los logs en Vercel Dashboard"
+    echo "  2. Verifica que todas las variables de entorno estén configuradas"
+    echo "  3. Ejecuta: vercel logs"
+    echo ""
+    exit 1
+fi

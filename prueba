@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardianes Guerrero - Participación Ciudadana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #D52B1E;
+            --accent-color: #FFD700;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #004080 100%);
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #002244;
+            border-color: #002244;
+        }
+        
+        .btn-danger {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .prediction-card {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .incident-card {
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .user-points {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #FFC107 100%);
+            color: #333;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .candidate-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .municipio-select {
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .comparison-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .trend-up {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .trend-down {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .trend-stable {
+            color: #6c757d;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 50px 0;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+/* ========================================
+   SISTEMA DE TABS - GUARDIANES GUERRERO
+   ======================================== */
+
+.tabs-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.tabs-header {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    background: linear-gradient(to bottom, #fafafa, #f5f5f5);
+    padding: 0;
+    overflow-x: auto;
+    position: relative;
+}
+
+.tab-button {
+    flex: 1;
+    min-width: 180px;
+    padding: 20px 25px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-button:hover {
+    background: rgba(44, 90, 160, 0.05);
+    color: var(--primary);
+}
+
+.tab-button.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: white;
+}
+
+.tab-badge {
+    background: var(--secondary);
+    color: white;
+    font-size: 0.7em;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(15px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Call to Action Badge */
+.cta-badge {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    animation: ctaPulse 3s infinite;
+}
+
+@keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+    50% { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5); }
+}
+
+.cta-badge-text {
+    font-size: 1.1em;
+    font-weight: 700;
+}
+
+.cta-badge-count {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+/* Encuestas Styles */
+.survey-item {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+.survey-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 6px 16px rgba(44, 90, 160, 0.15);
+    transform: translateY(-2px);
+}
+
+.survey-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border);
+}
+
+.survey-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.survey-badge-live {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.survey-description {
+    color: var(--text-light);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.survey-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.survey-meta-item {
+    background: #f0f7ff;
+    color: var(--primary);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.question-block {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    border-left: 4px solid var(--primary);
+}
+
+.question-title {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 15px;
+    font-size: 1.05em;
+}
+
+.question-required {
+    color: var(--secondary);
+    font-size: 0.9em;
+}
+
+.options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1em;
+}
+
+.option-label:hover {
+    border-color: var(--primary);
+    background: #f0f7ff;
+    transform: translateX(5px);
+}
+
+.option-label input[type="radio"],
+.option-label input[type="checkbox"] {
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.option-label input[type="text"],
+.option-label textarea {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.survey-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border);
+}
+
+.btn-submit-survey {
+    flex: 1;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 16px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+}
+
+.btn-submit-survey:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 90, 160, 0.4);
+}
+
+.btn-view-results {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    padding: 16px 30px;
+    border-radius: 8px;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-view-results:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* Resultados */
+.results-container {
+    margin-top: 30px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+}
+
+.results-title {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.result-item {
+    margin-bottom: 25px;
+}
+
+.result-question {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    font-size: 1.05em;
+}
+
+.result-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.result-option-name {
+    font-size: 0.95em;
+    color: var(--text-light);
+}
+
+.results-bar-container {
+    flex: 1;
+    margin: 0 15px;
+    background: #e9ecef;
+    height: 28px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+}
+
+.results-bar-fill {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85em;
+    transition: width 0.8s ease;
+    border-radius: 14px;
+}
+
+.result-option-count {
+    font-weight: 700;
+    color: var(--primary);
+    min-width: 80px;
+    text-align: right;
+}
+
+.total-responses {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Loading */
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tabs-header {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-button {
+        min-width: 140px;
+        font-size: 0.9em;
+        padding: 16px 15px;
+    }
+    
+    .cta-badge {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .survey-header-top {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .survey-actions {
+        flex-direction: column;
+    }
+    
+    .result-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .results-bar-container {
+        margin: 8px 0;
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>
+                Guardianes Guerrero
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showSection('inicio')">
+                            <i class="fas fa-home me-1"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('predicciones')">
+                            <i class="fas fa-chart-line me-1"></i> Predicciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('incidentes')">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Incidentes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('ranking')">
+                            <i class="fas fa-trophy me-1"></i> Ranking
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin" target="_blank">
+                            <i class="fas fa-cogs me-1"></i> Administración
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span id="userStatus" class="nav-link">
+                            <!-- Estado del usuario se carga aquí -->
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center" id="inicio">
+        <div class="container">
+            <h1 class="display-4 mb-4">Guardianes de la Democracia en Guerrero</h1>
+            <p class="lead mb-4">Tu voz cuenta. Participa en predicciones electorales, reporta incidentes y construyamos juntos elecciones transparentes</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="input-group municipio-select">
+                        <span class="input-group-text">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </span>
+                        <select class="form-select" id="municipioSelect">
+                            <option value="">Selecciona tu municipio</option>
+                            <!-- Municipios se cargan dinámicamente -->
+                        </select>
+                        <button class="btn btn-primary" onclick="cargarDatosMunicipio()">
+                            <i class="fas fa-chart-bar"></i> Ver Datos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<div class="container">
+    <!-- SECCIÓN AUTH (Mantener exactamente igual) -->
+    <div id="auth-section" class="section">
+        <h2>📱 Acceso Ciudadano</h2>
+        <p style="margin-bottom: 20px; color: var(--text-light);">
+            Verifica tu identidad con tu número de teléfono (solo 10 dígitos).
+        </p>
+
+        <div id="phone-form">
+            <div class="form-group">
+                <label for="phone">Número de teléfono (10 dígitos)</label>
+                <input type="tel" id="phone" placeholder="5512345678" 
+                       pattern="\d{10}" maxlength="10" inputmode="numeric">
+                <small style="color: var(--text-light);">
+                    Solo números, sin espacios ni guiones
+                </small>
+                <div id="phone-preview" style="margin-top: 10px; color: var(--primary); font-weight: 600; display: none;"></div>
+            </div>
+            <button type="button" id="btn-request-code">Solicitar Código</button>
+        </div>
+
+        <div id="code-form" class="hidden">
+            <div class="form-group">
+                <label for="code">Código de verificación (4 dígitos)</label>
+                <input type="text" id="code" placeholder="1234" maxlength="4" 
+                       inputmode="numeric" 
+                       style="font-size: 2em; text-align: center; letter-spacing: 0.5em;">
+                <small style="color: var(--text-light); display: block; text-align: center; margin-top: 10px;">
+                    Código enviado a: <strong id="sent-to-phone"></strong>
+                </small>
+            </div>
+            <div class="button-group">
+                <button type="button" id="btn-verify-code">Verificar Código</button>
+                <button type="button" id="btn-cancel-verification" class="btn-secondary">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="message-auth"></div>
+    </div>
+
+    <!-- NUEVO: SISTEMA DE TABS -->
+    <div id="main-tabs-container" class="hidden">
+        
+        <!-- Call to Action Badge -->
+        <div id="cta-survey-badge" class="cta-badge hidden">
+            <div class="cta-badge-text">
+                🔥 ¡Hay <span id="cta-count">0</span> encuesta(s) activa(s)!
+            </div>
+            <button onclick="switchTab('encuestas')" style="background: white; color: #f59e0b; padding: 10px 20px; border: none; border-radius: 20px; font-weight: 700; cursor: pointer;">
+                Participar Ahora →
+            </button>
+        </div>
+
+        <!-- Tabs Container -->
+        <div class="tabs-container">
+            <!-- Tabs Header -->
+            <div class="tabs-header">
+                <button class="tab-button" onclick="switchTab('encuestas')" id="tab-btn-encuestas">
+                    📋 Encuestas
+                    <span class="tab-badge" id="encuestas-badge" style="display:none;">0</span>
+                </button>
+                <button class="tab-button active" onclick="switchTab('predicciones')" id="tab-btn-predicciones">
+                    🗳️ Predicciones
+                </button>
+                <button class="tab-button" onclick="switchTab('historico')" id="tab-btn-historico">
+                    📊 Histórico
+                </button>
+                <button class="tab-button" onclick="switchTab('incidentes')" id="tab-btn-incidentes">
+                    ⚠️ Incidentes
+                </button>
+            </div>
+
+            <!-- Tabs Content -->
+            <div class="tabs-body">
+                
+                <!-- ============================================
+                     TAB 1: ENCUESTAS (NUEVO)
+                     ============================================ -->
+                <div id="tab-encuestas" class="tab-content">
+                    <div id="encuestas-container">
+                        <div style="text-align: center; padding: 60px 20px;">
+                            <div class="loading-spinner"></div>
+                            <p style="margin-top: 20px; color: var(--text-light); font-size: 1.1em;">Cargando encuestas activas...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     TAB 2: PREDICCIONES (EXISTENTE)
+                     ============================================ -->
+                <div id="tab-predicciones" class="tab-content active">
+                    <!-- MOVER AQUÍ TODO EL CONTENIDO DE participation-section -->
+                    <h2>🗳️ Hacer Predicción</h2>
+
+                    <div class="form-group">
+                        <label for="municipio">Municipio</label>
+                        <select id="municipio">
+                            <option value="">-- Selecciona --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidato">Candidato</label>
+                        <select id="candidato">
+                            <option value="">-- Selecciona --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confianza">Confianza</label>
+                        <select id="confianza">
+                            <option value="50">50% - Indeciso</option>
+                            <option value="75" selected>75% - Probablemente</option>
+                            <option value="100">100% - Seguro</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="btn-submit-prediction">✓ Registrar Predicción (+100 pts)</button>
+                    <div id="message-prediction"></div>
+
+                    <!-- Predicciones en Vivo -->
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid var(--border);">
+                        <h2>📊 Predicciones en Vivo</h2>
+                        <div id="predictions-container">
+                            <p style="color: var(--text-light);">Selecciona un municipio...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     TAB 3: HISTÓRICO (EXISTENTE)
+                     ============================================ -->
+                <div id="tab-historico" class="tab-content">
+                    <h2>📈 Comparación: 2018 vs 2021 vs 2024</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Elección</th>
+                                    <th>2024</th>
+                                    <th>2021</th>
+                                    <th>2018</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-light);">
+                                        Selecciona un municipio...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Participación Electoral -->
+                    <div style="margin-top: 40px;">
+                        <h2>🗳️ Participación Electoral Histórica</h2>
+                        <div id="participation-stats" class="stats-grid">
+                            <p style="grid-column: 1 / -1; color: var(--text-light);">
+                                Selecciona un municipio...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     TAB 4: INCIDENTES (EXISTENTE)
+                     ============================================ -->
+                <div id="tab-incidentes" class="tab-content">
+                    <h2>⚠️ Reportar Incidente</h2>
+
+                    <div class="form-group">
+                        <label for="incident-type">Tipo</label>
+                        <select id="incident-type">
+                            <option value="compra_voto">💰 Compra de voto</option>
+                            <option value="intimidacion">⚠️ Intimidación</option>
+                            <option value="casilla_irregular">🚨 Casilla irregular</option>
+                            <option value="propaganda_ilegal">📋 Propaganda ilegal</option>
+                            <option value="violencia">🔴 Violencia</option>
+                            <option value="fraude">🚫 Fraude</option>
+                            <option value="otro">❓ Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incident-description">Descripción</label>
+                        <textarea id="incident-description" rows="4" placeholder="Describe lo que observaste..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ubicación (opcional)</label>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" id="btn-request-location" class="btn-secondary">📍 Capturar Ubicación</button>
+                            <div id="location-status" style="color: var(--text-light); font-size: 0.9em;"></div>
+                        </div>
+                        <div id="location-coords" class="hidden" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-family: monospace; font-size: 0.85em;">
+                            Lat: <span id="lat-value"></span> | Lng: <span id="lng-value"></span>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" id="btn-submit-incident">📢 Reportar (+50 pts)</button>
+                        <button type="button" id="btn-clear-incident" class="btn-secondary">🔄 Limpiar</button>
+                    </div>
+
+                    <div id="message-incident"></div>
+                    <div id="incidents-list"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal de Autenticación -->
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-shield me-2"></i>
+                        Acceso Guardianes Guerrero
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Paso 1: Ingreso de teléfono -->
+                    <div id="authStep1">
+                        <p>Ingresa tu número de teléfono de 10 dígitos:</p>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text">+52</span>
+                                <input type="tel" class="form-control" id="phoneInput" 
+                                       placeholder="7441234567" pattern="[0-9]{10}" 
+                                       maxlength="10" required>
+                            </div>
+                            <small class="text-muted">Te enviaremos un código de 4 dígitos por SMS</small>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="requestVerificationCode()" id="requestCodeBtn">
+                            <i class="fas fa-sms me-2"></i>Enviar Código de Verificación
+                        </button>
+                    </div>
+                    
+                    <!-- Paso 2: Verificación de código -->
+                    <div id="authStep2" style="display: none;">
+                        <p>Ingresa el código de 4 dígitos enviado a tu teléfono:</p>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <input type="text" class="form-control text-center mx-1" 
+                                       id="code1" maxlength="1" size="1" style="width: 60px; font-size: 1.5rem;">
+                                <input type="text" class="form-control text-center mx-1" 
+                                       id="code2" maxlength="1" size="1" style="width: 60px; font-size: 1.5rem;">
+                                <input type="text" class="form-control text-center mx-1" 
+                                       id="code3" maxlength="1" size="1" style="width: 60px; font-size: 1.5rem;">
+                                <input type="text" class="form-control text-center mx-1" 
+                                       id="code4" maxlength="1" size="1" style="width: 60px; font-size: 1.5rem;">
+                            </div>
+                            <div class="text-center mb-3">
+                                <small class="text-muted" id="countdownText">El código expira en 10:00</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-success w-100 mb-2" onclick="verifyCode()" id="verifyCodeBtn">
+                            <i class="fas fa-check me-2"></i>Verificar Código
+                        </button>
+                        <div class="text-center">
+                            <a href="#" class="text-decoration-none" onclick="resetAuth()">
+                                <i class="fas fa-redo me-1"></i>Reenviar código
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>Guardianes Guerrero</h5>
+                    <p>Sistema de participación ciudadana para elecciones transparentes en el estado de Guerrero.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contacto</h5>
+                    <p class="mb-1">
+                        <i class="fas fa-envelope me-2"></i>contacto@guardianesguerrero.mx
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-phone me-2"></i>744 123 4567
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50" onclick="showSection('predicciones')">Predicciones</a></li>
+                        <li><a href="#" class="text-white-50" onclick="showSection('incidentes')">Reportar Incidentes</a></li>
+                        <li><a href="#" class="text-white-50" onclick="showSection('ranking')">Ranking</a></li>
+                        <li><a href="/admin" class="text-white-50" target="_blank">Panel de Administración</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">© 2024 Guardianes Guerrero. Sistema 100% productivo. Listo para 50,000+ ciudadanos.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ==================== CONFIGURACIÓN ====================
+        const API_BASE_URL = window.location.origin; // Usa el mismo origen del servidor
+        let currentUser = null;
+        let currentMunicipioId = null;
+        let authModal = null;
+        let countdownInterval = null;
+        let countdownSeconds = 600; // 10 minutos para el código
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Guardianes Guerrero - Sistema 100% Productivo');
+            
+            // Inicializar componentes Bootstrap
+            authModal = new bootstrap.Modal(document.getElementById('authModal'));
+            
+            // Verificar autenticación existente
+            checkAuthStatus();
+            
+            // Cargar datos iniciales
+            loadMunicipios();
+            loadRecentIncidents();
+            loadRanking();
+            
+            // Configurar inputs de código
+            setupCodeInputs();
+            
+            // Configurar event listeners
+            document.getElementById('electionSelect').addEventListener('change', loadCandidatesForElection);
+            document.getElementById('confidenceSlider').addEventListener('input', updateConfidenceValue);
+            
+            // Configurar formularios
+            document.getElementById('predictionForm').addEventListener('submit', submitPrediction);
+            document.getElementById('incidentForm').addEventListener('submit', submitIncident);
+        });
+
+        // ==================== AUTENTICACIÓN ====================
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    currentUser = JSON.parse(userData);
+                    updateUserStatus(true);
+                    updateUserStats();
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                    localStorage.clear();
+                    updateUserStatus(false);
+                }
+            } else {
+                updateUserStatus(false);
+            }
+        }
+
+        function updateUserStatus(isLoggedIn) {
+            const userStatus = document.getElementById('userStatus');
+            
+            if (isLoggedIn && currentUser) {
+                userStatus.innerHTML = `
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i>Guardian ${currentUser.phone ? currentUser.phone.substring(7) : ''}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <span class="dropdown-item-text">
+                                    <small>Puntos: <strong>${currentUser.points || 0}</strong></small>
+                                </span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </div>
+                `;
+                
+                updateUserPoints();
+            } else {
+                userStatus.innerHTML = `
+                    <button class="btn btn-outline-light btn-sm" onclick="showAuthModal()">
+                        <i class="fas fa-sign-in-alt me-1"></i>Acceder
+                    </button>
+                `;
+            }
+        }
+
+        function showAuthModal() {
+            document.getElementById('authStep1').style.display = 'block';
+            document.getElementById('authStep2').style.display = 'none';
+            document.getElementById('phoneInput').value = '';
+            authModal.show();
+        }
+
+        function requestVerificationCode() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            
+            if (!phone || phone.length !== 10) {
+                alert('Por favor ingresa un número de teléfono válido de 10 dígitos');
+                return;
+            }
+            
+            const btn = document.getElementById('requestCodeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+            
+            fetch(`${API_BASE_URL}/api/auth/request-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sms me-2"></i>Enviar Código de Verificación';
+                
+                if (data.success) {
+                    // Mostrar paso 2
+                    document.getElementById('authStep1').style.display = 'none';
+                    document.getElementById('authStep2').style.display = 'block';
+                    
+                    // Iniciar cuenta regresiva
+                    startCountdown();
+                    
+                    // Prellenar código en desarrollo
+                    if (data.code && window.location.hostname === 'localhost') {
+                        const codes = data.code.toString().split('');
+                        ['code1','code2','code3','code4'].forEach((id, i) => {
+                            if (codes[i]) document.getElementById(id).value = codes[i];
+                        });
+                    }
+                } else {
+                    alert(data.error || 'Error al enviar código');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sms me-2"></i>Enviar Código de Verificación';
+                alert('Error de conexión. Intenta nuevamente.');
+            });
+        }
+
+        function startCountdown() {
+            countdownSeconds = 600;
+            clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                countdownSeconds--;
+                const minutes = Math.floor(countdownSeconds / 60);
+                const seconds = countdownSeconds % 60;
+                
+                document.getElementById('countdownText').textContent = 
+                    `El código expira en ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (countdownSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownText').textContent = 'Código expirado';
+                    document.getElementById('countdownText').className = 'text-danger';
+                }
+            }, 1000);
+        }
+
+        function setupCodeInputs() {
+            const inputs = ['code1','code2','code3','code4'];
+            
+            inputs.forEach((id, index) => {
+                const input = document.getElementById(id);
+                
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1 && index < inputs.length - 1) {
+                        document.getElementById(inputs[index + 1]).focus();
+                    }
+                    
+                    // Auto-verificar si todos los códigos están llenos
+                    if (index === inputs.length - 1 && e.target.value.length === 1) {
+                        const allFilled = inputs.every(inputId => 
+                            document.getElementById(inputId).value.length === 1);
+                        if (allFilled) {
+                            setTimeout(verifyCode, 300);
+                        }
+                    }
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                        document.getElementById(inputs[index - 1]).focus();
+                    }
+                });
+            });
+        }
+
+        function verifyCode() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            const code = [
+                document.getElementById('code1').value,
+                document.getElementById('code2').value,
+                document.getElementById('code3').value,
+                document.getElementById('code4').value
+            ].join('');
+            
+            if (code.length !== 4) {
+                alert('Por favor ingresa el código completo de 4 dígitos');
+                return;
+            }
+            
+            const btn = document.getElementById('verifyCodeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+            
+            fetch(`${API_BASE_URL}/api/auth/verify-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar Código';
+                
+                if (data.success && data.token) {
+                    // Guardar token y datos
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    // Actualizar estado
+                    currentUser = data.user;
+                    updateUserStatus(true);
+                    updateUserStats();
+                    
+                    // Cerrar modal
+                    authModal.hide();
+                    clearInterval(countdownInterval);
+                    
+                    alert('¡Bienvenido a Guardianes Guerrero! Ahora puedes participar en predicciones y reportar incidentes.');
+                } else {
+                    alert(data.error || 'Código inválido');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar Código';
+                alert('Error de conexión. Intenta nuevamente.');
+            });
+        }
+
+        function resetAuth() {
+            clearInterval(countdownInterval);
+            document.getElementById('authStep1').style.display = 'block';
+            document.getElementById('authStep2').style.display = 'none';
+            ['code1','code2','code3','code4'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('countdownText').textContent = 'El código expira en 10:00';
+            document.getElementById('countdownText').className = 'text-muted';
+        }
+
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.clear();
+                currentUser = null;
+                updateUserStatus(false);
+                alert('Sesión cerrada correctamente');
+            }
+        }
+
+        // ==================== DATOS ====================
+        function loadMunicipios() {
+            fetch(`${API_BASE_URL}/api/data/municipios`)
+                .then(response => response.json())
+                .then(municipios => {
+                    const mainSelect = document.getElementById('municipioSelect');
+                    const incidentSelect = document.getElementById('incidentMunicipio');
+                    
+                    // Limpiar selects
+                    mainSelect.innerHTML = '<option value="">Selecciona tu municipio</option>';
+                    incidentSelect.innerHTML = '<option value="">Selecciona municipio</option>';
+                    
+                    // Agregar opciones
+                    municipios.forEach(mun => {
+                        const option1 = document.createElement('option');
+                        option1.value = mun.id;
+                        option1.textContent = mun.name;
+                        mainSelect.appendChild(option1);
+                        
+                        const option2 = document.createElement('option');
+                        option2.value = mun.id;
+                        option2.textContent = mun.name;
+                        incidentSelect.appendChild(option2);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading municipios:', error);
+                });
+        }
+
+        function cargarDatosMunicipio() {
+            const select = document.getElementById('municipioSelect');
+            const municipioId = select.value;
+            const municipioNombre = select.options[select.selectedIndex].text;
+            
+            if (!municipioId) {
+                alert('Por favor selecciona un municipio');
+                return;
+            }
+            
+            currentMunicipioId = municipioId;
+            
+            // Mostrar secciones de predicciones
+            document.getElementById('prediccionesContainer').style.display = 'block';
+            document.getElementById('noMunicipioSelected').style.display = 'none';
+            document.getElementById('municipioNombre').textContent = municipioNombre;
+            
+            // Actualizar comparación
+            document.getElementById('comparacionContainer').style.display = 'block';
+            document.getElementById('noComparacionSelected').style.display = 'none';
+            document.getElementById('comparacionMunicipioNombre').textContent = municipioNombre;
+            
+            // Activar pestaña de predicciones
+            const prediccionesTab = new bootstrap.Tab(document.getElementById('predicciones-tab'));
+            prediccionesTab.show();
+            
+            // Cargar datos
+            loadElectionsForMunicipio(municipioId);
+            loadCommunityPredictions(municipioId);
+            loadComparacionHistorica(municipioNombre);
+        }
+
+        function loadElectionsForMunicipio(municipioId) {
+            fetch(`${API_BASE_URL}/api/data/elecciones-activas?municipioId=${municipioId}`)
+                .then(response => response.json())
+                .then(elections => {
+                    const select = document.getElementById('electionSelect');
+                    select.innerHTML = '<option value="">Selecciona una elección</option>';
+                    
+                    elections.forEach(election => {
+                        const option = document.createElement('option');
+                        option.value = election.id;
+                        option.textContent = `${election.tipo_eleccion} ${election.anio}`;
+                        option.setAttribute('data-anio', election.anio);
+                        option.setAttribute('data-tipo', election.tipo_eleccion);
+                        select.appendChild(option);
+                    });
+                    
+                    if (elections.length > 0) {
+                        select.value = elections[0].id;
+                        loadCandidatesForElection();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading elections:', error);
+                    document.getElementById('electionSelect').innerHTML = 
+                        '<option value="">Error cargando elecciones</option>';
+                });
+        }
+
+        function loadCandidatesForElection() {
+            const electionId = document.getElementById('electionSelect').value;
+            const municipioId = currentMunicipioId;
+            
+            if (!electionId || !municipioId) return;
+            
+            fetch(`${API_BASE_URL}/api/data/candidatos?electionId=${electionId}&municipioId=${municipioId}`)
+                .then(response => response.json())
+                .then(candidatos => {
+                    const container = document.getElementById('candidatesContainer');
+                    
+                    if (candidatos.length === 0) {
+                        container.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay candidatos registrados para esta elección
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '';
+                    candidatos.forEach(candidato => {
+                        const color = candidato.color || '007bff';
+                        html += `
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" 
+                                       name="candidate" id="candidate_${candidato.id}" 
+                                       value="${candidato.id}" required>
+                                <label class="form-check-label" for="candidate_${candidato.id}">
+                                    <strong>${candidato.nombre}</strong>
+                                    <span class="candidate-tag" style="background-color: #${color};">
+                                        ${candidato.partido || 'Independiente'}
+                                    </span>
+                                    ${candidato.coalicion ? `<small class="text-muted ms-1">(${candidato.coalicion})</small>` : ''}
+                                </label>
+                            </div>
+                        `;
+                    });
+                    
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading candidates:', error);
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error cargando candidatos
+                        </div>
+                    `;
+                });
+        }
+
+        function loadCommunityPredictions(municipioId) {
+            fetch(`${API_BASE_URL}/api/predictions/aggregated?municipioId=${municipioId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('communityPredictions');
+                    
+                    if (!data || data.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No hay predicciones aún para este municipio</p>
+                                <p class="small text-muted">¡Sé el primero en hacer una predicción!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '<div class="list-group">';
+                    let total = data.reduce((sum, p) => sum + p.count, 0);
+                    
+                    data.forEach(prediction => {
+                        const percentage = Math.round((prediction.count / total) * 100);
+                        const color = prediction.candidate_color || '007bff';
+                        
+                        html += `
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <strong>${prediction.candidate_name}</strong>
+                                        <span class="badge" style="background-color: #${color}; color: white; font-size: 0.7rem;">
+                                            ${prediction.candidate_party}
+                                        </span>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">${percentage}%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: ${percentage}%; background-color: #${color};"></div>
+                                </div>
+                                <small class="text-muted">${prediction.count} predicciones</small>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading community predictions:', error);
+                });
+        }
+
+        function loadComparacionHistorica(municipioNombre) {
+            fetch(`${API_BASE_URL}/api/data/comparacion/${encodeURIComponent(municipioNombre)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('comparacionTable');
+                    tbody.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-database me-2"></i>
+                                    No hay datos históricos disponibles para este municipio
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        
+                        // Calcular tendencia y variación
+                        const valores = [row["2024"], row["2021"], row["2018"]].filter(v => v != null);
+                        let tendencia = '→ Estable';
+                        let variacion = 'N/A';
+                        let tendenciaClass = 'trend-stable';
+                        
+                        if (valores.length >= 2) {
+                            const masReciente = valores[0];
+                            const masAntiguo = valores[valores.length - 1];
+                            const diff = masReciente - masAntiguo;
+                            
+                            if (diff > 2) {
+                                tendencia = '↗ Aumentando';
+                                tendenciaClass = 'trend-up';
+                            } else if (diff < -2) {
+                                tendencia = '↘ Disminuyendo';
+                                tendenciaClass = 'trend-down';
+                            }
+                            
+                            variacion = `${diff > 0 ? '+' : ''}${diff.toFixed(1)}%`;
+                        }
+                        
+                        tr.innerHTML = `
+                            <td><strong>${row.tipo_eleccion}</strong></td>
+                            <td>${row["2024"] ? row["2024"].toFixed(1) + '%' : 'N/A'}</td>
+                            <td>${row["2021"] ? row["2021"].toFixed(1) + '%' : 'N/A'}</td>
+                            <td>${row["2018"] ? row["2018"].toFixed(1) + '%' : 'N/A'}</td>
+                            <td class="${tendenciaClass}">${tendencia}</td>
+                            <td class="${tendenciaClass}">${variacion}</td>
+                        `;
+                        
+                        tbody.appendChild(tr);
+                    });
+                    
+                    // Actualizar gráfico
+                    updateParticipationChart(data);
+                })
+                .catch(error => {
+                    console.error('Error loading comparacion historica:', error);
+                });
+        }
+
+        function updateParticipationChart(data) {
+            const ctx = document.getElementById('participationChart').getContext('2d');
+            
+            // Preparar datos para el gráfico
+            const labels = ['2018', '2021', '2024'];
+            const datasets = [];
+            
+            // Colores para cada tipo de elección
+            const colors = {
+                'Gubernatura': '#003366',
+                'Diputación Local': '#D52B1E',
+                'Ayuntamiento': '#FFD700'
+            };
+            
+            data.forEach(row => {
+                const dataset = {
+                    label: row.tipo_eleccion,
+                    data: [
+                        row["2018"] || null,
+                        row["2021"] || null,
+                        row["2024"] || null
+                    ],
+                    borderColor: colors[row.tipo_eleccion] || '#007bff',
+                    backgroundColor: colors[row.tipo_eleccion] ? colors[row.tipo_eleccion] + '20' : '#007bff20',
+                    tension: 0.3,
+                    fill: false
+                };
+                datasets.push(dataset);
+            });
+            
+            // Destruir gráfico existente si hay uno
+            if (window.participationChart) {
+                window.participationChart.destroy();
+            }
+            
+            // Crear nuevo gráfico
+            window.participationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Participación Electoral Histórica (%)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Participación (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== PREDICCIONES ====================
+        function submitPrediction(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showAuthModal();
+                return;
+            }
+            
+            const electionId = document.getElementById('electionSelect').value;
+            const candidateId = document.querySelector('input[name="candidate"]:checked')?.value;
+            const confidence = document.getElementById('confidenceSlider').value;
+            
+            if (!electionId || !candidateId) {
+                alert('Por favor selecciona una elección y un candidato');
+                return;
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showAuthModal();
+                return;
+            }
+            
+            const btn = document.getElementById('submitPredictionBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+            
+            fetch(`${API_BASE_URL}/api/predictions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    electionId,
+                    municipalityId: currentMunicipioId,
+                    candidateId,
+                    confidence: parseInt(confidence)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Predicción';
+                
+                if (data.success) {
+                    alert('✅ ¡Predicción enviada con éxito! Ganaste 100 puntos.');
+                    
+                    // Actualizar usuario
+                    if (currentUser) {
+                        currentUser.points = (currentUser.points || 0) + 100;
+                        currentUser.predictions_count = (currentUser.predictions_count || 0) + 1;
+                        localStorage.setItem('userData', JSON.stringify(currentUser));
+                        updateUserStatus(true);
+                        updateUserStats();
+                    }
+                    
+                    // Recargar predicciones comunitarias
+                    loadCommunityPredictions(currentMunicipioId);
+                    
+                    // Resetear formulario (excepto elección)
+                    document.querySelector('input[name="candidate"]:checked').checked = false;
+                    document.getElementById('confidenceSlider').value = 75;
+                    updateConfidenceValue();
+                    
+                    // Actualizar ranking
+                    loadRanking();
+                } else {
+                    alert(data.error || 'Error al enviar predicción');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Predicción';
+                alert('Error de conexión. Intenta nuevamente.');
+            });
+        }
+
+        function updateConfidenceValue() {
+            const value = document.getElementById('confidenceSlider').value;
+            document.getElementById('confidenceValue').textContent = value + '%';
+        }
+
+        // ==================== INCIDENTES ====================
+        function loadRecentIncidents() {
+            fetch(`${API_BASE_URL}/api/incidents/recent`)
+                .then(response => response.json())
+                .then(incidents => {
+                    const container = document.getElementById('recentIncidents');
+                    
+                    if (!incidents || incidents.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i>
+                                <p class="text-muted">No hay incidentes reportados recientemente</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '';
+                    incidents.slice(0, 5).forEach(incident => {
+                        const fecha = new Date(incident.created_at).toLocaleDateString('es-MX', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        // Mapear tipos a colores
+                        const typeColors = {
+                            'acarreo': 'warning',
+                            'compra_votos': 'danger',
+                            'presion': 'info',
+                            'violencia': 'dark',
+                            'irregularidades': 'secondary',
+                            'propaganda': 'primary',
+                            'otros': 'light'
+                        };
+                        
+                        const color = typeColors[incident.tipo] || 'secondary';
+                        
+                        html += `
+                            <div class="border-bottom pb-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="badge bg-${color}">${incident.tipo.replace('_', ' ').toUpperCase()}</span>
+                                    <small class="text-muted">${fecha}</small>
+                                </div>
+                                <p class="mb-1">${incident.descripcion.substring(0, 120)}${incident.descripcion.length > 120 ? '...' : ''}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    ${incident.municipio || incident.ubicacion || 'Ubicación no especificada'}
+                                </small>
+                            </div>
+                        `;
+                    });
+                    
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading incidents:', error);
+                });
+        }
+
+        function submitIncident(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showAuthModal();
+                return;
+            }
+            
+            const tipo = document.getElementById('incidentType').value;
+            const descripcion = document.getElementById('incidentDescription').value;
+            const ubicacion = document.getElementById('incidentLocation').value;
+            const municipioId = document.getElementById('incidentMunicipio').value;
+            const evidencia = document.getElementById('incidentEvidence').files[0];
+            
+            if (!tipo || !descripcion || !municipioId) {
+                alert('Por favor completa los campos obligatorios');
+                return;
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showAuthModal();
+                return;
+            }
+            
+            const btn = document.getElementById('submitIncidentBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+            
+            // Crear FormData
+            const formData = new FormData();
+            formData.append('tipo', tipo);
+            formData.append('descripcion', descripcion);
+            formData.append('municipioId', municipioId);
+            if (ubicacion) formData.append('ubicacion', ubicacion);
+            if (evidencia) formData.append('evidencia', evidencia);
+            
+            fetch(`${API_BASE_URL}/api/incidents`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Reportar Incidente';
+                
+                if (data.success) {
+                    alert('✅ ¡Incidente reportado con éxito! Gracias por tu contribución.');
+                    
+                    // Resetear formulario
+                    document.getElementById('incidentForm').reset();
+                    
+                    // Recargar incidentes recientes
+                    loadRecentIncidents();
+                } else {
+                    alert(data.error || 'Error al reportar incidente');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Reportar Incidente';
+                alert('Error de conexión. Intenta nuevamente.');
+            });
+        }
+
+        function getLocation() {
+            if (!navigator.geolocation) {
+                alert('Tu navegador no soporta geolocalización');
+                return;
+            }
+            
+            const locationInput = document.getElementById('incidentLocation');
+            locationInput.placeholder = 'Obteniendo ubicación...';
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Usar OpenStreetMap para reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.display_name) {
+                                locationInput.value = data.display_name;
+                            } else {
+                                locationInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            }
+                            locationInput.placeholder = 'Dirección, colonia, referencia';
+                        })
+                        .catch(() => {
+                            locationInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            locationInput.placeholder = 'Dirección, colonia, referencia';
+                        });
+                },
+                (error) => {
+                    alert('No se pudo obtener la ubicación: ' + error.message);
+                    locationInput.placeholder = 'Dirección, colonia, referencia';
+                }
+            );
+        }
+
+        // ==================== RANKING ====================
+        function loadRanking() {
+            fetch(`${API_BASE_URL}/api/rankings/top`)
+                .then(response => response.json())
+                .then(ranking => {
+                    const tbody = document.getElementById('rankingTable');
+                    
+                    if (!ranking || ranking.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-users me-2"></i>
+                                    No hay participantes en el ranking aún
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = '';
+                    
+                    ranking.forEach((user, index) => {
+                        const tr = document.createElement('tr');
+                        
+                        // Íconos de posición
+                        let positionIcon = '';
+                        let positionClass = '';
+                        if (index === 0) {
+                            positionIcon = '<i class="fas fa-crown text-warning"></i>';
+                            positionClass = 'table-warning';
+                        } else if (index === 1) {
+                            positionIcon = '<i class="fas fa-medal text-secondary"></i>';
+                            positionClass = 'table-light';
+                        } else if (index === 2) {
+                            positionIcon = '<i class="fas fa-medal" style="color: #cd7f32;"></i>';
+                            positionClass = 'table-light';
+                        }
+                        
+                        const porcentaje = user.predictions_count > 0 
+                            ? Math.round((user.correct_predictions / user.predictions_count) * 100)
+                            : 0;
+                        
+                        // Ocultar teléfono para privacidad
+                        const phoneDisplay = user.phone ? 
+                            user.phone.substring(0, 3) + '•••' + user.phone.substring(6) : 'Anónimo';
+                        
+                        tr.className = positionClass;
+                        tr.innerHTML = `
+                            <td class="fw-bold text-center">
+                                ${positionIcon} ${index + 1}
+                            </td>
+                            <td>${phoneDisplay}</td>
+                            <td><span class="badge bg-warning text-dark">${user.points || 0}</span></td>
+                            <td>${user.predictions_count || 0}</td>
+                            <td>${user.correct_predictions || 0}</td>
+                            <td>
+                                <div class="progress" style="height: 8px; width: 80px;">
+                                    <div class="progress-bar ${porcentaje >= 70 ? 'bg-success' : porcentaje >= 50 ? 'bg-warning' : 'bg-danger'}" 
+                                         style="width: ${porcentaje}%"></div>
+                                </div>
+                                <small>${porcentaje}%</small>
+                            </td>
+                            <td>${user.municipio || 'No especificado'}</td>
+                        `;
+                        
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading ranking:', error);
+                });
+        }
+
+        function updateUserStats() {
+            if (!currentUser) return;
+            
+            document.getElementById('userPointsCount').textContent = currentUser.points || 0;
+            
+            const accuracy = currentUser.predictions_count > 0 ?
+                Math.round((currentUser.correct_predictions / currentUser.predictions_count) * 100) : 0;
+            document.getElementById('userAccuracy').textContent = accuracy + '%';
+            
+            // Simular posición (en un sistema real esto vendría del backend)
+            document.getElementById('userRank').textContent = '#1'; // Placeholder
+        }
+
+        function updateUserPoints() {
+            if (!currentUser) return;
+            
+            const userPoints = document.getElementById('userPoints');
+            if (userPoints) {
+                userPoints.innerHTML = `
+                    <i class="fas fa-star me-1"></i>
+                    ${currentUser.points || 0} Puntos
+                `;
+                userPoints.style.display = 'inline-block';
+            }
+        }
+
+        // ==================== UI HELPERS ====================
+        function showSection(sectionId) {
+            // Activar la pestaña correspondiente
+            const tabEl = document.getElementById(`${sectionId}-tab`);
+            if (tabEl) {
+                const tab = new bootstrap.Tab(tabEl);
+                tab.show();
+            }
+        }
+
+        // Inicializar gráfico placeholder
+        function initPlaceholderChart() {
+            const ctx = document.getElementById('participationChart').getContext('2d');
+            window.participationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['2018', '2021', '2024'],
+                    datasets: [{
+                        label: 'Cargando datos...',
+                        data: [null, null, null],
+                        borderColor: '#ccc',
+                        backgroundColor: '#f8f9fa',
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Selecciona un municipio para ver los datos'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializar gráfico placeholder
+        document.addEventListener('DOMContentLoaded', initPlaceholderChart);
+// ========================================
+// SISTEMA DE TABS
+// ========================================
+function switchTab(tabName) {
+    console.log('🔄 Cambiando a tab:', tabName);
+    
+    // Remover active de todos los botones
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Remover active de todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Activar el botón seleccionado
+    document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+    
+    // Activar el contenido seleccionado
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    
+    // Si es tab de encuestas y no se han cargado, cargarlas
+    if (tabName === 'encuestas') {
+        const container = document.getElementById('encuestas-container');
+        if (container.querySelector('.loading-spinner')) {
+            loadActiveSurveysInTab();
+        }
+    }
+}
+
+// ========================================
+// CARGAR ENCUESTAS EN TAB
+// ========================================
+async function loadActiveSurveysInTab() {
+    try {
+        console.log('📋 [TAB] Cargando encuestas activas...');
+        
+        const response = await fetch(`${API_BASE}/surveys/active`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ [TAB] Encuestas recibidas:', data);
+        
+        const container = document.getElementById('encuestas-container');
+        
+        // Actualizar badge y CTA
+        const surveysCount = data.surveys?.length || 0;
+        
+        if (surveysCount > 0) {
+            document.getElementById('encuestas-badge').textContent = surveysCount;
+            document.getElementById('encuestas-badge').style.display = 'inline-block';
+            document.getElementById('cta-count').textContent = surveysCount;
+            document.getElementById('cta-survey-badge').classList.remove('hidden');
+        }
+        
+        // Si no hay encuestas
+        if (!data.surveys || data.surveys.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px; background: #fff3cd; border-radius: 12px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">📋</div>
+                    <h3 style="color: #856404; font-size: 1.5em; margin-bottom: 10px;">
+                        No hay encuestas activas
+                    </h3>
+                    <p style="color: #856404; font-size: 1.1em;">
+                        Las encuestas aparecerán aquí cuando el admin las active
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Renderizar encuestas
+        let html = '';
+        
+        for (const survey of data.surveys) {
+            const electionType = survey.electionType || survey.election_type || 'Encuesta';
+            const questionsCount = survey.questionsCount || survey.questions_count || 0;
+            const totalRespondents = survey.totalRespondents || survey.total_respondents || 0;
+            
+            // Cargar preguntas de esta encuesta
+            const questions = await loadSurveyQuestions(survey.id);
+            
+            html += `
+                <div class="survey-item" id="survey-${survey.id}">
+                    <div class="survey-header-top">
+                        <h3 class="survey-title">${survey.title}</h3>
+                        <div class="survey-badge-live">
+                            <span class="pulse-dot"></span>
+                            EN VIVO
+                        </div>
+                    </div>
+                    
+                    <p class="survey-description">${survey.description || ''}</p>
+                    
+                    <div class="survey-meta">
+                        <span class="survey-meta-item">🗳️ ${electionType}</span>
+                        <span class="survey-meta-item">📝 ${questionsCount} preguntas</span>
+                        <span class="survey-meta-item">👥 ${totalRespondents} participantes</span>
+                    </div>
+                    
+                    <form id="survey-form-${survey.id}" data-survey-id="${survey.id}">
+                        ${renderSurveyQuestions(questions, survey.id)}
+                        
+                        <div class="survey-actions">
+                            <button type="button" class="btn-submit-survey" onclick="submitSurveyResponse(${survey.id})">
+                                ✅ Enviar Respuestas (+50 pts)
+                            </button>
+                            <button type="button" class="btn-view-results" onclick="viewSurveyResults(${survey.id})">
+                                📊 Ver Resultados
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="survey-results-${survey.id}" class="hidden"></div>
+                    <div id="survey-message-${survey.id}"></div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+        console.log(`✅ [TAB] ${data.surveys.length} encuestas renderizadas`);
+        
+    } catch (error) {
+        console.error('❌ [TAB] Error cargando encuestas:', error);
+        document.getElementById('encuestas-container').innerHTML = `
+            <div style="text-align: center; padding: 60px 20px; background: #f8d7da; border-radius: 12px;">
+                <div style="font-size: 4em; margin-bottom: 20px;">⚠️</div>
+                <h3 style="color: #721c24; font-size: 1.5em; margin-bottom: 10px;">
+                    Error al cargar encuestas
+                </h3>
+                <p style="color: #721c24; font-size: 1.1em;">
+                    ${error.message}
+                </p>
+                <button onclick="loadActiveSurveysInTab()" style="margin-top: 20px; padding: 12px 30px; background: var(--secondary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    🔄 Reintentar
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ========================================
+// CARGAR PREGUNTAS DE UNA ENCUESTA
+// ========================================
+async function loadSurveyQuestions(surveyId) {
+    try {
+        console.log(`📝 [TAB] Cargando preguntas de encuesta ${surveyId}...`);
+        
+        const response = await fetch(`${API_BASE}/surveys/${surveyId}/questions`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [TAB] Preguntas cargadas:`, data.questions?.length || 0);
+        
+        return data.questions || [];
+        
+    } catch (error) {
+        console.error(`❌ [TAB] Error cargando preguntas:`, error);
+        return [];
+    }
+}
+
+// ========================================
+// RENDERIZAR PREGUNTAS
+// ========================================
+function renderSurveyQuestions(questions, surveyId) {
+    if (!questions || questions.length === 0) {
+        return '<p style="color: var(--text-light); padding: 20px; text-align: center;">No hay preguntas disponibles</p>';
+    }
+    
+    let html = '';
+    
+    questions.forEach((q, index) => {
+        const questionText = q.questionText || q.question_text || '';
+        const questionType = q.questionType || q.question_type || 'single_choice';
+        const isRequired = q.isRequired !== undefined ? q.isRequired : (q.is_required !== false);
+        const options = q.options ? (typeof q.options === 'string' ? JSON.parse(q.options) : q.options) : [];
+        
+        html += `
+            <div class="question-block">
+                <div class="question-title">
+                    ${index + 1}. ${questionText}
+                    ${isRequired ? '<span class="question-required">*</span>' : ''}
+                </div>
+                
+                <div class="options-group">
+                    ${renderQuestionOptions(q.id, questionType, options, surveyId)}
+                </div>
+            </div>
+        `;
+    });
+    
+    return html;
+}
+
+// ========================================
+// RENDERIZAR OPCIONES DE PREGUNTA
+// ========================================
+function renderQuestionOptions(questionId, questionType, options, surveyId) {
+    let html = '';
+    
+    const inputType = questionType === 'multiple_choice' ? 'checkbox' : 'radio';
+    const inputName = `question-${surveyId}-${questionId}`;
+    
+    if (questionType === 'text') {
+        html = `
+            <label class="option-label" style="display: block;">
+                <input type="text" 
+                       name="${inputName}" 
+                       data-question-id="${questionId}"
+                       placeholder="Escribe tu respuesta..."
+                       style="width: 100%; margin: 0; padding: 12px; border: 2px solid var(--border); border-radius: 8px;">
+            </label>
+        `;
+    } else if (questionType === 'textarea') {
+        html = `
+            <label class="option-label" style="display: block;">
+                <textarea name="${inputName}" 
+                          data-question-id="${questionId}"
+                          rows="4"
+                          placeholder="Escribe tu respuesta..."
+                          style="width: 100%; margin: 0; padding: 12px; border: 2px solid var(--border); border-radius: 8px;"></textarea>
+            </label>
+        `;
+    } else {
+        // Radio o Checkbox
+        options.forEach((option, idx) => {
+            const optionValue = typeof option === 'string' ? option : option.value || option;
+            const optionLabel = typeof option === 'string' ? option : option.label || option;
+            
+            html += `
+                <label class="option-label">
+                    <input type="${inputType}" 
+                           name="${inputName}" 
+                           value="${optionValue}"
+                           data-question-id="${questionId}">
+                    <span>${optionLabel}</span>
+                </label>
+            `;
+        });
+    }
+    
+    return html;
+}
+
+// ========================================
+// ENVIAR RESPUESTAS DE ENCUESTA
+// ========================================
+async function submitSurveyResponse(surveyId) {
+    console.log(`📤 [TAB] Enviando respuestas de encuesta ${surveyId}...`);
+    
+    const form = document.getElementById(`survey-form-${surveyId}`);
+    const messageContainer = document.getElementById(`survey-message-${surveyId}`);
+    
+    try {
+        // Recopilar respuestas
+        const responses = [];
+        
+        // Agrupar por pregunta
+        const responsesByQuestion = {};
+        
+        form.querySelectorAll('input, textarea, select').forEach(input => {
+            const questionId = input.getAttribute('data-question-id');
+            if (!questionId) return;
+            
+            if (input.type === 'checkbox') {
+                if (input.checked) {
+                    if (!responsesByQuestion[questionId]) {
+                        responsesByQuestion[questionId] = [];
+                    }
+                    responsesByQuestion[questionId].push(input.value);
+                }
+            } else if (input.type === 'radio') {
+                if (input.checked) {
+                    responsesByQuestion[questionId] = input.value;
+                }
+            } else {
+                if (input.value.trim()) {
+                    responsesByQuestion[questionId] = input.value;
+                }
+            }
+        });
+        
+        // Convertir a formato esperado por el backend
+        for (const [questionId, answer] of Object.entries(responsesByQuestion)) {
+            responses.push({
+                questionId: parseInt(questionId),
+                answer: Array.isArray(answer) ? answer.join(', ') : answer,
+                confidence: null
+            });
+        }
+        
+        if (responses.length === 0) {
+            showMessage(`survey-message-${surveyId}`, '⚠️ Por favor responde al menos una pregunta', 'error');
+            return;
+        }
+        
+        console.log('📊 [TAB] Respuestas recopiladas:', responses);
+        
+        // Enviar al backend
+        const response = await fetch(`${API_BASE}/surveys/${surveyId}/response`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ responses })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(`survey-message-${surveyId}`, 
+                `✅ ¡Respuesta enviada con éxito! +${data.pointsEarned || 50} puntos`, 
+                'success');
+            
+            // Actualizar puntos del usuario
+            if (currentUser && data.pointsEarned) {
+                currentUser.points += data.pointsEarned;
+                updateUserMenuInfo();
+            }
+            
+            // Deshabilitar formulario
+            form.querySelectorAll('input, textarea, select, button').forEach(el => {
+                el.disabled = true;
+            });
+            
+            // Mostrar resultados automáticamente
+            setTimeout(() => {
+                viewSurveyResults(surveyId);
+            }, 1500);
+            
+        } else {
+            showMessage(`survey-message-${surveyId}`, 
+                `❌ ${data.error || 'Error al enviar respuesta'}`, 
+                'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ [TAB] Error enviando respuesta:', error);
+        showMessage(`survey-message-${surveyId}`, 
+            '❌ Error de conexión. Verifica tu red e intenta de nuevo.', 
+            'error');
+    }
+}
+
+// ========================================
+// VER RESULTADOS DE ENCUESTA
+// ========================================
+async function viewSurveyResults(surveyId) {
+    console.log(`📊 [TAB] Cargando resultados de encuesta ${surveyId}...`);
+    
+    const resultsContainer = document.getElementById(`survey-results-${surveyId}`);
+    
+    try {
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.innerHTML = `
+            <div style="text-align: center; padding: 30px;">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border-width: 3px;"></div>
+                <p style="margin-top: 15px; color: var(--text-light);">Cargando resultados...</p>
+            </div>
+        `;
+        
+        const response = await fetch(`${API_BASE}/surveys/${surveyId}/results`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ [TAB] Resultados recibidos:', data);
+        
+        // Renderizar resultados
+        let html = `
+            <div class="results-container">
+                <div class="results-title">
+                    📊 Resultados en Tiempo Real
+                </div>
+        `;
+        
+        if (!data.results || data.results.length === 0) {
+            html += '<p style="text-align: center; color: var(--text-light); padding: 20px;">Aún no hay resultados disponibles</p>';
+        } else {
+            data.results.forEach(result => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-question">${result.questionText}</div>
+                `;
+                
+                if (result.responses && result.responses.length > 0) {
+                    const totalVotes = result.responses.reduce((sum, r) => sum + r.count, 0);
+                    
+                    result.responses.forEach(r => {
+                        const percentage = totalVotes > 0 ? ((r.count / totalVotes) * 100).toFixed(1) : 0;
+                        
+                        html += `
+                            <div class="result-option">
+                                <span class="result-option-name">${r.value}</span>
+                                <div class="results-bar-container">
+                                    <div class="results-bar-fill" style="width: ${percentage}%">
+                                        ${percentage}%
+                                    </div>
+                                </div>
+                                <span class="result-option-count">${r.count} voto${r.count !== 1 ? 's' : ''}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p style="color: var(--text-light); font-style: italic;">Sin respuestas aún</p>';
+                }
+                
+                html += '</div>';
+            });
+            
+            // Total de respuestas
+            const totalResponses = data.results[0]?.responses?.reduce((sum, r) => sum + r.count, 0) || 0;
+            html += `
+                <div class="total-responses">
+                    📊 Total de participantes: <strong>${totalResponses}</strong>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        
+        resultsContainer.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ [TAB] Error cargando resultados:', error);
+        resultsContainer.innerHTML = `
+            <div style="text-align: center; padding: 30px; background: #f8d7da; border-radius: 8px;">
+                <p style="color: #721c24;">Error al cargar resultados: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// ========================================
+// ACTUALIZAR FUNCIONES EXISTENTES
+// ========================================
+
+// IMPORTANTE: Busca en tu código la función showAuthenticatedUI() 
+// y REEMPLÁZALA completamente con esta versión:
+function showAuthenticatedUI() {
+    console.log('📱 [AUTH] showAuthenticatedUI() llamada');
+    
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('main-tabs-container').classList.remove('hidden');
+    document.getElementById('user-menu-container').classList.remove('hidden');
+
+    updateUserMenuInfo();
+    
+    // Cargar encuestas al mostrar tabs
+    loadActiveSurveysInTab();
+}
+    </script>
+</body>
+</html>
