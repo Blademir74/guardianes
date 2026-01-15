@@ -199,7 +199,7 @@ app.use((req, res, next) => {
 // IMPORTACIÓN DE RUTAS (MODULAR)
 // ===================================
 
-const authRoutes = require('./routes/auth');
+const { router: authRoutes } = require('./routes/auth');
 const surveysRoutes = require('./routes/surveys');
 const dataRoutes = require('./routes/data');
 const predictionsRoutes = require('./routes/predictions');
