@@ -244,7 +244,7 @@ if (!CONFIG.isProduction) {
 // STATIC FILES - SPA SUPPORT
 // ===================================
 
-const frontendPath = path.join(__dirname, '..', 'public');
+const frontendPath = path.join(__dirname, 'public');
 app.use(express.static(frontendPath, {
     maxAge: CONFIG.isProduction ? '1y' : '0', // Cache agresiva solo en producción
     etag: true
