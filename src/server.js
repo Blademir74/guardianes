@@ -124,8 +124,14 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: CONFIG.isProduction ? ["'self'"] : ["'self'", "'unsafe-inline'"], // Unsafe-inline solo para desarrollo
+            scriptSrc: [
+            "'self'", 
+            "'unsafe-inline'", // Necesario para el JSONP de Chart.js si lo usas
+            "https://cdn.jsdelivr.net", // Para Bootstrap
+            "https://cdnjs.cloudflare.com"  // Para Font Awesome
+            ],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            styleSrcElem: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'"],
             fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
