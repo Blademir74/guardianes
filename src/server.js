@@ -118,6 +118,7 @@ global.dbQuery = async (text, params = []) => {
 // ===================================
 
 const app = express();
+app.set('trust proxy', true);
 
 // Security Middleware Stack - CSP más estricta para producción
 // Security Middleware Stack - Versión Corregida
