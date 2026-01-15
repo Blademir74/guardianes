@@ -241,8 +241,8 @@ app.get('/api/health', async (req, res) => {
         const dbResult = await global.dbQuery('SELECT 1 as check');
         res.json({
             status: 'healthy',
+            title: 'DIAGNOSTICO - VERSION 3.0',
             timestamp: new Date().toISOString(),
-            version: '2.1.0-secure',
             environment: process.env.NODE_ENV || 'development',
             uptime: process.uptime(),
             database: dbResult.rows[0].check === 1 ? 'connected' : 'error',
