@@ -121,36 +121,7 @@ const app = express();
 
 // Security Middleware Stack - CSP más estricta para producción
 // Security Middleware Stack - Versión Corregida
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
-                "'self'", 
-                "'unsafe-inline'",
-                "https://cdn.jsdelivr.net",
-                "https://cdnjs.cloudflare.com"
-            ],
-            // LA CLAVE ESTÁ AQUÍ: Añadir los CDNs a styleSrc
-            styleSrc: [
-                "'self'", 
-                "'unsafe-inline'", 
-                "https://fonts.googleapis.com",
-                "https://cdn.jsdelivr.net",     // <-- AÑADIDO
-                "https://cdnjs.cloudflare.com"  // <-- AÑADIDO
-            ],
-            styleSrcElem: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
-            fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            frameSrc: ["'none'"],
-            upgradeInsecureRequests: [],
-        },
-    },
-    hsts: CONFIG.isProduction ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false
-}));
+
 
 // CORS configurado para producción con lista blanca estricta
 const allowedOrigins = [
