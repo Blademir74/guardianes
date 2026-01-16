@@ -68,7 +68,7 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error en admin login:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
@@ -835,116 +835,5 @@ router.get('/predictions/stats', verifyAdminToken, async (req, res) => {
     }
 });
 
-// ========================================
-// GESTIÓN DE ENCUESTAS
-// ========================================
-
-/**
- * POST /api/admin/surveys
- * Crear nueva encuesta
- */
-router.post('/surveys', verifyAdminToken, async (req, res) => {
-  try {
-    const { title, description, electionType, endDate, isActive, isPublic } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ error: 'Título requerido' });
-    }
-
-    let query = `
-      INSERT INTO surveys (title, description, election_type, is_active, is_public, start_date
-    `;
-    let values = [title, description || '', electionType || 'general', isActive !== false, isPublic !== false, new Date()];
-    let paramIndex = 7;
-
-    if (endDate) {
-      query += ', end_date';
-      values.push(endDate);
-      paramIndex++;
-    }
-
-    query += `) VALUES ($1, $2, $3, $4, $5, $6`;
-
-    for (let i = 7; i < paramIndex; i++) {
-      query += `, $${i}`;
-    }
-
-    query += `) RETURNING id, title, created_at`;
-
-    const result = await db.query(query, values);
-
-    res.json({
-      success: true,
-      message: 'Encuesta creada correctamente',
-      survey: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('❌ Error creando encuesta:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * GET /api/admin/surveys
- * Lista de todas las encuestas
- */
-router.get('/surveys', verifyAdminToken, async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT 
-        s.id,
-        s.title,
-        s.description,
-        s.election_type,
-        s.is_active,
-        s.is_public,
-        s.start_date,
-        s.end_date,
-        s.created_at,
-        COUNT(sr.id) as responses_count
-      FROM surveys s
-      LEFT JOIN survey_responses sr ON sr.survey_id = s.id
-      GROUP BY s.id
-      ORDER BY s.created_at DESC
-    `);
-
-    res.json({
-      success: true,
-      surveys: result.rows
-    });
-
-  } catch (error) {
-    console.error('❌ Error obteniendo encuestas:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * DELETE /api/admin/surveys/:id
- * Eliminar encuesta
- */
-router.delete('/surveys/:id', verifyAdminToken, async (req, res) => {
-  try {
-    const surveyId = parseInt(req.params.id);
-
-    await db.query('DELETE FROM survey_responses WHERE survey_id = $1', [surveyId]);
-    await db.query('DELETE FROM survey_questions WHERE survey_id = $1', [surveyId]);
-    const result = await db.query('DELETE FROM surveys WHERE id = $1 RETURNING id', [surveyId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Encuesta no encontrada' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Encuesta eliminada correctamente'
-    });
-
-  } catch (error) {
-    console.error('❌ Error eliminando encuesta:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 module.exports = router;

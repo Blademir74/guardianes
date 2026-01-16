@@ -2,7 +2,6 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
 
 /**
  * GET /api/data/participacion
@@ -56,27 +55,23 @@ router.get('/participacion', async (req, res) => {
  */
 router.get('/municipios', async (req, res) => {
   try {
-    const result = await db.query(`
+    const result = await global.dbQuery(`
       SELECT id, name, state
       FROM municipalities
       ORDER BY name ASC
     `);
 
-    res.json({
-      success: true,
-      data: result.rows.map(m => ({
-        id: m.id,
-        name: m.name,
-        state: m.state
-      })),
-      count: result.rows.length
-    });
+    res.json(result.rows.map(m => ({
+      id: m.id,
+      name: m.name,
+      state: m.state
+    })));
   } catch (error) {
     console.error('Error al obtener municipios:', error.message);
     res.status(500).json({
-      success: false,
       error: 'Failed to fetch municipalities',
-      details: error.message
+      details: error.message,
+      code: error.code
     });
   }
 });
@@ -143,19 +138,11 @@ router.get('/comparacion/:municipioId', async (req, res) => {
       ORDER BY tipo_eleccion
     `, [municipioNombre]);
 
-    res.json({
-      success: true,
-      municipio: municipioNombre,
-      data: result.rows
-    });
+    res.json(result.rows);
 
   } catch (error) {
     console.error('❌ Error en /comparacion:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to fetch comparison data',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch comparison data' });
   }
 });
 
@@ -202,17 +189,10 @@ router.get('/participacion/:municipioId', async (req, res) => {
       ORDER BY anio DESC, tipo_eleccion
     `, [municipioNombre]);
 
-    res.json({
-      success: true,
-      municipio: municipioNombre,
-      data: result.rows
-    });
+    res.json(result.rows);
   } catch (error) {
     console.error('Error en /participacion por municipio:', error);
-    res.status(500).json({ 
-      success: false,
-      error: error.message 
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 

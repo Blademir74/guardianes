@@ -1,6 +1,6 @@
 {
   "name": "guardianes-project",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "src/server.js",
   "scripts": {
