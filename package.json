@@ -44,7 +44,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
-    "twilio": "^5.11.1"
+    "twilio": "^5.11.1",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "artillery": "^2.0.27",
