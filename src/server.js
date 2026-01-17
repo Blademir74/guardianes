@@ -3,7 +3,6 @@ const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const xss = require('xss-clean');
 const { getDbPool } = require('./db');
 
 // ===================================
@@ -14,7 +13,7 @@ const app = express();
 
 // 1. Seguridad Avanzada
 app.use(helmet()); // Headers de seguridad
-app.use(xss()); // Sanitización contra XSS
+
 
 // Configuración CORS Permisiva para desarrollo/prod controlado
 const corsOptions = {
