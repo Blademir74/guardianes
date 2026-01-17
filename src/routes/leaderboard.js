@@ -1,38 +1,28 @@
-const router = require('express').Router();
-const db = require('../db');
+const express = require('express');
+const router = express.Router();
+const gamification = require('../services/gamification');
 
-// GET /api/leaderboard
+/**
+ * GET /api/leaderboard
+ * Obtener el top 10 de usuarios con más puntos
+ */
 router.get('/', async (req, res) => {
   try {
-    let limit = parseInt(req.query.limit, 10) || 10;
-    let offset = parseInt(req.query.offset, 10) || 0;
+    const leaderboard = await gamification.getLeaderboard();
 
-    if (limit > 100) limit = 100;
-    if (limit < 1) limit = 10;
-    if (offset < 0) offset = 0;
-
-    const query = `
-      SELECT id, points, predictions_count, accuracy_pct, last_active
-      FROM users
-      ORDER BY points DESC
-      LIMIT $1 OFFSET $2;
-    `;
-    
-    const result = await db.query(query, [limit, offset]);
-    
-    const leaderboard = result.rows.map((user, index) => ({
-      rank: offset + index + 1,
-      userId: user.id,
-      points: user.points,
-      predictionsCount: user.predictions_count,
-      accuracyPct: user.accuracy_pct,
-      lastActive: user.last_active
+    // Asignar posición
+    const ranked = leaderboard.map((user, index) => ({
+      ...user,
+      position: index + 1
     }));
-    
-    res.json(leaderboard);
+
+    res.json({
+      success: true,
+      leaderboard: ranked
+    });
   } catch (error) {
-    console.error('Failed to fetch leaderboard:', error);
-    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    console.error('❌ Error obteniendo leaderboard:', error);
+    res.status(500).json({ error: 'Error obteniendo leaderboard' });
   }
 });
 

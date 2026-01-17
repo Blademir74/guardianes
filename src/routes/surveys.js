@@ -1,8 +1,10 @@
 // src/routes/surveys.js
 const express = require('express');
-const router = express.Router();
 const db = require('../db');
 const { verifyAdminToken } = require('../middleware/auth');
+const gamification = require('../services/gamification');
+
+const router = express.Router();
 
 // ========================================
 // PUBLIC ENDPOINTS
@@ -205,11 +207,8 @@ router.post('/:id/response', async (req, res) => {
     }
 
     if (userId) {
-      await client.query(`
-        UPDATE users 
-        SET points = points + 50, last_active = NOW()
-        WHERE id = $1
-      `, [userId]);
+      const gamification = require('../services/gamification');
+      await gamification.addPoints(userId, 'SURVEY_COMPLETE', client);
     }
 
     await client.query('COMMIT');

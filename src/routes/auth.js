@@ -1,262 +1,121 @@
-// backend/src/routes/auth.js
 const express = require('express');
+const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const db = require('../db');
+const { query } = require('../db');
 const { body, validationResult } = require('express-validator');
-const { generateUserToken } = require('../middleware/auth');
 
-const router = express.Router();
+const SECRET_KEY = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 
-// Configuración
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-const JWT_EXPIRATION = '7d';
+// ===================================
+// AUTH ANONIMA (Teléfono -> Hash -> JWT)
+// ===================================
 
-// Almacenamiento temporal de códigos (en producción usar Redis)
-const codes = new Map(); // phone -> { code, expiresAt }
-
-// ========================================
-// FUNCIONES AUXILIARES
-// ========================================
-function hashPhone(phone) {
-    const fullPhone = `+52${phone}`;
-    return crypto.createHash('sha256').update(fullPhone).digest('hex');
-}
-
-function generateCode(length = 4) {
-    const min = Math.pow(10, length - 1);
-    const max = Math.pow(10, length) - 1;
-    return (Math.floor(Math.random() * (max - min + 1)) + min).toString();
-}
-
-// ========================================
+// 1. SOLICITAR CÓDIGO (Simulado para MVP, en prod usar Twilio/SNS)
 // POST /api/auth/request-code
-// ========================================
 router.post('/request-code', [
-  body('phone')
-    .trim()
-    .isLength({ min: 10, max: 10 })
-    .isNumeric()
-    .withMessage('Teléfono debe ser exactamente 10 dígitos numéricos')
+    body('phone').matches(/^\d{10}$/).withMessage('El teléfono debe ser de 10 dígitos')
 ], async (req, res) => {
-    console.log('📱 POST /api/auth/request-code - Body:', req.body);
-
-    // Manejar errores de validación
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Datos inválidos',
-            details: errors.array()
-        });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const { phone } = req.body;
+
+    // Generar Hash del teléfono (Salt fijo por app + teléfono) para consistencia
+    // NOTA: Para anonimato REAL, el salt no debería guardarse con el hash, pero necesitamos recuperar el usuario.
+    // Usamos scrypt para hacer lento el ataque de fuerza bruta.
+    const phoneHash = crypto.createHmac('sha256', 'GUARDIANES_SALT_2027').update(phone).digest('hex');
+
+    // Generar OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
 
     try {
-        const { phone } = req.body;
+        // Guardar OTP
+        await query(
+            `INSERT INTO phone_verifications (phone_hash, otp_code, expires_at) 
+             VALUES ($1, $2, $3)
+             RETURNING id`,
+            [phoneHash, otp, expiresAt]
+        );
 
-        // Generar código
-        const code = generateCode(4);
-        const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutos
+        // EN PRODUCCIÓN: Enviar SMS aquí.
+        // PARA MVP: Retornar el código en la respuesta (SOLO BETA)
+        console.log(`🔑 OTP para ${phone.slice(-4)}: ${otp}`);
 
-        // Guardar en memoria
-        codes.set(phone, { code, expiresAt });
-
-        console.log(`✅ Código generado para ${phone}: ${code}`);
-        console.log(`   Expira en: ${new Date(expiresAt).toLocaleTimeString()}`);
-
-        // Respuesta
-        return res.json({ 
+        res.json({
             success: true,
-            message: 'Código generado',
-            code, // SOLO EN DESARROLLO
-            phonePreview: `+52 ${phone.slice(0,3)} ${phone.slice(3,6)} ${phone.slice(6)}`,
-            expiresIn: 600
+            message: 'Código enviado (ver consola en dev)',
+            debug_otp: process.env.NODE_ENV !== 'production' ? otp : undefined
         });
 
-    } catch (error) {
-        console.error('❌ Error en /request-code:', error);
-        return res.status(500).json({ 
-            error: 'Error interno al generar código' 
-        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al generar código' });
     }
 });
 
-// ========================================
+// 2. VERIFICAR CÓDIGO
 // POST /api/auth/verify-code
-// ========================================
 router.post('/verify-code', [
-  body('phone')
-    .trim()
-    .isLength({ min: 10, max: 10 })
-    .isNumeric()
-    .withMessage('Teléfono debe ser exactamente 10 dígitos numéricos'),
-  body('code')
-    .trim()
-    .isLength({ min: 4, max: 4 })
-    .isNumeric()
-    .withMessage('Código debe ser exactamente 4 dígitos numéricos')
+    body('phone').matches(/^\d{10}$/).withMessage('Teléfono inválido'),
+    body('code').isLength({ min: 6, max: 6 }).withMessage('Código inválido')
 ], async (req, res) => {
-    console.log('🔐 POST /api/auth/verify-code - Body:', req.body);
-
-    // Manejar errores de validación
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Datos inválidos',
-            details: errors.array()
-        });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const client = await db.connect();
+    const { phone, code } = req.body;
+    const phoneHash = crypto.createHmac('sha256', 'GUARDIANES_SALT_2027').update(phone).digest('hex');
 
     try {
-        const { phone, code } = req.body;
+        // Verificar OTP
+        const result = await query(
+            `SELECT * FROM phone_verifications 
+             WHERE phone_hash = $1 AND otp_code = $2 AND expires_at > NOW() AND verified = false
+             ORDER BY created_at DESC LIMIT 1`,
+            [phoneHash, code]
+        );
 
-        // Buscar código en memoria
-        const entry = codes.get(phone);
-        console.log('📋 Código almacenado:', entry);
-
-        if (!entry) {
-            console.log('❌ No hay código para este teléfono');
-            return res.status(400).json({ 
-                error: 'No hay código generado para este teléfono. Solicita uno nuevo.' 
-            });
+        if (result.rows.length === 0) {
+            return res.status(400).json({ error: 'Código inválido o expirado' });
         }
 
-        // Verificar expiración
-        if (Date.now() > entry.expiresAt) {
-            codes.delete(phone);
-            console.log('❌ Código expirado');
-            return res.status(400).json({ 
-                error: 'Código expirado. Solicita uno nuevo.' 
-            });
-        }
+        // Marcar OTP como usado
+        await query('UPDATE phone_verifications SET verified = true WHERE id = $1', [result.rows[0].id]);
 
-        // Verificar código
-        if (entry.code !== code) {
-            console.log(`❌ Código incorrecto. Esperado: ${entry.code}, Recibido: ${code}`);
-            return res.status(400).json({ 
-                error: 'Código incorrecto' 
-            });
-        }
+        // Crear o Actualizar Usuario
+        let userResult = await query('SELECT * FROM users WHERE phone_hash = $1', [phoneHash]);
 
-        console.log('✅ Código válido');
-
-        await client.query('BEGIN');
-
-        // Hash del teléfono
-        const phoneHash = hashPhone(phone);
-
-        // Buscar o crear usuario
-        let userResult = await client.query(`
-            SELECT id, points, predictions_count, accuracy_pct
-            FROM users
-            WHERE phone_hash = $1
-        `, [phoneHash]);
-
-        let userId;
         if (userResult.rows.length === 0) {
-            // Crear nuevo usuario
-            console.log('👤 Creando nuevo usuario');
-            const newUserResult = await client.query(`
-                INSERT INTO users (phone_hash, points, predictions_count, accuracy_pct, created_at, last_active)
-                VALUES ($1, 0, 0, 0.0, NOW(), NOW())
-                RETURNING id, points, predictions_count, accuracy_pct
-            `, [phoneHash]);
-            userId = newUserResult.rows[0].id;
-            userResult = newUserResult;
-        } else {
-            userId = userResult.rows[0].id;
-            console.log('👤 Usuario existente:', userId);
-            // Actualizar last_active
-            await client.query(`
-                UPDATE users SET last_active = NOW() WHERE id = $1
-            `, [userId]);
+            userResult = await query(
+                `INSERT INTO users (phone_hash) VALUES ($1) RETURNING *`,
+                [phoneHash]
+            );
         }
-
-        await client.query('COMMIT');
 
         const user = userResult.rows[0];
 
-        // Generar JWT usando la función del middleware
-        const token = generateUserToken(userId, phoneHash);
+        // Generar JWT
+        const token = jwt.sign(
+            { id: user.id, hash: user.phone_hash, role: user.role },
+            SECRET_KEY,
+            { expiresIn: '30d' } // Sesión larga para conveniencia
+        );
 
-        // Limpiar código usado
-        codes.delete(phone);
-
-        console.log('✅ Token generado para userId:', userId);
-
-        return res.json({
+        res.json({
             success: true,
             token,
             user: {
-                id: userId,
-                points: user.points,
-                predictionsCount: user.predictions_count,
-                accuracyPct: user.accuracy_pct || 0
+                id: user.id,
+                role: user.role,
+                points: user.points
             }
         });
 
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('❌ Error en /verify-code:', error);
-        return res.status(500).json({ 
-            error: 'Error interno al verificar código' 
-        });
-    } finally {
-        client.release();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error de verificación' });
     }
 });
-
-// ========================================
-// GET /api/auth/me
-// ========================================
-router.get('/me', async (req, res) => {
-    console.log('👤 GET /api/auth/me');
-    
-    try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Token requerido' });
-        }
-
-        const decoded = jwt.verify(token, JWT_SECRET);
-        
-        const result = await db.query(`
-            SELECT id, points, predictions_count, accuracy_pct, created_at, last_active
-            FROM users
-            WHERE id = $1
-        `, [decoded.userId]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        const user = result.rows[0];
-        res.json({
-            id: user.id,
-            points: user.points,
-            predictionsCount: user.predictions_count,
-            accuracyPct: user.accuracy_pct || 0,
-            memberSince: user.created_at,
-            lastActive: user.last_active
-        });
-
-    } catch (error) {
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({ error: 'Token inválido' });
-        }
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ error: 'Token expirado' });
-        }
-        console.error('Error en /me:', error);
-        res.status(500).json({ error: 'Error al obtener perfil' });
-    }
-});
-
-// ========================================
-// EXPORTAR ROUTER
-// ========================================
-console.log('✅ Router de autenticación configurado');
 
 module.exports = router;

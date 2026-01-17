@@ -4,20 +4,20 @@
     {
       "src": "src/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "src/server.js"
+      "dest": "/src/server.js"
     },
     {
       "src": "/(.*)",
-      "dest": "src/server.js"
+      "dest": "/public/$1"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "regions": ["iad1"]
+  ]
 }
