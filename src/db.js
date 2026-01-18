@@ -1,65 +1,77 @@
+// src/db.js
 const { Pool } = require('pg');
-
-// ===================================
-// CONFIGURACIÓN DE BASE DE DATOS OPTIMIZADA
-// ===================================
 
 let pool;
 
+// Inicialización del pool de forma síncrona para asegurar que esté listo
+const initializePool = () => {
+  if (pool) {
+    return pool;
+  }
+
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    // Este error aparecerá en los logs de Vercel si la variable falta
+    throw new Error('FATAL: DATABASE_URL is not defined in environment variables.');
+  }
+
+  pool = new Pool({
+    connectionString,
+    // Aseguramos SSL para Neon y otros proveedores cloud
+    ssl: { rejectUnauthorized: false },
+    // Configuración optimizada para serverless
+    max: 5, // Muy importante para no exceder límites de conexión
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000, // Aumentamos un poco el timeout
+  });
+
+  pool.on('error', (err, client) => {
+    console.error('❌ Unexpected error on idle client', err);
+    // En serverless, no intentamos recuperar el pool aquí.
+    // La siguiente invocación creará uno nuevo si es necesario.
+  });
+
+  console.log('🔌 DB Pool created successfully.');
+  return pool;
+};
+
+// Llamamos a la inicialización al cargar el módulo
+try {
+  initializePool();
+} catch (e) {
+  console.error('🚨 Failed to initialize DB Pool on startup:', e.message);
+  // No detenemos el proceso, pero el primer intento de query fallará.
+}
+
+
 const getDbPool = () => {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-
-    if (!connectionString) {
-      console.error('❌ DATABASE_URL missing. DB features will fail.');
-      return null;
-    }
-
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    pool = new Pool({
-      connectionString,
-      ssl: isProduction || connectionString.includes('neon.tech') ? { rejectUnauthorized: false } : false,
-      // Optimización para Serverless (Vercel)
-      // Mantener bajo el número de conexiones para evitar "too many connections" en lambdas concurrentes
-      max: isProduction ? 5 : 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-    });
-
-    pool.on('error', (err) => {
-      console.error('❌ Unexpected error on idle client', err);
-      // No salir del proceso, dejar que el pool intente reconectar o manejar el error en el request
-    });
-
-    console.log(`🔌 DB Pool initialized (Max connections: ${isProduction ? 5 : 10})`);
+    // Esto no debería pasar si initializePool funcionó, pero es un respaldo.
+    throw new Error('DB Pool was not initialized. Check startup logs.');
   }
   return pool;
 };
 
 const query = async (text, params) => {
   const p = getDbPool();
-  if (!p) throw new Error('DB not configured');
-
   const start = Date.now();
   try {
     const res = await p.query(text, params);
     const duration = Date.now() - start;
     if (duration > 1000) {
-      console.warn(`⚠️ Slow query detected (${duration}ms): ${text.slice(0, 50)}...`);
+      console.warn(`⚠️ Slow query (${duration}ms): ${text}`);
     }
     return res;
   } catch (error) {
-    console.error(`❌ Query Error: ${error.message} | Query: ${text.slice(0, 50)}...`);
+    console.error(`❌ Query Failed: ${error.message}`);
     throw error;
   }
 };
 
-// Helper transacción atómica
+// La transacción se mantiene igual
 const transaction = async (callback) => {
   const p = getDbPool();
-  if (!p) throw new Error('DB not configured');
-
   const client = await p.connect();
   try {
     await client.query('BEGIN');

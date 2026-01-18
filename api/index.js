@@ -1,9 +1,9 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { getDbPool } = require('./db');
+require('../src/routes/auth');
+require('../src/routes/public-data');
+require('../src/routes/surveys');
+require('../src/routes/incidents');
+require('../src/routes/admin');
+require('../src/db');
 
 // ===================================
 // CONFIGURACIÓN DEL SERVIDOR
