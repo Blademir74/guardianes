@@ -3,6 +3,7 @@ const express = require('express');
 const db = require('../db');
 const { verifyAdminToken } = require('../middleware/auth');
 const gamification = require('../services/gamification');
+const surveyController = require('../controllers/surveyController');
 
 const router = express.Router();
 
@@ -14,6 +15,8 @@ const router = express.Router();
  * GET /api/surveys/active
  * Obtener encuestas públicas activas
  */
+router.get('/', surveyController.getSurveys);
+router.get('/:id/results', surveyController.getSurveyResults);
 router.get('/active', async (req, res) => {
   try {
     console.log('📡 [BACKEND] GET /api/surveys/active - Solicitado');
