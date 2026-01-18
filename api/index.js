@@ -1,9 +1,10 @@
-require('../src/routes/auth');
-require('../src/routes/public-data');
-require('../src/routes/surveys');
-require('../src/routes/incidents');
-require('../src/routes/admin');
-require('../src/db');
+// api/index.js
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { getDbPool } = require('../src/db'); // <-- RUTA CORREGIDA
 
 // ===================================
 // CONFIGURACIÓN DEL SERVIDOR
@@ -11,9 +12,8 @@ require('../src/db');
 
 const app = express();
 
-// 1. Seguridad Avanzada
-app.use(helmet()); // Headers de seguridad
-
+// 1. Seguridad Avanzada (sin xss-clean por ahora)
+app.use(helmet()); 
 
 // Configuración CORS Permisiva para desarrollo/prod controlado
 const corsOptions = {
@@ -24,23 +24,16 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 2. Parsers
-app.use(express.json({ limit: '10kb' })); // Limitar tamaño de body
+app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 3. Rate Limiting (Protección DDOS básica)
+// 3. Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 1000, // Límite de 1000 peticiones por IP
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message: 'Demasiadas peticiones desde esta IP, por favor intente de nuevo más tarde.'
 });
 app.use('/api/', limiter);
-
-const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 10, // Max 5 intentos de login/verify por hora por IP
-  message: 'Demasiados intentos de autenticación.'
-});
-app.use('/api/auth/', authLimiter);
 
 // 4. Logging
 app.use((req, res, next) => {
@@ -51,19 +44,16 @@ app.use((req, res, next) => {
 });
 
 // ===================================
-// RUTAS
+// RUTAS (TODAS CORREGIDAS)
 // ===================================
 
-// Rutas Públicas y Auth
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/public', require('./routes/public-data'));
+app.use('/api/auth', require('../src/routes/auth')); // <-- RUTA CORREGIDA
+app.use('/api/public', require('../src/routes/public-data')); // <-- RUTA CORREGIDA
+app.use('/api/surveys', require('../src/routes/surveys')); // <-- RUTA CORREGIDA
+app.use('/api/incidents', require('../src/routes/incidents')); // <-- RUTA CORREGIDA
+app.use('/api/admin', require('../src/routes/admin')); // <-- RUTA CORREGIDA
 
-// Rutas Protegidas (Requieren Auth Middleware interno)
-app.use('/api/surveys', require('./routes/surveys'));
-app.use('/api/incidents', require('./routes/incidents'));
-app.use('/api/admin', require('./routes/admin'));
-
-// Health Check (Vital para Vercel/Render)
+// Health Check
 app.get('/api/health', async (req, res) => {
   const pool = getDbPool();
   let dbStatus = 'disconnected';
@@ -93,25 +83,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-// STATIC FILES (Solo para dev local, Vercel lo maneja fuera)
-if (process.env.NODE_ENV !== 'production') {
-  app.use(express.static(path.join(__dirname, '../public')));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(__dirname, '../public/index.html'));
-    } else {
-      res.status(404).json({ error: 'Endpoint not found' });
-    }
-  });
-}
-
-// Server Start (Local)
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`\n🚀 Guerrero Guardianes 2027 System Active`);
-    console.log(`📍 Port: ${PORT}`);
-  });
-}
-
+// Exportamos la app para Vercel
 module.exports = app;
