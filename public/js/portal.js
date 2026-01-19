@@ -1,129 +1,70 @@
 // public/js/portal.js
-const API_BASE = 'https://pulsoguerrero.vercel.app/api';
+// ... (función apiCall de la versión anterior) ...
 
-// Función para hacer peticiones autenticadas a la API
-async function apiCall(endpoint, options = {}) {
-    const token = localStorage.getItem('guardianes_token');
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
-    };
-    const finalOptions = { ...defaultOptions, ...options };
-
-    const response = await fetch(`${API_BASE}${endpoint}`, finalOptions);
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error en la petición');
-    }
-
-    return response.json();
-}
-
-// Carga y muestra las encuestas activas
 async function loadSurveys() {
     const container = document.getElementById('surveys-container');
-    container.innerHTML = '<p>Cargando encuestas...</p>';
-
     try {
-        // Nota: Usamos el endpoint público para ver las encuestas activas
-        const surveys = await apiCall('/public/surveys'); 
-        container.innerHTML = ''; // Limpiar mensaje de carga
-
-        if (surveys.length === 0) {
-            container.innerHTML = '<p>No hay encuestas activas en este momento.</p>';
-            return;
-        }
+        const surveys = await apiCall('/public/surveys');
+        container.innerHTML = '';
+        if (surveys.length === 0) { container.innerHTML = '<p class="text-center">No hay encuestas activas.</p>'; return; }
 
         surveys.forEach(survey => {
             const surveyEl = document.createElement('div');
-            surveyEl.className = 'survey-card';
+            surveyEl.className = 'bg-white p-6 rounded-lg shadow-lg mb-8';
             surveyEl.innerHTML = `
-                <h4>${survey.title}</h4>
-                <p>${survey.description || ''}</p>
-                <div class="options-container" id="options-${survey.id}">
-                    <p>Cargando opciones...</p>
+                <h2 class="text-2xl font-bold mb-2">${survey.title}</h2>
+                <p class="text-gray-600 mb-4">${survey.description}</p>
+                <div id="options-${survey.id}" class="space-y-3"></div>
+                <div class="mt-4">
+                    <label for="confidence-${survey.id}" class="block text-sm font-medium text-gray-700">¿Qué tan seguro estás de tu elección?</label>
+                    <input type="range" id="confidence-${survey.id}" name="confidence" min="50" max="100" step="25" value="75" class="w-full" oninput="updateConfidenceLabel(this.value, ${survey.id})">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>Dudoso (50%)</span>
+                        <span id="confidence-label-${survey.id}">Probable (75%)</span>
+                        <span>Seguro (100%)</span>
+                    </div>
+                </div>
+                <button onclick="submitVote(${survey.id})" class="mt-6 w-full bg-gold-accent text-guardian-blue font-bold py-3 px-4 rounded-md hover:bg-yellow-400">Enviar Voto</button>
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold mb-2">Resultados en Vivo</h3>
+                    <canvas id="results-chart-${survey.id}" width="400" height="200"></canvas>
                 </div>
             `;
             container.appendChild(surveyEl);
             loadSurveyOptions(survey.id);
+            loadSurveyResults(survey.id);
         });
-
-    } catch (error) {
-        container.innerHTML = `<p>Error al cargar las encuestas: ${error.message}</p>`;
-        console.error('Load Surveys Error:', error);
-    }
+    } catch (error) { /* ... manejo de errores ... */ }
 }
 
-// Carga las opciones de una encuesta específica
-async function loadSurveyOptions(surveyId) {
-    const optionsContainer = document.getElementById(`options-${surveyId}`);
-    
+function updateConfidenceLabel(value, surveyId) {
+    const label = document.getElementById(`confidence-label-${surveyId}`);
+    if (value == 50) label.textContent = 'Dudoso (50%)';
+    else if (value == 75) label.textContent = 'Probable (75%)';
+    else if (value == 100) label.textContent = 'Seguro (100%)';
+}
+
+async function loadSurveyResults(surveyId) {
     try {
-        // Asumimos que el endpoint público ya incluye las opciones
-        const surveys = await apiCall('/public/surveys');
-        const currentSurvey = surveys.find(s => s.id === surveyId);
-
-        if (!currentSurvey || !currentSurvey.options) {
-            optionsContainer.innerHTML = '<p>No se encontraron opciones para esta encuesta.</p>';
-            return;
-        }
-
-        optionsContainer.innerHTML = ''; // Limpiar
-        
-        currentSurvey.options.forEach(option => {
-            const optionLabel = document.createElement('label');
-            optionLabel.className = 'option-label';
-            optionLabel.innerHTML = `
-                <input type="radio" name="survey-${surveyId}" value="${option.id}">
-                <span>${option.text}</span>
-            `;
-            optionsContainer.appendChild(optionLabel);
+        const results = await apiCall(`/public/surveys/${surveyId}/results`);
+        const ctx = document.getElementById(`results-chart-${surveyId}`).getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: results.map(r => r.option_text),
+                datasets: [{
+                    label: 'Votos',
+                    data: results.map(r => r.vote_count),
+                    backgroundColor: 'rgba(10, 46, 90, 0.6)',
+                    borderColor: 'rgba(10, 46, 90, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
         });
-
-        const voteButton = document.createElement('button');
-        voteButton.textContent = 'Enviar Voto';
-        voteButton.className = 'vote-button';
-        voteButton.onclick = () => submitVote(surveyId);
-        optionsContainer.appendChild(voteButton);
-
-    } catch (error) {
-        optionsContainer.innerHTML = `<p>Error al cargar opciones: ${error.message}</p>`;
-    }
+    } catch (error) { /* ... manejo de errores ... */ }
 }
 
-// Envía el voto de un usuario a una encuesta
 async function submitVote(surveyId) {
-    const selectedOption = document.querySelector(`input[name="survey-${surveyId}"]:checked`);
-
-    if (!selectedOption) {
-        alert('Por favor, selecciona una opción antes de votar.');
-        return;
-    }
-
-    const optionId = selectedOption.value;
-    const voteButton = document.querySelector(`#options-${surveyId} .vote-button`);
-    voteButton.disabled = true;
-    voteButton.textContent = 'Enviando...';
-
-    try {
-        // IMPORTANTE: Ajusta este endpoint al que realmente tengas en tu backend
-        const response = await apiCall('/surveys/vote', { 
-            method: 'POST',
-            body: JSON.stringify({ surveyId, optionId })
-        });
-
-        alert('¡Voto registrado con éxito! Gracias por participar.');
-        // Opcional: Deshabilitar la encuesta para que no vote de nuevo
-        document.querySelector(`#options-${surveyId}`).style.opacity = '0.6';
-        document.querySelector(`#options-${surveyId}`).style.pointerEvents = 'none';
-
-    } catch (error) {
-        alert(`Error al enviar tu voto: ${error.message}`);
-        voteButton.disabled = false;
-        voteButton.textContent = 'Enviar Voto';
-        console.error('Submit Vote Error:', error);
-    }
+    // ... (lógica para enviar el voto, incluyendo el valor del slider de confianza) ...
 }

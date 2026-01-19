@@ -7,6 +7,7 @@
     "start": "node api/index.js",
     "dev": "nodemon api/index.js",
     "build": "echo 'No build step required for static files'",
+    "build-css": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css --watch",
     "seed-admin": "node src/seed-admin.js",
     "reset-production": "node scripts/reset-production.js",
     "vercel-deploy": "vercel --prod",
@@ -18,6 +19,7 @@
     "test:coverage": "jest --coverage",
     "test:integration": "jest --config jest.integration.config.js",
     "test:load": "artillery run load-test.yml"
+    
   },
   "jest": {
     "testEnvironment": "node",
@@ -51,6 +53,8 @@
     "artillery": "^2.0.27",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "tailwindcss": "^4.1.18"
+    
   }
 }
