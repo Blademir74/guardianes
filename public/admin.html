@@ -1,16 +1,1199 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ... Head similar a las otras páginas ... -->
-    <title>Panel Administrativo - Guerrero Guardianes</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Guardianes Guerrero 2027</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .sidebar { transition: transform 0.3s ease; }
+        .sidebar.collapsed { transform: translateX(-100%); }
+        @media (min-width: 768px) {
+            .sidebar.collapsed { transform: translateX(0); }
+        }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        #map { height: 500px; border-radius: 12px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse { animation: pulse 2s infinite; }
+        .status-badge { @apply px-3 py-1 rounded-full text-xs font-bold uppercase; }
+        .status-active { @apply bg-green-100 text-green-700; }
+        .status-inactive { @apply bg-gray-100 text-gray-700; }
+        .status-pending { @apply bg-amber-100 text-amber-700; }
+        .status-verified { @apply bg-emerald-100 text-emerald-700; }
+        .status-critical { @apply bg-red-100 text-red-700; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
+        .nav-item.active { @apply bg-slate-800 text-white; }
+        .table-actions button { @apply text-sm px-3 py-1 rounded font-medium; }
+        .table-actions .view-btn { @apply text-blue-600 hover:bg-blue-50; }
+        .table-actions .edit-btn { @apply text-slate-600 hover:bg-slate-50; }
+        .table-actions .delete-btn { @apply text-red-600 hover:bg-red-50; }
+    </style>
 </head>
-<body class="font-sans bg-gray-100 text-gray-800">
-    <div id="app" class="container mx-auto px-4 py-8">
-        <!-- Contenido dinámico -->
+<body class="bg-slate-50 h-screen overflow-hidden">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 gradient-bg flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-lg">
+                    🛡️
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Panel Administrativo</h2>
+                <p class="text-slate-600">Acceso restringido solo para administradores autorizados</p>
+            </div>
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Usuario Administrador</label>
+                    <input type="text" id="admin-username" required
+                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
+                        placeholder="admin">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Contraseña Segura</label>
+                    <input type="password" id="admin-password" required
+                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                </div>
+                <button type="submit"
+                    id="loginButton"
+                    class="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold py-4 rounded-xl transition shadow-lg">
+                    🔐 Iniciar Sesión Segura
+                </button>
+            </form>
+            <div id="loginMessage" class="mt-4 text-center text-sm"></div>
+            <p class="text-xs text-slate-500 text-center mt-6">
+                🔒 Conexión cifrada • Sistema auditado
+            </p>
+        </div>
     </div>
-    <script src="/js/auth.js"></script>
-    <script src="/js/admin.js"></script>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div id="adminPanel" class="hidden h-screen flex">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
+            <div class="p-6 border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+                        🛡️
+                    </div>
+                    <div>
+                        <div class="font-bold text-white text-lg">Guardianes</div>
+                        <div class="text-xs text-slate-400">Admin Panel</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-6 space-y-1">
+                <a href="#" onclick="showSection('dashboard')" class="nav-item active flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">📊</span> Dashboard
+                </a>
+                <a href="#" onclick="showSection('surveys')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">📋</span> Encuestas
+                </a>
+                <a href="#" onclick="showSection('predictions')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">🔮</span> Predicciones
+                </a>
+                <a href="#" onclick="showSection('incidents')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">🚨</span> Incidentes
+                </a>
+                <a href="#" onclick="showSection('map')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">🗺️</span> Mapa en Vivo
+                </a>
+                <a href="#" onclick="showSection('users')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">👥</span> Usuarios
+                </a>
+                <a href="#" onclick="showSection('export')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
+                    <span class="mr-3">💾</span> Exportar Datos
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-slate-800">
+                <button onclick="logout()" class="flex items-center text-red-400 hover:text-red-300 transition text-sm font-medium w-full">
+                    <span class="mr-2">🚪</span> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 overflow-y-auto bg-slate-50">
+            
+            <!-- HEADER -->
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-8 py-5 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900" id="page-title">Dashboard General</h1>
+                        <p class="text-sm text-slate-600 mt-1">Sistema de monitoreo electoral en tiempo real</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="flex items-center text-sm font-medium">
+                            <span class="w-2.5 h-2.5 bg-green-500 rounded-full mr-2 pulse"></span>
+                            Sistema Operativo
+                        </span>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center text-white font-bold border-2 border-blue-200 shadow">
+                            A
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-8 max-w-[1600px] mx-auto">
+
+                <!-- SECCIÓN: DASHBOARD -->
+                <section id="section-dashboard" class="space-y-8">
+                    
+                    <!-- KPI CARDS -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="text-4xl">👥</div>
+                                <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">+12%</span>
+                            </div>
+                            <div class="text-sm text-slate-500 font-medium mb-1">Usuarios Registrados</div>
+                            <div class="text-3xl font-black text-slate-900" id="kpi-users">0</div>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="text-4xl">🗳️</div>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">Hoy</span>
+                            </div>
+                            <div class="text-sm text-slate-500 font-medium mb-1">Predicciones Totales</div>
+                            <div class="text-3xl font-black text-blue-900" id="kpi-predictions">0</div>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="text-4xl">📋</div>
+                                <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">Activas</span>
+                            </div>
+                            <div class="text-sm text-slate-500 font-medium mb-1">Encuestas en Curso</div>
+                            <div class="text-3xl font-black text-emerald-600" id="kpi-surveys">0</div>
+                        </div>
+
+                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="text-4xl">🚨</div>
+                                <span class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-bold">Nuevos</span>
+                            </div>
+                            <div class="text-sm text-slate-500 font-medium mb-1">Incidentes Reportados</div>
+                            <div class="text-3xl font-black text-red-600" id="kpi-incidents">0</div>
+                        </div>
+                    </div>
+
+                    <!-- GRÁFICOS -->
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <h3 class="font-bold text-lg text-slate-900 mb-6">Tendencia de Predicciones (Gubernatura)</h3>
+                            <canvas id="trendChart" height="250"></canvas>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
+                            <h3 class="font-bold text-lg text-slate-900 mb-6">Participación por Municipio (Top 10)</h3>
+                            <canvas id="participationChart" height="250"></canvas>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- SECCIÓN: ENCUESTAS -->
+                <section id="section-surveys" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-900">Gestión de Encuestas</h2>
+                        <button onclick="openCreateSurveyModal()" class="px-6 py-3 bg-gradient-to-r from-blue-900 to-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition">
+                            + Nueva Encuesta
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 border-b-2 border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Título</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Tipo</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Municipio</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Respuestas</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Estado</th>
+                                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="surveys-table" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-8 text-center text-slate-400">
+                                        Cargando encuestas...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: PREDICCIONES -->
+                <section id="section-predictions" class="hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Análisis de Predicciones</h2>
+                    
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-slate-900">Distribución por Candidato (Encuesta Activa)</h3>
+                            <select id="municipality-filter-predictions" onchange="loadPredictionsByMunicipality()" class="px-4 py-2 border-2 border-slate-300 rounded-lg font-medium">
+                                <option value="">Todos los municipios</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                        <canvas id="predictionsChart" height="300"></canvas>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: INCIDENTES -->
+                <section id="section-incidents" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-900">Reportes de Incidentes</h2>
+                        <button onclick="exportIncidents()" class="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition">
+                            📥 Exportar CSV
+                        </button>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Pendientes</div>
+                            <div class="text-3xl font-bold text-amber-600" id="incidents-pending">0</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Verificados</div>
+                            <div class="text-3xl font-bold text-green-600" id="incidents-verified">0</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Críticos</div>
+                            <div class="text-3xl font-bold text-red-600" id="incidents-critical">0</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto max-h-[600px]">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b-2 border-slate-200 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">ID</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Tipo</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Municipio</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Descripción</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Estado</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Fecha</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incidents-table" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-slate-400">
+                                            Cargando incidentes...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: MAPA -->
+                <section id="section-map" class="hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Mapa de Incidentes Geolocalizados</h2>
+                    
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-200 relative">
+                        <div id="map"></div>
+                        <div class="absolute top-10 right-10 bg-white p-4 rounded-xl shadow-xl z-[1000] border-2 border-slate-200">
+                            <div class="font-bold text-sm mb-3 text-slate-900">Capas del Mapa</div>
+                            <label class="flex items-center space-x-2 cursor-pointer mb-2">
+                                <input type="checkbox" id="toggle-incidents-layer" checked onchange="toggleMapLayer('incidents')">
+                                <span class="text-sm font-medium text-slate-700">Incidentes</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="toggle-participation-layer" onchange="toggleMapLayer('participation')">
+                                <span class="text-sm font-medium text-slate-700">Participación</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: USUARIOS -->
+                <section id="section-users" class="hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Usuarios del Sistema</h2>
+                    
+                    <div class="grid md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Total Usuarios</div>
+                            <div class="text-3xl font-bold text-slate-900" id="users-total">0</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Activos Hoy</div>
+                            <div class="text-3xl font-bold text-emerald-600" id="users-active">0</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Nuevos (7d)</div>
+                            <div class="text-3xl font-bold text-blue-600" id="users-new">0</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
+                            <div class="text-sm text-slate-600 mb-1">Puntos Promedio</div>
+                            <div class="text-3xl font-bold text-amber-600" id="users-avg-points">0</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200">
+                        <div class="p-6">
+                            <canvas id="usersGrowthChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: EXPORTACIÓN -->
+                <section id="section-export" class="hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Exportación de Datos</h2>
+                    <p class="text-slate-600">Descargue bases de datos en formato CSV para análisis externo.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <button onclick="downloadCSV('predictions')" class="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105">
+                            📊 Exportar Predicciones
+                        </button>
+                        <button onclick="downloadCSV('incidents')" class="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105">
+                            🚨 Exportar Incidentes
+                        </button>
+                        <button onclick="downloadCSV('users')" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105">
+                            👥 Exportar Usuarios
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: CREAR/EDITAR ENCUESTA -->
+    <div id="surveyModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-8">
+            <h3 class="text-xl font-bold text-slate-900 mb-6" id="surveyModalTitle">Crear Nueva Encuesta</h3>
+            <form id="surveyForm">
+                <input type="hidden" id="surveyId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Título</label>
+                        <input type="text" id="surveyTitle" required
+                               class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Tipo de Elección</label>
+                        <select id="surveyType" required
+                                class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                            <option value="">Seleccionar...</option>
+                            <option value="gubernatura">Gubernatura</option>
+                            <option value="distrito_local">Distrito Local</option>
+                            <option value="distrito_federal">Distrito Federal</option>
+                            <option value="municipio">Municipio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Municipio (opcional)</label>
+                        <select id="surveyMunicipality"
+                                class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                            <option value="">Todos</option>
+                            <!-- Se llenará dinámicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Estado Inicial</label>
+                        <select id="surveyStatus" required
+                                class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                            <option value="active">Activa</option>
+                            <option value="paused">Pausada</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeSurveyModal()" class="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-lg transition">
+                        Guardar Encuesta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://pulsoguerrero.vercel.app/api'; // Ajusta a tu dominio
+        let adminToken = localStorage.getItem('adminToken');
+        let map = null;
+        let markers = []; // Para gestionar los markers del mapa
+        let charts = {}; // Para almacenar instancias de Chart.js
+
+        // ==================== UTILIDADES ====================
+        function showMessage(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `<div class="p-3 rounded-lg ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
+                setTimeout(() => element.innerHTML = '', 5000); // Limpiar después de 5 segundos
+            }
+        }
+
+        function hideElement(elementId) {
+            document.getElementById(elementId)?.classList.add('hidden');
+        }
+
+        function showElement(elementId) {
+            document.getElementById(elementId)?.classList.remove('hidden');
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('es-MX');
+        }
+
+        // ==================== LOGIN ====================
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            const button = document.getElementById('loginButton');
+
+            button.disabled = true;
+            button.textContent = 'Iniciando...';
+
+            try {
+                const response = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }) // Enviar username en lugar de email
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    adminToken = data.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    initAdmin();
+                } else {
+                    showMessage('loginMessage', data.error || 'Credenciales incorrectas', 'error');
+                }
+            } catch (error) {
+                console.error('Error de login:', error);
+                showMessage('loginMessage', 'Error de conexión con el servidor.', 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = '🔐 Iniciar Sesión Segura';
+            }
+        });
+
+        function initAdmin() {
+            hideElement('loginOverlay');
+            showElement('adminPanel');
+            loadDashboard();
+            loadMunicipalitiesForFilter(); // Para filtros
+            loadMunicipalitiesForSurveyModal(); // Para modal de encuesta
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión de administrador?')) {
+                localStorage.removeItem('adminToken');
+                adminToken = null;
+                location.reload();
+            }
+        }
+
+        // ==================== NAVEGACIÓN ====================
+
+        function showSection(section) {
+            // Ocultar todas las secciones
+            ['dashboard', 'surveys', 'predictions', 'incidents', 'map', 'users', 'export'].forEach(s => {
+                hideElement(`section-${s}`);
+            });
+
+            // Mostrar sección seleccionada
+            showElement(`section-${section}`);
+
+            // Actualizar navegación activa
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active', 'bg-slate-800', 'text-white');
+            });
+            event.target.closest('.nav-item').classList.add('active', 'bg-slate-800', 'text-white');
+
+            // Actualizar título
+            const titles = {
+                'dashboard': 'Dashboard General',
+                'surveys': 'Gestión de Encuestas',
+                'predictions': 'Análisis de Predicciones',
+                'incidents': 'Reportes de Incidentes',
+                'map': 'Mapa de Incidentes en Vivo',
+                'users': 'Gestión de Usuarios',
+                'export': 'Exportación de Datos'
+            };
+            document.getElementById('page-title').textContent = titles[section];
+
+            // Cargar datos según sección
+            switch(section) {
+                case 'map':
+                    if (!map) initMap();
+                    loadIncidentsForMap();
+                    break;
+                case 'surveys':
+                    loadSurveys();
+                    break;
+                case 'incidents':
+                    loadIncidents();
+                    break;
+                case 'predictions':
+                    loadMunicipalitiesForFilter(true); // Recargar para predictions
+                    loadPredictionsByMunicipality(); // Carga predicciones iniciales
+                    break;
+                case 'users':
+                    loadUserStats();
+                    loadUsersGrowthChart();
+                    break;
+                case 'export':
+                    // Nada especial para cargar aquí
+                    break;
+            }
+        }
+
+        // ==================== DASHBOARD ====================
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_URL}/data/stats`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const stats = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('kpi-users').textContent = stats.total_users || 0;
+                    document.getElementById('kpi-predictions').textContent = stats.total_predictions || 0;
+                    document.getElementById('kpi-surveys').textContent = stats.active_surveys || 0;
+                    document.getElementById('kpi-incidents').textContent = stats.total_incidents || 0;
+                } else {
+                    console.error('Error obteniendo stats:', stats.error);
+                }
+
+                // Cargar gráficos del dashboard
+                loadTrendChart();
+                loadParticipationChart();
+
+            } catch (error) {
+                console.error('Error cargando dashboard:', error);
+                showMessage('section-dashboard', 'Error al cargar datos del dashboard.', 'error');
+            }
+        }
+
+        async function loadTrendChart() {
+            try {
+                // Este endpoint es hipotético, debes implementarlo en tu backend si no existe
+                const res = await fetch(`${API_URL}/admin/trends`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const ctx = document.getElementById('trendChart')?.getContext('2d');
+                if (ctx) {
+                    if (charts.trend) charts.trend.destroy();
+                    charts.trend = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels || ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                            datasets: [{
+                                label: 'Predicciones',
+                                data: data.data || [120, 450, 890, 1250],
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando gráfico de tendencias:', error);
+            }
+        }
+
+        async function loadParticipationChart() {
+            try {
+                // Este endpoint es hipotético, debes implementarlo en tu backend si no existe
+                const res = await fetch(`${API_URL}/admin/participation`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const ctx = document.getElementById('participationChart')?.getContext('2d');
+                if (ctx) {
+                    if (charts.participation) charts.participation.destroy();
+                    charts.participation = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels || ['Acapulco', 'Chilpancingo', 'Iguala', 'Zihuatanejo', 'Taxco'],
+                            datasets: [{
+                                label: 'Participantes',
+                                data: data.data || [450, 280, 150, 120, 95],
+                                backgroundColor: '#10b981'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando gráfico de participación:', error);
+            }
+        }
+
+        // ==================== ENCUESTAS ====================
+
+        async function loadSurveys() {
+            try {
+                const res = await fetch(`${API_URL}/surveys`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const tbody = document.getElementById('surveys-table');
+                if (res.ok && Array.isArray(data.surveys)) {
+                    tbody.innerHTML = data.surveys.map(s => `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 text-slate-600">${s.id}</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">${s.name}</td>
+                            <td class="px-6 py-4 text-slate-600">${s.type}</td>
+                            <td class="px-6 py-4 text-slate-600">${s.municipality || 'Todos'}</td>
+                            <td class="px-6 py-4 text-slate-600">${s.responses_count || 0}</td>
+                            <td class="px-6 py-4">
+                                <span class="status-badge status-${s.status}">
+                                    ${s.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right table-actions">
+                                <button onclick="openEditSurveyModal(${s.id})" class="edit-btn">Editar</button>
+                                <button onclick="toggleSurveyStatus(${s.id}, '${s.status}')" class="text-sm px-3 py-1 rounded font-medium ${s.status === 'active' ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}">
+                                    ${s.status === 'active' ? 'Pausar' : 'Activar'}
+                                </button>
+                                <button onclick="deleteSurvey(${s.id})" class="delete-btn">Eliminar</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Error: ${data.error || 'No se pudieron cargar las encuestas.'}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Error cargando encuestas:', error);
+                document.getElementById('surveys-table').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Error de conexión al cargar encuestas.</td></tr>';
+            }
+        }
+
+        async function createSurvey(surveyData) {
+            try {
+                const res = await fetch(`${API_URL}/surveys`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(surveyData)
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    closeSurveyModal();
+                    loadSurveys(); // Refrescar lista
+                    showMessage('section-surveys', 'Encuesta creada exitosamente.', 'success');
+                } else {
+                    showMessage('surveyModal', data.error || 'Error al crear encuesta.', 'error');
+                }
+            } catch (error) {
+                console.error('Error creando encuesta:', error);
+                showMessage('surveyModal', 'Error de conexión al crear encuesta.', 'error');
+            }
+        }
+
+        async function updateSurvey(id, surveyData) {
+            try {
+                const res = await fetch(`${API_URL}/surveys/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(surveyData)
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    closeSurveyModal();
+                    loadSurveys(); // Refrescar lista
+                    showMessage('section-surveys', 'Encuesta actualizada exitosamente.', 'success');
+                } else {
+                    showMessage('surveyModal', data.error || 'Error al actualizar encuesta.', 'error');
+                }
+            } catch (error) {
+                console.error('Error actualizando encuesta:', error);
+                showMessage('surveyModal', 'Error de conexión al actualizar encuesta.', 'error');
+            }
+        }
+
+        async function toggleSurveyStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+            const action = newStatus === 'paused' ? 'pausar' : 'activar';
+            if (!confirm(`¿Estás seguro de que deseas ${action} esta encuesta (ID: ${id})?`)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/surveys/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (res.ok) {
+                    loadSurveys(); // Refrescar lista
+                    showMessage('section-surveys', `Encuesta ${action} exitosamente.`, 'success');
+                } else {
+                    const data = await res.json();
+                    alert(`Error al ${action}: ${data.error || 'Desconocido'}`);
+                }
+            } catch (error) {
+                console.error(`Error al ${action} encuesta:`, error);
+                alert(`Error de conexión al ${action} encuesta.`);
+            }
+        }
+
+        async function deleteSurvey(id) {
+            if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta encuesta (ID: ${id})? Esta acción no se puede deshacer.`)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/surveys/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (res.ok) {
+                    loadSurveys(); // Refrescar lista
+                    showMessage('section-surveys', 'Encuesta eliminada exitosamente.', 'success');
+                } else {
+                    const data = await res.json();
+                    alert(`Error al eliminar: ${data.error || 'Desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error eliminando encuesta:', error);
+                alert('Error de conexión al eliminar encuesta.');
+            }
+        }
+
+        // --- Modal de Encuesta ---
+        function openCreateSurveyModal() {
+            document.getElementById('surveyForm').reset();
+            document.getElementById('surveyModalTitle').textContent = 'Crear Nueva Encuesta';
+            document.getElementById('surveyId').value = '';
+            showElement('surveyModal');
+        }
+
+        async function openEditSurveyModal(id) {
+            try {
+                const res = await fetch(`${API_URL}/surveys/${id}`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const survey = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('surveyModalTitle').textContent = 'Editar Encuesta';
+                    document.getElementById('surveyId').value = survey.id;
+                    document.getElementById('surveyTitle').value = survey.name;
+                    document.getElementById('surveyType').value = survey.type;
+                    document.getElementById('surveyMunicipality').value = survey.municipality_id || '';
+                    document.getElementById('surveyStatus').value = survey.status;
+                    showElement('surveyModal');
+                } else {
+                    alert(`Error al cargar encuesta para editar: ${survey.error}`);
+                }
+            } catch (error) {
+                console.error('Error abriendo modal de edición:', error);
+                alert('Error de conexión al cargar encuesta.');
+            }
+        }
+
+        function closeSurveyModal() {
+            hideElement('surveyModal');
+        }
+
+        document.getElementById('surveyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('surveyId').value;
+            const surveyData = {
+                name: document.getElementById('surveyTitle').value,
+                type: document.getElementById('surveyType').value,
+                municipality_id: document.getElementById('surveyMunicipality').value || null,
+                status: document.getElementById('surveyStatus').value
+            };
+
+            if (id) {
+                updateSurvey(parseInt(id), surveyData);
+            } else {
+                createSurvey(surveyData);
+            }
+        });
+
+        async function loadMunicipalitiesForSurveyModal() {
+            try {
+                const res = await fetch(`${API_URL}/data/municipalities`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const select = document.getElementById('surveyMunicipality');
+                if (res.ok && Array.isArray(data.municipalities)) {
+                    select.innerHTML = '<option value="">Todos</option>';
+                    data.municipalities.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m.id;
+                        option.textContent = m.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando municipios para modal:', error);
+            }
+        }
+
+        // ==================== INCIDENTES ====================
+
+        async function loadIncidents() {
+            try {
+                const res = await fetch(`${API_URL}/incidents`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const tbody = document.getElementById('incidents-table');
+                if (res.ok && Array.isArray(data.incidents)) {
+                    tbody.innerHTML = data.incidents.map(i => `
+                        <tr>
+                            <td class="px-6 py-4 text-slate-600">${i.id}</td>
+                            <td class="px-6 py-4 text-slate-600">${i.type}</td>
+                            <td class="px-6 py-4 text-slate-600">${i.municipality}</td>
+                            <td class="px-6 py-4 text-slate-900 max-w-xs">${i.description}</td>
+                            <td class="px-6 py-4">
+                                <span class="status-badge status-${i.status}">${i.status}</span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">${formatDate(i.created_at)}</td>
+                            <td class="px-6 py-4 text-slate-600">
+                                <button onclick="updateIncidentStatus(${i.id}, 'verified')" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200">Verificar</button>
+                                <button onclick="updateIncidentStatus(${i.id}, 'critical')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded ml-1 hover:bg-red-200">Marcar Crítico</button>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    // Actualizar contadores
+                    document.getElementById('incidents-pending').textContent = data.incidents.filter(i => i.status === 'pending').length;
+                    document.getElementById('incidents-verified').textContent = data.incidents.filter(i => i.status === 'verified').length;
+                    document.getElementById('incidents-critical').textContent = data.incidents.filter(i => i.status === 'critical').length;
+
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Error: ${data.error || 'No se pudieron cargar los incidentes.'}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Error cargando incidentes:', error);
+                document.getElementById('incidents-table').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Error de conexión al cargar incidentes.</td></tr>';
+            }
+        }
+
+        async function updateIncidentStatus(id, newStatus) {
+            if (!confirm(`¿Actualizar estado del incidente ID ${id} a "${newStatus}"?`)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/incidents/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (res.ok) {
+                    loadIncidents(); // Refrescar tabla
+                    loadIncidentsForMap(); // Refrescar mapa si es relevante
+                } else {
+                    const data = await res.json();
+                    alert(`Error al actualizar: ${data.error || 'Desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error actualizando incidente:', error);
+                alert('Error de conexión al actualizar incidente.');
+            }
+        }
+
+        // ==================== MAPA ====================
+
+        function initMap() {
+            if (!map) {
+                map = L.map('map').setView([17.5731, -99.5035], 7); // Centro de Guerrero
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            // Inicialmente carga incidentes
+            loadIncidentsForMap();
+        }
+
+        async function loadIncidentsForMap() {
+            if (!map) return;
+
+            // Limpiar marcadores anteriores
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            try {
+                const res = await fetch(`${API_URL}/incidents`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (res.ok && Array.isArray(data.incidents)) {
+                    data.incidents.forEach(i => {
+                        if (i.latitude && i.longitude) {
+                            let iconUrl, color;
+                            switch(i.status) {
+                                case 'critical':
+                                    color = 'red';
+                                    break;
+                                case 'verified':
+                                    color = 'green';
+                                    break;
+                                default:
+                                    color = 'orange';
+                            }
+                            // Icono personalizado simple
+                            const customIcon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${i.type.charAt(0)}</div>`,
+                                iconSize: [24, 24],
+                                iconAnchor: [12, 12]
+                            });
+
+                            const marker = L.marker([i.latitude, i.longitude], { icon: customIcon }).addTo(map);
+                            marker.bindPopup(`<b>${i.type}</b><br>${i.description}<br>${i.municipality}<br>Estado: ${i.status}<br>${formatDate(i.created_at)}`);
+                            markers.push(marker);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando incidentes para el mapa:', error);
+            }
+        }
+
+        function toggleMapLayer(layerName) {
+            // Implementación básica: por ahora solo maneja incidentes
+            if (layerName === 'incidents') {
+                const isVisible = document.getElementById('toggle-incidents-layer').checked;
+                if (isVisible) {
+                    loadIncidentsForMap(); // Recarga si está visible
+                } else {
+                    // Oculta marcadores (no implementado completamente aquí, solo recarga si visible)
+                }
+            }
+            // La capa de participación no está implementada completamente aquí, se dejaría para un futuro desarrollo backend.
+        }
+
+        // ==================== PREDICCIONES ====================
+
+        async function loadMunicipalitiesForFilter(forPredictions = false) {
+            try {
+                const res = await fetch(`${API_URL}/data/municipalities`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const selectId = forPredictions ? 'municipality-filter-predictions' : 'municipality-filter';
+                const select = document.getElementById(selectId);
+
+                if (res.ok && Array.isArray(data.municipalities)) {
+                    select.innerHTML = '<option value="">Todos los municipios</option>';
+                    data.municipalities.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m.id;
+                        option.textContent = m.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando municipios para filtro:', error);
+            }
+        }
+
+        async function loadPredictionsByMunicipality() {
+            const municipalityId = document.getElementById('municipality-filter-predictions').value;
+
+            try {
+                // Este endpoint es hipotético, debes implementarlo en tu backend si no existe
+                // Ejemplo: GET /api/surveys/results?municipality_id=1
+                const endpoint = municipalityId ? `${API_URL}/surveys/results?municipality_id=${municipalityId}` : `${API_URL}/surveys/results`;
+                const res = await fetch(endpoint, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const ctx = document.getElementById('predictionsChart')?.getContext('2d');
+                if (ctx) {
+                    if (charts.predictions) charts.predictions.destroy();
+                    charts.predictions = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.labels || [],
+                            datasets: [{
+                                data: data.data || [],
+                                backgroundColor: [
+                                    '#dc2626', '#2563eb', '#16a34a', '#ca8a04', '#7e22ce', '#c2410c', '#64748b'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom' } }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando gráfico de predicciones:', error);
+            }
+        }
+
+        // ==================== USUARIOS ====================
+
+        async function loadUserStats() {
+            try {
+                // Este endpoint es hipotético, debes implementarlo en tu backend si no existe
+                const res = await fetch(`${API_URL}/admin/user-stats`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('users-total').textContent = data.total || 0;
+                    document.getElementById('users-active').textContent = data.active_today || 0;
+                    document.getElementById('users-new').textContent = data.new_last_7_days || 0;
+                    document.getElementById('users-avg-points').textContent = data.avg_points?.toFixed(1) || 0;
+                }
+            } catch (error) {
+                console.error('Error cargando stats de usuarios:', error);
+            }
+        }
+
+        async function loadUsersGrowthChart() {
+            try {
+                // Este endpoint es hipotético, debes implementarlo en tu backend si no existe
+                const res = await fetch(`${API_URL}/admin/users-growth`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                const ctx = document.getElementById('usersGrowthChart')?.getContext('2d');
+                if (ctx) {
+                    if (charts.usersGrowth) charts.usersGrowth.destroy();
+                    charts.usersGrowth = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels || [],
+                            datasets: [{
+                                label: 'Usuarios Nuevos',
+                                data: data.data || [],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando gráfico de crecimiento de usuarios:', error);
+            }
+        }
+
+        // ==================== EXPORTACIÓN ====================
+
+        async function downloadCSV(type) {
+            try {
+                let url;
+                switch(type) {
+                    case 'predictions':
+                        url = `${API_URL}/admin/export/predictions`;
+                        break;
+                    case 'incidents':
+                        url = `${API_URL}/admin/export/incidents`;
+                        break;
+                    case 'users':
+                        url = `${API_URL}/admin/export/users`;
+                        break;
+                    default:
+                        alert('Tipo de exportación no válido.');
+                        return;
+                }
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `${type}_data_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                } else {
+                    const data = await res.json();
+                    alert(`Error al descargar: ${data.error || 'Desconocido'}`);
+                }
+            } catch (error) {
+                console.error(`Error descargando ${type}:`, error);
+                alert(`Error de conexión al descargar ${type}.`);
+            }
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+
+        function checkAuthOnLoad() {
+            if (adminToken) {
+                initAdmin();
+            }
+            // Si no hay token, permanece en el overlay de login
+        }
+
+        window.onload = checkAuthOnLoad;
+
+    </script>
 </body>
 </html>

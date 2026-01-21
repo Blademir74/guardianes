@@ -3,17 +3,767 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Ciudadano - Guerrero Guardianes 2027</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="/css/style.css" rel="stylesheet">
+    <title>Portal Ciudadano | Guardianes Guerrero 2027</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .candidate-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .candidate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .candidate-card:hover::before { left: 100%; }
+        .candidate-card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2); 
+        }
+        .candidate-card.selected { 
+            border: 3px solid #10b981; 
+            box-shadow: 0 0 40px rgba(16,185,129,0.5), 0 0 0 4px rgba(16,185,129,0.1);
+            background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.1) 100%);
+        }
+        .slider-track { 
+            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%); 
+            height: 12px;
+            border-radius: 6px;
+        }
+        input[type="range"] { 
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+            border-radius: 6px;
+        }
+        input[type="range"]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 32px; 
+            height: 32px; 
+            background: white; 
+            border: 5px solid #10b981; 
+            border-radius: 50%; 
+            cursor: grab;
+            margin-top: -10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            cursor: grabbing;
+        }
+        input[type="range"]::-moz-range-thumb { 
+            width: 32px; 
+            height: 32px; 
+            background: white; 
+            border: 5px solid #10b981; 
+            border-radius: 50%; 
+            cursor: grab;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.6s ease-out; }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+    </style>
 </head>
-<body class="font-sans bg-gray-50 text-gray-800">
-    <div id="app" class="container mx-auto px-4 py-8 min-h-screen">
-        <!-- El contenido se cargará dinámicamente -->
+<body class="bg-slate-50">
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="/landing.html" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-xl">🛡️</span>
+                    </div>
+                    <span class="text-xl font-bold text-slate-900">Guardianes <span class="text-blue-600">2027</span></span>
+                </a>
+                <div id="user-menu" class="hidden">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <div class="text-xs text-slate-500 font-medium">Tus Puntos</div>
+                            <div class="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent" id="user-points">0</div>
+                        </div>
+                        <button onclick="logout()" class="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium">
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="pt-16 min-h-screen">
+
+        <!-- SECCIÓN DE AUTENTICACIÓN -->
+        <section id="auth-section" class="py-12 gradient-bg min-h-[calc(100vh-4rem)] flex items-center">
+            <div class="max-w-md mx-auto px-4 w-full animate-slide-up">
+                <div class="glass rounded-2xl shadow-2xl p-8 border border-white/20">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg">
+                            🛡️
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Acceso Ciudadano Seguro</h2>
+                        <p class="text-slate-600">Verificación anónima vía SMS</p>
+                    </div>
+
+                    <!-- FORMULARIO TELÉFONO -->
+                    <div id="phone-form">
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Número de Teléfono (10 dígitos)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-4 text-slate-400 font-semibold">+52</span>
+                                <input type="tel" id="phone" maxlength="10" 
+                                       class="w-full pl-16 pr-4 py-4 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition text-lg font-medium"
+                                       placeholder="744 123 4567">
+                            </div>
+                            <div id="phone-preview" class="hidden mt-3 text-sm text-blue-600 font-semibold"></div>
+                        </div>
+                        <button onclick="requestCode()" id="btn-request-code"
+                                class="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            Solicitar Código de Verificación
+                        </button>
+                    </div>
+
+                    <!-- FORMULARIO CÓDIGO -->
+                    <div id="code-form" class="hidden">
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Código de Verificación</label>
+                            <input type="text" id="code" maxlength="6" 
+                                   class="w-full px-4 py-4 border-2 border-slate-300 rounded-xl text-center font-mono text-2xl tracking-widest focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
+                                   placeholder="• • • • • •">
+                            <p class="text-xs text-slate-500 mt-3 text-center">
+                                Código enviado a: <strong id="sent-to-phone" class="text-blue-600"></strong>
+                            </p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="verifyCode()" id="btn-verify"
+                                    class="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl">
+                                Verificar
+                            </button>
+                            <button onclick="cancelVerification()"
+                                    class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="auth-message" class="mt-4"></div>
+                    
+                    <div class="mt-6 text-center text-xs text-slate-500">
+                        <p>🔐 Tu número se convierte en hash SHA-256 irreversible</p>
+                        <p class="mt-1">No almacenamos IPs ni datos personales</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN PRINCIPAL (Portal) -->
+        <section id="portal-section" class="hidden py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <!-- HEADER -->
+                <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-2xl shadow-xl p-8 mb-8 text-white">
+                    <div class="flex justify-between items-center flex-wrap gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2">Predicción Electoral Gubernatura 2027</h1>
+                            <p class="text-blue-100">Tu voz cuenta. Tu identidad está protegida. Los resultados son transparentes.</p>
+                        </div>
+                        <div class="text-right bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                            <div class="text-xs text-blue-200 uppercase tracking-wide mb-1">Tu Nivel</div>
+                            <div class="text-2xl font-bold" id="user-level">Observador</div>
+                            <div class="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent" id="user-points-display">0 puntos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENCUESTA: SELECCIÓN DE CANDIDATO -->
+                <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8 mb-8 animate-slide-up">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                        <span class="mr-3 text-3xl">1️⃣</span> 
+                        <span>Selecciona tu Candidato(a) Preferido(a)</span>
+                    </h2>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" id="candidates-container">
+                        <!-- Skeleton Loading -->
+                        <div class="col-span-full grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="shimmer h-64 rounded-xl"></div>
+                            <div class="shimmer h-64 rounded-xl"></div>
+                            <div class="shimmer h-64 rounded-xl"></div>
+                        </div>
+                    </div>
+
+                    <!-- Opción "Aún no decido" -->
+                    <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl">
+                        <label class="flex items-center cursor-pointer group">
+                            <input type="checkbox" id="undecided" class="w-5 h-5 text-amber-600 rounded focus:ring-amber-500 mr-3 cursor-pointer">
+                            <span class="text-slate-800 font-semibold group-hover:text-amber-700 transition">
+                                🤔 Aún no decido <span class="text-sm font-normal text-slate-600">(20.9% de ciudadanos)</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SLIDER DE CONFIANZA -->
+                <div id="confidence-section" class="hidden bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8 mb-8 animate-slide-up">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                        <span class="mr-3 text-3xl">2️⃣</span> 
+                        <span>¿Qué tan seguro estás de tu elección?</span>
+                    </h2>
+
+                    <div class="max-w-3xl mx-auto">
+                        <div class="relative mb-8">
+                            <input type="range" id="confidence-slider" min="50" max="100" step="25" value="75"
+                                   class="w-full cursor-pointer">
+                            <div class="flex justify-between mt-6 text-sm font-bold">
+                                <div class="text-center">
+                                    <div class="text-red-600 text-lg">50%</div>
+                                    <div class="text-xs text-slate-600 mt-1">Dudoso</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-amber-600 text-lg">75%</div>
+                                    <div class="text-xs text-slate-600 mt-1">Probable</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-emerald-600 text-lg">100%</div>
+                                    <div class="text-xs text-slate-600 mt-1">Seguro</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center p-8 bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 rounded-2xl border-3 border-blue-200 shadow-inner">
+                            <div class="text-sm text-slate-600 mb-3 font-medium">Tu nivel de confianza actual:</div>
+                            <div class="text-6xl font-black bg-gradient-to-r from-blue-900 to-emerald-600 bg-clip-text text-transparent mb-3" id="confidence-value">75%</div>
+                            <div class="text-base text-slate-700 font-medium" id="confidence-label">Probablemente votaré por este candidato</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTÓN DE ENVÍO -->
+                <div id="submit-section" class="hidden text-center mb-8 animate-slide-up">
+                    <button onclick="submitPrediction()" id="btn-submit-prediction"
+                            class="px-16 py-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-emerald-700 text-white font-black text-2xl rounded-2xl shadow-2xl transition transform hover:scale-105 hover:shadow-emerald-500/50">
+                        ✅ Enviar Predicción (+100 Puntos)
+                    </button>
+                    <p class="text-sm text-slate-500 mt-4 font-medium">🔐 Tu predicción es completamente anónima y cifrada</p>
+                </div>
+
+                <!-- RESULTADOS EN VIVO -->
+                <div id="results-section" class="hidden animate-slide-up">
+                    <div class="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+                        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+                            <h2 class="text-3xl font-bold flex items-center">
+                                <span class="mr-3">📊</span> Resultados en Tiempo Real
+                            </h2>
+                            <span class="flex items-center text-sm bg-emerald-500 px-5 py-2.5 rounded-full font-bold shadow-lg">
+                                <span class="w-2.5 h-2.5 bg-white rounded-full mr-2 pulse"></span>
+                                ACTUALIZANDO EN VIVO
+                            </span>
+                        </div>
+                        <p class="text-blue-100 mb-8 text-lg">Predicciones agregadas de todos los ciudadanos participantes en Guerrero</p>
+                        
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                                <canvas id="resultsChart" height="300"></canvas>
+                            </div>
+                            <div id="results-list" class="space-y-4">
+                                <!-- Llenado dinámicamente -->
+                            </div>
+                        </div>
+
+                        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
+                                <div class="text-4xl font-black mb-1" id="total-predictions">0</div>
+                                <div class="text-sm text-blue-200 font-medium">Predicciones Totales</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
+                                <div class="text-4xl font-black mb-1" id="total-municipalities">85</div>
+                                <div class="text-sm text-blue-200 font-medium">Municipios Cubiertos</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
+                                <div class="text-4xl font-black mb-1" id="avg-confidence">78%</div>
+                                <div class="text-sm text-blue-200 font-medium">Confianza Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPARATIVA HISTÓRICA -->
+                    <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8">
+                        <h3 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                            <span class="mr-3">📈</span> Comparativa con Resultados Históricos
+                        </h3>
+                        <p class="text-slate-600 mb-6">Contrasta las predicciones actuales con datos reales del INE</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gradient-to-r from-slate-50 to-blue-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-sm font-bold text-slate-700">Partido/Coalición</th>
+                                        <th class="px-6 py-4 text-center text-sm font-bold text-blue-700">Predicción 2027</th>
+                                        <th class="px-6 py-4 text-center text-sm font-bold text-slate-600">Real 2021</th>
+                                        <th class="px-6 py-4 text-center text-sm font-bold text-slate-500">Real 2018</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparison-table" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-8 text-center text-slate-400">
+                                            Cargando datos comparativos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
     </div>
 
-    <script src="/js/auth.js"></script>
-    <script src="/js/portal.js"></script>
+    <script>
+        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://pulsoguerrero.vercel.app/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = null;
+        let selectedCandidate = null;
+        let candidates = [];
+
+        // ==================== AUTENTICACIÓN ====================
+
+        document.getElementById('phone').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').slice(0, 10);
+            e.target.value = value;
+            
+            const preview = document.getElementById('phone-preview');
+            if (value.length === 10) {
+                preview.textContent = `✓ Se enviará código a: +52 ${value.slice(0,3)} ${value.slice(3,6)} ${value.slice(6)}`;
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        });
+
+        async function requestCode() {
+            const phone = document.getElementById('phone').value.trim();
+            if (!/^\d{10}$/.test(phone)) {
+                showMessage('auth-message', 'Por favor ingresa exactamente 10 dígitos', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-request-code');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Enviando código...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/request-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const formatted = `+52 ${phone.slice(0,3)} ${phone.slice(3,6)} ${phone.slice(6)}`;
+                    document.getElementById('sent-to-phone').textContent = formatted;
+                    
+                    showMessage('auth-message', 
+                        data.debug_otp ? `✅ Código de desarrollo: ${data.debug_otp}` : '✅ Código enviado por SMS. Revisa tu teléfono.', 
+                        'success');
+                    
+                    document.getElementById('phone-form').classList.add('hidden');
+                    document.getElementById('code-form').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('code').focus(), 100);
+                } else {
+                    showMessage('auth-message', data.error || 'Error al solicitar código. Intenta de nuevo.', 'error');
+                }
+            } catch (error) {
+                showMessage('auth-message', 'Error de conexión con el servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Solicitar Código de Verificación';
+            }
+        }
+
+        async function verifyCode() {
+            const phone = document.getElementById('phone').value.trim();
+            const code = document.getElementById('code').value.trim();
+
+            if (!code || code.length < 4) {
+                showMessage('auth-message', 'El código debe tener al menos 4 dígitos', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-verify');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Verificando...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/verify-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, code })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    
+                    showAuthenticatedUI();
+                } else {
+                    showMessage('auth-message', data.error || 'Código incorrecto. Verifica e intenta de nuevo.', 'error');
+                    document.getElementById('code').value = '';
+                    document.getElementById('code').focus();
+                }
+            } catch (error) {
+                showMessage('auth-message', 'Error de conexión con el servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verificar';
+            }
+        }
+
+        function cancelVerification() {
+            document.getElementById('phone-form').classList.remove('hidden');
+            document.getElementById('code-form').classList.add('hidden');
+            document.getElementById('code').value = '';
+            document.getElementById('phone-preview').classList.add('hidden');
+            document.getElementById('auth-message').innerHTML = '';
+        }
+
+        function showAuthenticatedUI() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('portal-section').classList.remove('hidden');
+            document.getElementById('user-menu').classList.remove('hidden');
+            
+            updateUserInfo();
+            loadCandidates();
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('user-points').textContent = currentUser.points || 0;
+                document.getElementById('user-points-display').textContent = `${currentUser.points || 0} puntos`;
+                document.getElementById('user-level').textContent = currentUser.level || 'Observador';
+            }
+        }
+
+        function logout() {
+            if (confirm('¿Seguro que deseas cerrar sesión?')) {
+                localStorage.removeItem('authToken');
+                authToken = null;
+                currentUser = null;
+                location.reload();
+            }
+        }
+
+        // ==================== CANDIDATOS ====================
+
+        async function loadCandidates() {
+            try {
+                const response = await fetch(`${API_URL}/candidates?election_type=Gubernatura`);
+                candidates = await response.json();
+                
+                const container = document.getElementById('candidates-container');
+                container.innerHTML = candidates.map(c => `
+                    <div class="candidate-card bg-white border-2 border-slate-200 rounded-2xl p-6 cursor-pointer shadow-md" 
+                         data-id="${c.id}" onclick="selectCandidate(${c.id})">
+                        <div class="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br ${getPartyColor(c.party)} flex items-center justify-center text-white text-4xl font-black shadow-lg">
+                            ${c.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 text-center mb-2">${c.name}</h3>
+                        <p class="text-sm text-white text-center font-bold py-2 px-4 rounded-full ${getPartyBadge(c.party)} inline-block w-full">${c.party}</p>
+                        <div class="mt-4 pt-4 border-t border-slate-200 text-xs text-slate-600 text-center leading-relaxed">
+                            ${c.bio || 'Aspirante a la Gubernatura de Guerrero 2027'}
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('undecided').addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        document.querySelectorAll('.candidate-card').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        selectedCandidate = null;
+                        document.getElementById('confidence-section').classList.add('hidden');
+                        document.getElementById('submit-section').classList.remove('hidden');
+                    } else {
+                        document.getElementById('submit-section').classList.add('hidden');
+                    }
+                });
+            } catch (error) {
+                console.error('Error cargando candidatos:', error);
+                document.getElementById('candidates-container').innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-red-600 font-semibold">Error al cargar candidatos. Recarga la página.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getPartyColor(party) {
+            const colors = {
+                'Morena': 'from-red-600 to-red-700',
+                'PRI-PAN-PRD': 'from-blue-600 to-blue-700',
+                'PVEM': 'from-green-600 to-green-700',
+                'Independiente': 'from-slate-600 to-slate-700'
+            };
+            return colors[party] || 'from-slate-500 to-slate-600';
+        }
+
+        function getPartyBadge(party) {
+            const badges = {
+                'Morena': 'bg-red-600',
+                'PRI-PAN-PRD': 'bg-blue-600',
+                'PVEM': 'bg-green-600',
+                'Independiente': 'bg-slate-600'
+            };
+            return badges[party] || 'bg-slate-500';
+        }
+
+        function selectCandidate(id) {
+            selectedCandidate = id;
+            document.getElementById('undecided').checked = false;
+            
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                if (parseInt(card.dataset.id) === id) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+
+            document.getElementById('confidence-section').classList.remove('hidden');
+            document.getElementById('submit-section').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('confidence-section').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 100);
+        }
+
+        // ==================== SLIDER DE CONFIANZA ====================
+
+        const slider = document.getElementById('confidence-slider');
+        const confidenceValue = document.getElementById('confidence-value');
+        const confidenceLabel = document.getElementById('confidence-label');
+
+        slider?.addEventListener('input', (e) => {
+            const value = e.target.value;
+            confidenceValue.textContent = `${value}%`;
+            
+            const labels = {
+                '50': 'Dudoso - Podría cambiar de opinión',
+                '75': 'Probablemente votaré por este candidato',
+                '100': 'Totalmente seguro de mi decisión'
+            };
+            confidenceLabel.textContent = labels[value] || '';
+        });
+
+        // ==================== ENVIAR PREDICCIÓN ====================
+
+        async function submitPrediction() {
+            if (!selectedCandidate && !document.getElementById('undecided').checked) {
+                alert('⚠️ Selecciona un candidato o marca "Aún no decido"');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-prediction');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Enviando predicción...';
+
+            try {
+                const payload = {
+                    electionId: 1,
+                    municipalityId: 1,
+                    candidateId: selectedCandidate,
+                    confidence: parseInt(slider.value)
+                };
+
+                const response = await fetch(`${API_URL}/predictions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser.points += (data.pointsEarned || 100);
+                    updateUserInfo();
+                    
+                    document.getElementById('submit-section').classList.add('hidden');
+                    document.getElementById('results-section').classList.remove('hidden');
+                    
+                    await loadResults();
+                    
+                    setTimeout(() => {
+                        document.getElementById('results-section').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
+                } else {
+                    alert('❌ ' + (data.error || 'Error al enviar predicción'));
+                }
+            } catch (error) {
+                alert('❌ Error de conexión con el servidor');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // ==================== RESULTADOS ====================
+
+        async function loadResults() {
+            try {
+                const response = await fetch(`${API_URL}/predictions/1/1`);
+                const data = await response.json();
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    // Gráfico
+                    const ctx = document.getElementById('resultsChart')?.getContext('2d');
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.map(d => d.name || 'N/A'),
+                                datasets: [{
+                                    label: 'Porcentaje de Predicciones',
+                                    data: data.map(d => parseFloat(d.percentage) || 0),
+                                    backgroundColor: data.map(d => {
+                                        if (d.party?.includes('Morena')) return '#dc2626';
+                                        if (d.party?.includes('PRI')) return '#2563eb';
+                                        if (d.party?.includes('PVEM')) return '#16a34a';
+                                        return '#64748b';
+                                    }),
+                                    borderRadius: 8,
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { 
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0,0,0,0.8)',
+                                        padding: 12,
+                                        titleFont: { size: 14, weight: 'bold' },
+                                        bodyFont: { size: 13 }
+                                    }
+                                },
+                                scales: {
+                                    y: { 
+                                        beginAtZero: true, 
+                                        max: 100,
+                                        ticks: { color: 'rgba(255,255,255,0.8)' },
+                                        grid: { color: 'rgba(255,255,255,0.1)' }
+                                    },
+                                    x: {
+                                        ticks: { color: 'rgba(255,255,255,0.8)' },
+                                        grid: { display: false }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // Lista
+                    const resultsList = document.getElementById('results-list');
+                    resultsList.innerHTML = data.map(d => `
+                        <div class="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30 hover:bg-white/30 transition">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-lg">${d.name || 'N/A'}</span>
+                                <span class="text-3xl font-black">${parseFloat(d.percentage || 0).toFixed(1)}%</span>
+                            </div>
+                            <div class="text-sm text-blue-100">${d.count || 0} predicciones</div>
+                        </div>
+                    `).join('');
+
+                    // Stats
+                    const totalPred = data.reduce((sum, d) => sum + (parseInt(d.count) || 0), 0);
+                    document.getElementById('total-predictions').textContent = totalPred.toLocaleString();
+                }
+
+            } catch (error) {
+                console.error('Error cargando resultados:', error);
+            }
+        }
+
+        // ==================== UTILIDADES ====================
+
+        function showMessage(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            const colors = {
+                success: 'bg-green-50 border-green-300 text-green-800',
+                error: 'bg-red-50 border-red-300 text-red-800',
+                info: 'bg-blue-50 border-blue-300 text-blue-800'
+            };
+            container.innerHTML = `
+                <div class="${colors[type]} border-2 rounded-xl p-4 text-sm font-semibold shadow-sm">
+                    ${message}
+                </div>
+            `;
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+
+        async function init() {
+            if (authToken) {
+                try {
+                    const response = await fetch(`${API_URL}/auth/me`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    if (response.ok) {
+                        currentUser = await response.json();
+                        showAuthenticatedUI();
+                    } else {
+                        logout();
+                    }
+                } catch (error) {
+                    console.error('Error verificando sesión:', error);
+                }
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
