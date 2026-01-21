@@ -6,26 +6,31 @@
       "use": "@vercel/node",
       "config": {
         "maxDuration": 10,
-        "includeFiles": ["src/**", "node_modules/**"] // Asegúrate de incluir node_modules si hay dependencias compiladas
+        "includeFiles": ["src/**"]
       }
     },
     {
-      "src": "public/**/*", // Captura todos los archivos estáticos
+      "src": "public/**",
       "use": "@vercel/static"
     }
   ],
-  "routes": [ // Cambié "rewrites" por "routes" para un control más explícito
-    // Regla para la API
-    { "src": "/api/(.*)", "dest": "/api/index.js" },
-    // Reglas para páginas estáticas específicas
-    { "src": "/", "dest": "/public/index.html" },
-    { "src": "/landing.html", "dest": "/public/landing.html" }, // Corregido: ahora apunta a la URL con .html
-    { "src": "/admin", "dest": "/public/admin.html" },
-    { "src": "/admin/", "dest": "/public/admin.html" }, // Opcional: para capturar /admin/
-    // Regla general para otros archivos estáticos (CSS, JS, imágenes, etc.)
-    { "handle": "filesystem" },
-    // Si no se encuentra un archivo estático, devuelve index.html (útil para SPAs)
-    { "src": "/(.*)", "dest": "/public/index.html" }
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/landing",
+      "destination": "/public/landing.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/public/admin.html"
+    }
   ],
   "headers": [
     {
@@ -38,11 +43,11 @@
       ]
     },
     {
-      "source": "/(.+\\.(js|css|svg|png|jpg|jpeg|gif|ico|webp|woff|woff2|ttf|eot)$)",
+      "source": "/public/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000" // Cache agresivo para assets estáticos
+          "value": "public, max-age=3600"
         }
       ]
     }
