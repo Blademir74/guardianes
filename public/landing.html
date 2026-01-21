@@ -63,7 +63,7 @@
                         <a href="/index.html" class="px-8 py-4 gradient-cta text-white rounded-xl font-bold hover:shadow-2xl transition text-lg text-center">
                             🗳️ Participar en la Predicción Piloto
                         </a>
-                        <button onclick="scrollTo('como-funciona')" class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 transition text-lg">
+                        <button onclick="scrollToSection('como-funciona')" class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 transition text-lg">
                             Ver Cómo Funciona
                         </button>
                     </div>
@@ -287,9 +287,12 @@
         }
 
         // Scroll suave
-        function scrollTo(id) {
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
+        function scrollToSection(id) {
+        const element = document.getElementById(id);
+        if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
 
         // Cargar stats en vivo
         async function loadStats() {

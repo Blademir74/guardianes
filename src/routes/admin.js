@@ -117,7 +117,7 @@ router.get('/recent-users', authenticateAdmin, async (req, res) => {
     const result = await query(`
       SELECT 
         u.id,
-        u.phone,
+        u.phone_last4,
         u.name,
         m.name as municipality,
         u.created_at,
@@ -125,7 +125,7 @@ router.get('/recent-users', authenticateAdmin, async (req, res) => {
       FROM users u
       LEFT JOIN municipalities m ON u.municipality_id = m.id
       LEFT JOIN survey_responses sr ON sr.user_id = u.id
-      GROUP BY u.id, u.phone, u.name, m.name, u.created_at
+      GROUP BY u.id, u.phone_last4, u.name, m.name, u.created_at
       ORDER BY u.created_at DESC
       LIMIT 20
     `);
@@ -179,7 +179,7 @@ router.get('/export/:type', authenticateAdmin, async (req, res) => {
         result = await query(`
           SELECT 
             sr.id,
-            u.phone,
+            u.phone_last4,
             u.name as user_name,
             m.name as municipality,
             s.title as survey_title,
@@ -199,7 +199,7 @@ router.get('/export/:type', authenticateAdmin, async (req, res) => {
         result = await query(`
           SELECT 
             p.id,
-            u.phone,
+            u.phone_last4,
             u.name as user_name,
             m.name as municipality,
             c.name as candidate_name,
@@ -224,7 +224,7 @@ router.get('/export/:type', authenticateAdmin, async (req, res) => {
             i.location,
             m.name as municipality,
             u.name as reporter_name,
-            u.phone,
+            u.phone_last4,
             i.created_at
           FROM incidents i
           LEFT JOIN municipalities m ON i.municipality_id = m.id

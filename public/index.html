@@ -348,7 +348,7 @@
     </div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://pulsoguerrero.vercel.app/api';
+        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
         let authToken = localStorage.getItem('authToken');
         let currentUser = null;
         let selectedCandidate = null;

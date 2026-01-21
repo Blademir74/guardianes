@@ -1,4 +1,4 @@
-// api/index.js - VERSIÓN CORREGIDA FINAL
+// api/index.js - VERSIÓN FINAL CON LISTENER
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -33,7 +33,7 @@ app.get('/api/health', async (req, res) => {
         status: 'connected',
         error: null
       },
-      version: '2.2.0-CTO-Ready'
+      version: '2.3.0-FIXED'
     });
   } catch (error) {
     res.status(500).json({
@@ -52,9 +52,9 @@ app.get('/api/health', async (req, res) => {
 // ===================================
 const authRoutes = require('../src/routes/auth');
 const dataRoutes = require('../src/routes/data');
-const surveyRoutes = require('../src/routes/surveys');  // ✅ CORREGIDO: surveys.js
+const surveyRoutes = require('../src/routes/surveys');
 const adminRoutes = require('../src/routes/admin');
-const candidateRoutes = require('../src/routes/candidate');
+const candidateRoutes = require('../src/routes/candidates');
 const predictionsRoutes = require('../src/routes/predictions');
 const leaderboardRoutes = require('../src/routes/leaderboard');
 const incidentsRoutes = require('../src/routes/incidents');
@@ -65,7 +65,7 @@ const whatsappRoutes = require('../src/routes/whatsapp');
 // ===================================
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
-app.use('/api/surveys', surveyRoutes);  // ✅ CORREGIDO
+app.use('/api/surveys', surveyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/predictions', predictionsRoutes);
@@ -74,7 +74,7 @@ app.use('/api/incidents', incidentsRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 
 // ===================================
-// RUTAS HTML (SOLO SI NO SE SIRVEN DESDE VERCEL.JSON)
+// RUTAS HTML
 // ===================================
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -118,6 +118,26 @@ app.use((err, req, res, next) => {
     details: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
+
+// ===================================
+// LISTENER PARA DESARROLLO LOCAL
+// ===================================
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`${'='.repeat(60)}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`🏛️  Municipios: http://localhost:${PORT}/api/data/municipalities`);
+    console.log(`📝 Encuestas: http://localhost:${PORT}/api/surveys/active`);
+    console.log(`👤 Candidatos: http://localhost:${PORT}/api/candidates`);
+    console.log(`🏠 Index: http://localhost:${PORT}/`);
+    console.log(`📄 Landing: http://localhost:${PORT}/landing`);
+    console.log(`⚙️  Admin: http://localhost:${PORT}/admin`);
+    console.log(`${'='.repeat(60)}\n`);
+  });
+}
 
 // Para Vercel
 module.exports = app;
