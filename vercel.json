@@ -5,8 +5,8 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 10,
-        "includeFiles": ["src/**"]
+        "maxDuration": 60,
+        "includeFiles": ["src/**", "api/**"]
       }
     },
     {
@@ -16,7 +16,7 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "destination": "/api/index.js"
     },
     {
@@ -34,8 +34,20 @@
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
         {
           "key": "Cache-Control",
           "value": "no-store, max-age=0"
@@ -43,7 +55,7 @@
       ]
     },
     {
-      "source": "/public/(.*)",
+      "source": "/public/:path*",
       "headers": [
         {
           "key": "Cache-Control",

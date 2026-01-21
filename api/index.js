@@ -1,183 +1,70 @@
 // api/index.js
-// API Principal - Guerrero Guardianes 2027
-require('dotenv').config({ path: '.env.local' });
-
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+require('dotenv').config();
 
-// Importar DB
-const { getDbPool } = require('../src/db');
-
-// Crear app
 const app = express();
 
-// =====================================================
-// MIDDLEWARES GLOBALES
-// =====================================================
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Seguridad
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
-
-// CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 1000, // 1000 requests por IP
-  message: { error: 'Demasiadas peticiones, intenta de nuevo más tarde' }
-});
-app.use('/api/', limiter);
-
-// Logging
+// Log de requests
 app.use((req, res, next) => {
-  if (req.path !== '/api/health') {
-    console.log(`📨 ${req.method} ${req.path}`);
-  }
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// =====================================================
-// HEALTH CHECK
-// =====================================================
-app.get('/api/health', async (req, res) => {
-  let dbStatus = 'disconnected';
-  let dbError = null;
-
-  try {
-    const pool = getDbPool();
-    if (pool) {
-      await pool.query('SELECT NOW()');
-      dbStatus = 'connected';
-    }
-  } catch (error) {
-    dbStatus = 'error';
-    dbError = error.message;
-  }
-
-  res.json({
-    status: 'ok',
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
     timestamp: new Date().toISOString(),
-    database: {
-      status: dbStatus,
-      error: dbError
-    },
-    version: '2.2.0-CTO-Ready'
+    env: process.env.NODE_ENV 
   });
 });
 
-// =====================================================
-// IMPORTAR RUTAS (con manejo de errores)
-// =====================================================
+// Importar rutas
+const authRoutes = require('../src/routes/auth');
+const dataRoutes = require('../src/routes/data');
+const surveyRoutes = require('../src/routes/survey');
+const adminRoutes = require('../src/routes/admin');
+const candidateRoutes = require('../src/routes/candidate');
+const predictionsRoutes = require('../src/routes/predictions');
+const leaderboardRoutes = require('../src/routes/leaderboard');
+const incidentsRoutes = require('../src/routes/incidents');
+const whatsappRoutes = require('../src/routes/whatsapp');
 
-function safeRoute(routePath, routeName) {
-  try {
-    const route = require(`../src/routes/${routePath}`);
-    console.log(`✅ Ruta cargada: ${routeName}`);
-    return route;
-  } catch (error) {
-    console.error(`❌ Error cargando ruta ${routeName}:`, error.message);
-    
-    // Retornar router vacío que responde con error
-    const router = express.Router();
-    router.all('*', (req, res) => {
-      res.status(503).json({
-        error: `Ruta ${routeName} temporalmente no disponible`,
-        message: 'El servicio está en mantenimiento'
-      });
-    });
-    return router;
-  }
-}
+// Registrar rutas
+app.use('/api/auth', authRoutes);
+app.use('/api/data', dataRoutes);
+app.use('/api/surveys', surveyRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/candidates', candidateRoutes);
+app.use('/api/predictions', predictionsRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/incidents', incidentsRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
-// Montar rutas
-app.use('/api/auth', safeRoute('auth', 'auth'));
-app.use('/api/data', safeRoute('data', 'data'));
-app.use('/api/surveys', safeRoute('surveys', 'surveys'));
-app.use('/api/predictions', safeRoute('predictions', 'predictions'));
-app.use('/api/incidents', safeRoute('incidents', 'incidents'));
-app.use('/api/candidates', safeRoute('candidates', 'candidates'));
-app.use('/api/leaderboard', safeRoute('leaderboard', 'leaderboard'));
-app.use('/api/admin', safeRoute('admin', 'admin'));
-
-// =====================================================
-// ENDPOINT RAÍZ DE API
-// =====================================================
-app.get('/api', (req, res) => {
-  res.json({
-    name: 'Guerrero Guardianes API',
-    version: '2.2.0',
-    status: 'operational',
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth/*',
-      data: '/api/data/*',
-      surveys: '/api/surveys/*',
-      predictions: '/api/predictions/*',
-      incidents: '/api/incidents/*',
-      candidates: '/api/candidates/*',
-      leaderboard: '/api/leaderboard',
-      admin: '/api/admin/*'
-    },
-    documentation: 'https://docs.pulsoguerrero.com'
-  });
-});
-
-// =====================================================
-// MANEJO DE ERRORES 404
-// =====================================================
-app.use((req, res, next) => {
-  res.status(404).json({
-    error: 'Ruta no encontrada',
+// Error 404
+app.use((req, res) => {
+  console.log(`❌ 404 - Ruta no encontrada: ${req.method} ${req.path}`);
+  res.status(404).json({ 
+    error: 'Route not found',
     path: req.path,
-    method: req.method,
-    suggestion: 'Visita /api para ver endpoints disponibles'
+    method: req.method 
   });
 });
 
-// =====================================================
-// MANEJO DE ERRORES GLOBAL
-// =====================================================
+// Error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Error en servidor:', err);
-  
-  res.status(err.status || 500).json({
-    error: 'Error interno del servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Ocurrió un error inesperado',
-    path: req.path
+  console.error('❌ Error:', err);
+  res.status(err.status || 500).json({ 
+    error: err.message || 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
-// =====================================================
-// INICIAR SERVIDOR (solo si se ejecuta directamente)
-// =====================================================
-const PORT = process.env.PORT || 3000;
-
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log('\n' + '═'.repeat(60));
-    console.log('🚀 SERVIDOR INICIADO');
-    console.log('═'.repeat(60));
-    console.log(`📡 URL: http://localhost:${PORT}`);
-    console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
-    console.log(`📚 API Docs: http://localhost:${PORT}/api`);
-    console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
-    console.log('═'.repeat(60) + '\n');
-  });
-}
-
-// Exportar para Vercel
+// Para Vercel
 module.exports = app;
