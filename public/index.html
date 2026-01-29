@@ -1,769 +1,1931 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Ciudadano | Guardianes Guerrero 2027</title>
+    <title>Guardianes de Guerrero | Caja Negra Democrática</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .candidate-card { 
+        :root {
+            --color-primary: #FF8C00;
+            /* Naranja */
+            --color-secondary: #E63946;
+            /* Rojo */
+            --color-background: #1a2630;
+            /* Charcoal */
+            --color-surface: #284869;
+            /* Gris-azul tenue */
+            --color-text-primary: #FFFFFF;
+            /* Blanco */
+            --color-text-secondary: #B0B0B0;
+            /* Gris claro */
+            --color-accent: #FFD60A;
+            /* Alertas - Amarillo Ocre */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-black {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-active {
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .candidate-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            border: 2px solid transparent;
         }
-        .candidate-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
+
+        .candidate-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(202, 138, 4, 0.4);
         }
-        .candidate-card:hover::before { left: 100%; }
-        .candidate-card:hover { 
-            transform: translateY(-8px) scale(1.02); 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.2); 
+
+        .candidate-card.selected {
+            border-color: var(--accent);
+            background: rgba(202, 138, 4, 0.1);
+            box-shadow: 0 0 30px rgba(202, 138, 4, 0.3);
         }
-        .candidate-card.selected { 
-            border: 3px solid #10b981; 
-            box-shadow: 0 0 40px rgba(16,185,129,0.5), 0 0 0 4px rgba(16,185,129,0.1);
-            background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.1) 100%);
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 5px;
+            color: var(--accent);
         }
-        .slider-track { 
-            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%); 
-            height: 12px;
-            border-radius: 6px;
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
-        input[type="range"] { 
-            -webkit-appearance: none; 
-            width: 100%; 
-            background: transparent;
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
         }
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 12px;
-            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%);
-            border-radius: 6px;
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
-        input[type="range"]::-webkit-slider-thumb { 
-            -webkit-appearance: none; 
-            width: 32px; 
-            height: 32px; 
-            background: white; 
-            border: 5px solid #10b981; 
-            border-radius: 50%; 
-            cursor: grab;
-            margin-top: -10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.2s;
+
+        .tab-content {
+            display: none;
         }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+
+        .tab-content.active {
+            display: block;
         }
-        input[type="range"]::-webkit-slider-thumb:active {
-            cursor: grabbing;
+
+        /* Botones Quirúrgicos */
+        button.bg-amber-600,
+        button.bg-emerald-600,
+        button.bg-red-600,
+        button[onclick="submitSurvey()"] {
+            background-color: var(--color-primary) !important;
+            transition: all 200ms ease-out !important;
+            border-radius: 1.5rem !important;
         }
-        input[type="range"]::-moz-range-thumb { 
-            width: 32px; 
-            height: 32px; 
-            background: white; 
-            border: 5px solid #10b981; 
-            border-radius: 50%; 
-            cursor: grab;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+
+        button.bg-amber-600:hover,
+        button.bg-emerald-600:hover,
+        button.bg-red-600:hover,
+        button[onclick="submitSurvey()"]:hover {
+            background-color: var(--color-secondary) !important;
+            transform: translateY(-1px);
         }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .pulse { animation: pulse 2s infinite; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: slideUp 0.6s ease-out; }
-        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
-        .shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
     </style>
 </head>
-<body class="bg-slate-50">
 
+<body class="min-h-screen">
     <!-- NAVBAR -->
-    <nav class="fixed w-full z-50 bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a href="/landing.html" class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
-                        <span class="text-white font-bold text-xl">🛡️</span>
-                    </div>
-                    <span class="text-xl font-bold text-slate-900">Guardianes <span class="text-blue-600">2027</span></span>
-                </a>
-                <div id="user-menu" class="hidden">
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <div class="text-xs text-slate-500 font-medium">Tus Puntos</div>
-                            <div class="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent" id="user-points">0</div>
-                        </div>
-                        <button onclick="logout()" class="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium">
-                            Cerrar Sesión
-                        </button>
-                    </div>
+    <nav class="fixed top-0 w-full z-50 glass-card bg-slate-950/80 border-b border-white/5 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center font-black text-2xl shadow-lg shadow-amber-900/40">
+                    G</div>
+                <h1 class="text-xl font-extrabold tracking-tighter uppercase">Guardianes Guerrero <span
+                        class="text-amber-500">2027</span></h1>
+            </div>
+            <div id="user-info" class="hidden flex items-center gap-6">
+                <div class="text-right">
+                    <div class="text-[14px] font-black text-slate-500 uppercase tracking-widest">Nivel Relevancia</div>
+                    <span id="user-points" class="text-amber-500 font-black text-xs uppercase italic tracking-tighter">0
+                        PTS de Influencia</span>
                 </div>
+                <button onclick="logout()"
+                    class="text-[14px] bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg font-black uppercase transition">Cerrar</button>
             </div>
         </div>
     </nav>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="pt-16 min-h-screen">
+    <!-- CONTENT -->
+    <main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
 
-        <!-- SECCIÓN DE AUTENTICACIÓN -->
-        <section id="auth-section" class="py-12 gradient-bg min-h-[calc(100vh-4rem)] flex items-center">
-            <div class="max-w-md mx-auto px-4 w-full animate-slide-up">
-                <div class="glass rounded-2xl shadow-2xl p-8 border border-white/20">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg">
-                            🛡️
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Acceso Ciudadano Seguro</h2>
-                        <p class="text-slate-600">Verificación anónima vía SMS</p>
-                    </div>
+        <!-- AUTH -->
+        <section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
+            <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
+                <h2 class="text-3xl font-black mb-2 italic tracking-tighter uppercase whitespace-nowrap">Portal <span
+                        class="text-amber-500">Ciudadano</span></h2>
+                <p class="text-xs font-bold text-slate-500 mb-10 uppercase tracking-[0.2em]">Anonimato Total Garantizado
+                </p>
 
-                    <!-- FORMULARIO TELÉFONO -->
-                    <div id="phone-form">
-                        <div class="mb-6">
-                            <label class="block text-sm font-bold text-slate-700 mb-2">Número de Teléfono (10 dígitos)</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-4 text-slate-400 font-semibold">+52</span>
-                                <input type="tel" id="phone" maxlength="10" 
-                                       class="w-full pl-16 pr-4 py-4 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition text-lg font-medium"
-                                       placeholder="744 123 4567">
-                            </div>
-                            <div id="phone-preview" class="hidden mt-3 text-sm text-blue-600 font-semibold"></div>
-                        </div>
-                        <button onclick="requestCode()" id="btn-request-code"
-                                class="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                            Solicitar Código de Verificación
-                        </button>
-                    </div>
+                <div id="phone-step" class="space-y-4">
+                    <input type="tel" id="user-phone" placeholder="744 123 4567"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-2xl font-black focus:border-amber-500 outline-none transition shadow-inner">
+                    <button onclick="sendCode()"
+                        class="w-full bg-amber-600 hover:bg-amber-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-amber-900/20 uppercase tracking-tighter">Accesar
+                        con SMS</button>
+                </div>
 
-                    <!-- FORMULARIO CÓDIGO -->
-                    <div id="code-form" class="hidden">
-                        <div class="mb-6">
-                            <label class="block text-sm font-bold text-slate-700 mb-2">Código de Verificación</label>
-                            <input type="text" id="code" maxlength="6" 
-                                   class="w-full px-4 py-4 border-2 border-slate-300 rounded-xl text-center font-mono text-2xl tracking-widest focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                                   placeholder="• • • • • •">
-                            <p class="text-xs text-slate-500 mt-3 text-center">
-                                Código enviado a: <strong id="sent-to-phone" class="text-blue-600"></strong>
-                            </p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="verifyCode()" id="btn-verify"
-                                    class="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl">
-                                Verificar
-                            </button>
-                            <button onclick="cancelVerification()"
-                                    class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
+                <div id="code-step" class="hidden space-y-4">
+                    <input type="text" id="verify-code" placeholder="• • • • • •"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-3xl font-black tracking-[0.3em] focus:border-emerald-500 outline-none transition shadow-inner">
+                    <button onclick="verifyCode()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-emerald-900/20 uppercase tracking-tighter">Validar
+                        Ingreso</button>
+                </div>
 
-                    <div id="auth-message" class="mt-4"></div>
-                    
-                    <div class="mt-6 text-center text-xs text-slate-500">
-                        <p>🔐 Tu número se convierte en hash SHA-256 irreversible</p>
-                        <p class="mt-1">No almacenamos IPs ni datos personales</p>
-                    </div>
+                <div class="mt-8 flex items-center justify-center gap-2 opacity-30">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest leading-none">Encriptación
+                        AES-256</span>
                 </div>
             </div>
         </section>
 
-        <!-- SECCIÓN PRINCIPAL (Portal) -->
-        <section id="portal-section" class="hidden py-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- PORTAL MAIN -->
+        <section id="portal-section" class="hidden space-y-10 animate-in fade-in zoom-in-95 duration-500">
+            <!-- TABS -->
+            <div
+                class="flex overflow-x-auto gap-4 p-2 glass-card rounded-2xl sticky top-24 z-40 bg-slate-950/40 border-white/5 scrollbar-hide">
+                <button onclick="switchTab('encuestas')" data-tab="encuestas"
+                    class="tab-btn flex-1 py-4 px-8 rounded-xl font-black text-[18px] uppercase tracking-[0.2em] transition whitespace-nowrap nav-active">📋
+                    Encuestas</button>
+                <button onclick="switchTab('incidentes')" data-tab="incidentes"
+                    class="tab-btn flex-1 py-4 px-8 rounded-xl font-black text-[18px] uppercase tracking-[0.2em] transition whitespace-nowrap">🚨
+                    Incidentes</button>
+                <button onclick="switchTab('historico')" data-tab="historico"
+                    class="tab-btn flex-1 py-4 px-8 rounded-xl font-black text-[18px] uppercase tracking-[0.2em] transition whitespace-nowrap">📊
+                    Histórico</button>
+                <button onclick="switchTab('predicciones')" data-tab="predicciones"
+                    class="tab-btn flex-1 py-4 px-8 rounded-xl font-black text-[18px] uppercase tracking-[0.2em] transition whitespace-nowrap">🔮
+                    Predicciones</button>
+            </div>
 
-                <!-- HEADER -->
-                <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-2xl shadow-xl p-8 mb-8 text-white">
-                    <div class="flex justify-between items-center flex-wrap gap-4">
+            <!-- TAB CONTENT -->
+            <div id="tab-encuestas" class="tab-content active transition-all">
+                <!-- BANNER EN VIVO -->
+                <div
+                    class="mb-12 p-6 rounded-3xl bg-gradient-to-r from-[#1A1A2E] to-[#2D3748] border-l-4 border-[#FF8C00] overflow-hidden relative">
+                    <div class="absolute inset-0 opacity-30">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-[#FF8C00] blur-3xl animate-pulse"></div>
+                    </div>
+                    <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-[#E63946] rounded-full animate-pulse"></span>
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD60A]">EN
+                                    VIVO</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-white uppercase italic">📊 Encuestas <span
+                                    class="text-[#FF8C00]">Activas</span></h3>
+                        </div>
+                        <p class="text-sm font-bold text-[#B0B0B0]">Participación en tiempo real</p>
+                    </div>
+                </div>
+                <div id="surveys-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Surveys Injected -->
+                </div>
+            </div>
+
+            <div id="tab-incidentes" class="tab-content transition-all">
+                <div class="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
+                    <div class="glass-card p-10 rounded-[2.5rem] shadow-2xl border-red-900/10">
+                        <span class="text-[10px] font-black text-red-500 uppercase tracking-widest block mb-1">Centro de
+                            Monitoreo</span>
+                        <h3 class="text-3xl font-black mb-8 italic uppercase tracking-tighter">Reportar <span
+                                class="text-red-600">Anomalía</span></h3>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label
+                                    class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Clasificación</label>
+                                <select id="incident-type"
+                                    class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-red-600 transition tracking-tighter">
+                                    <option value="otro">OTRO / GENERAL</option>
+                                    <option value="compra_voto">COMPRA DE VOTO</option>
+                                    <option value="intimidacion">INTIMIDACIÓN / VIOLENCIA</option>
+                                    <option value="casilla_irregular">ANOMALÍA EN CASILLA</option>
+                                    <option value="propaganda_ilegal">PROPAGANDA PROHIBIDA</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Municipio
+                                    del Incidente</label>
+                                <select id="incident-muni-selector"
+                                    class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-red-600 transition tracking-tighter">
+                                    <option value="">SELECCIONA MUNICIPIO</option>
+                                    <option value="1">ACAPULCO DE JUÁREZ</option>
+                                    <option value="2">ACATEPEC</option>
+                                    <option value="3">AHUACUOTZINGO</option>
+                                    <option value="4">AJUCHITLAN DEL PROGRESO</option>
+                                    <option value="5">ALCOZAUCA DE GUERRERO</option>
+                                    <option value="6">ALPOYECA</option>
+                                    <option value="7">APAXTLA</option>
+                                    <option value="8">ARCELIA</option>
+                                    <option value="9">ATENANGO DEL RÍO</option>
+                                    <option value="10">ATLAMAJALCINGO DEL MONTE</option>
+                                    <option value="11">ATLIXTAC</option>
+                                    <option value="12">ATOYAC DE ÁLVAREZ</option>
+                                    <option value="13">AYUTLA DE LOS LIBRES</option>
+                                    <option value="14">AZOYU</option>
+                                    <option value="15">BENITO JUÁREZ</option>
+                                    <option value="16">BUENAVISTA DE CUÉLLAR</option>
+                                    <option value="17">CHILAPA DE ÁLVAREZ</option>
+                                    <option value="18">CHILPANCINGO DE LOS BRAVO</option>
+                                    <option value="19">COAHUAYUTLA DE JOSÉ MARÍA IZAZAGA</option>
+                                    <option value="20">COCHOAPA EL GRANDE</option>
+                                    <option value="21">COCULA</option>
+                                    <option value="22">COPALA</option>
+                                    <option value="23">COPALILLO</option>
+                                    <option value="24">COPANATOYAC</option>
+                                    <option value="25">COYUCA DE BENÍTEZ</option>
+                                    <option value="26">COYUCA DE CATALÁN</option>
+                                    <option value="27">CUAJINICUILAPA</option>
+                                    <option value="28">CUALAC</option>
+                                    <option value="29">CUAUTEPEC</option>
+                                    <option value="30">CUETZALA DEL PROGRESO</option>
+                                    <option value="31">CUTZAMALA DE PINZÓN</option>
+                                    <option value="32">EDUARDO NERI</option>
+                                    <option value="33">FLORENCIO VILLARREAL</option>
+                                    <option value="34">GENERAL CANUTO A. NERI</option>
+                                    <option value="35">GENERAL HELIODORO CASTILLO</option>
+                                    <option value="36">HUAMUXTITLÁN</option>
+                                    <option value="37">HUITZUCO DE LOS FIGUEROA</option>
+                                    <option value="38">IGUALA DE LA INDEPENDENCIA</option>
+                                    <option value="39">IGUALAPA</option>
+                                    <option value="40">ILIATENCO</option>
+                                    <option value="41">IXCATEOPAN DE CUAUHTÉMOC</option>
+                                    <option value="42">JOSÉ JOAQUÍN DE HERRERA</option>
+                                    <option value="43">JUAN R. ESCUDERO</option>
+                                    <option value="44">JUCHITÁN</option>
+                                    <option value="45">LA UNIÓN DE ISIDORO MONTES DE OCA</option>
+                                    <option value="46">LAS VIGAS</option>
+                                    <option value="47">LEONARDO BRAVO</option>
+                                    <option value="48">MALINALTEPEC</option>
+                                    <option value="49">MARQUELIA</option>
+                                    <option value="50">MÁRTIR DE CUILAPAN</option>
+                                    <option value="51">METLATONOC</option>
+                                    <option value="52">MOCHITLÁN</option>
+                                    <option value="53">NUU SAVI</option>
+                                    <option value="54">OLINALA</option>
+                                    <option value="55">OMETEPEC</option>
+                                    <option value="56">PEDRO ASCENCIO ALQUISIRAS</option>
+                                    <option value="57">PETATLÁN</option>
+                                    <option value="58">PILCAYA</option>
+                                    <option value="59">PUNGARABATO</option>
+                                    <option value="60">QUECHULTENANGO</option>
+                                    <option value="61">SAN LUIS ACATLÁN</option>
+                                    <option value="62">SAN MARCOS</option>
+                                    <option value="63">SAN MIGUEL TOTOLAPAN</option>
+                                    <option value="64">SAN NICOLÁS</option>
+                                    <option value="65">SANTA CRUZ DEL RINCÓN</option>
+                                    <option value="66">TAXCO DE ALARCÓN</option>
+                                    <option value="67">TECOANAPA</option>
+                                    <option value="68">TECPAN DE GALEANA</option>
+                                    <option value="69">TELOLOAPAN</option>
+                                    <option value="70">TEPECOACUILCO DE TRUJANO</option>
+                                    <option value="71">TETIPAC</option>
+                                    <option value="72">TIXTLA DE GUERRERO</option>
+                                    <option value="73">TLACOACHISTLAHUACA</option>
+                                    <option value="74">TLACOAPA</option>
+                                    <option value="75">TLALCHAPA</option>
+                                    <option value="76">TLALIXTAQUILLA DE MALDONADO</option>
+                                    <option value="77">TLAPA DE COMONFORT</option>
+                                    <option value="78">TLAPEHUALA</option>
+                                    <option value="79">XALPATLAHUAC</option>
+                                    <option value="80">XOCHIHUEHUETLÁN</option>
+                                    <option value="81">XOCHISTLAHUACA</option>
+                                    <option value="82">ZAPOTITLÁN TABLAS</option>
+                                    <option value="83">ZIHUATANEJO DE AZUETA</option>
+                                    <option value="84">ZIRANDARO</option>
+                                    <option value="85">ZITLALA</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Descripción
+                                    de los Hechos</label>
+                                <textarea id="incident-desc" placeholder="Especifica lugar y detalles presenciados..."
+                                    class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl h-44 font-medium outline-none focus:border-red-600 transition"></textarea>
+                            </div>
+                            <button id="report-btn" onclick="reportIncident()"
+                                class="w-full bg-red-600 hover:bg-red-700 p-6 rounded-2xl font-black text-lg shadow-2xl shadow-red-900/20 uppercase tracking-tight transition">Enviar
+                                Alerta con Geolocalización</button>
+                            <p id="location-status"
+                                class="text-[8px] font-black opacity-30 text-center uppercase tracking-widest">
+                                Sincronización GPS requerida para validez judicial</p>
+                        </div>
+                    </div>
+                    <div class="space-y-8 flex flex-col">
+                        <div
+                            class="glass-card flex-1 rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center opacity-40">
+                            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                                </path>
+                            </svg>
+                            <div class="font-black text-xs uppercase tracking-widest">Mapa de Calor <br> En Desarrollo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-historico" class="tab-content transition-all">
+                <div class="glass-card p-10 rounded-[3rem]">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
                         <div>
-                            <h1 class="text-3xl font-bold mb-2">Predicción Electoral Gubernatura 2027</h1>
-                            <p class="text-blue-100">Tu voz cuenta. Tu identidad está protegida. Los resultados son transparentes.</p>
+                            <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Archivo
+                                Electoral del INE</span>
+                            <h3 class="text-3xl font-black italic uppercase tracking-tighter">Memoria <span
+                                    class="text-amber-500">Histórica</span></h3>
                         </div>
-                        <div class="text-right bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                            <div class="text-xs text-blue-200 uppercase tracking-wide mb-1">Tu Nivel</div>
-                            <div class="text-2xl font-bold" id="user-level">Observador</div>
-                            <div class="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent" id="user-points-display">0 puntos</div>
+                        <select id="muni-selector" onchange="loadHistorical(this.value)"
+                            class="bg-slate-900 border border-white/10 p-4 rounded-xl font-black outline-none w-full md:w-80 shadow-xl focus:border-amber-600">
+                            <option value="">ESTADO DE GUERRERO (TODO)</option>
+                            <option value="1">ACAPULCO DE JUÁREZ</option>
+                            <option value="2">ACATEPEC</option>
+                            <option value="3">AHUACUOTZINGO</option>
+                            <option value="4">AJUCHITLAN DEL PROGRESO</option>
+                            <option value="5">ALCOZAUCA DE GUERRERO</option>
+                            <option value="6">ALPOYECA</option>
+                            <option value="7">APAXTLA</option>
+                            <option value="8">ARCELIA</option>
+                            <option value="9">ATENANGO DEL RÍO</option>
+                            <option value="10">ATLAMAJALCINGO DEL MONTE</option>
+                            <option value="11">ATLIXTAC</option>
+                            <option value="12">ATOYAC DE ÁLVAREZ</option>
+                            <option value="13">AYUTLA DE LOS LIBRES</option>
+                            <option value="14">AZOYU</option>
+                            <option value="15">BENITO JUÁREZ</option>
+                            <option value="16">BUENAVISTA DE CUÉLLAR</option>
+                            <option value="17">CHILAPA DE ÁLVAREZ</option>
+                            <option value="18">CHILPANCINGO DE LOS BRAVO</option>
+                            <option value="19">COAHUAYUTLA DE JOSÉ MARÍA IZAZAGA</option>
+                            <option value="20">COCHOAPA EL GRANDE</option>
+                            <option value="21">COCULA</option>
+                            <option value="22">COPALA</option>
+                            <option value="23">COPALILLO</option>
+                            <option value="24">COPANATOYAC</option>
+                            <option value="25">COYUCA DE BENÍTEZ</option>
+                            <option value="26">COYUCA DE CATALÁN</option>
+                            <option value="27">CUAJINICUILAPA</option>
+                            <option value="28">CUALAC</option>
+                            <option value="29">CUAUTEPEC</option>
+                            <option value="30">CUETZALA DEL PROGRESO</option>
+                            <option value="31">CUTZAMALA DE PINZÓN</option>
+                            <option value="32">EDUARDO NERI</option>
+                            <option value="33">FLORENCIO VILLARREAL</option>
+                            <option value="34">GENERAL CANUTO A. NERI</option>
+                            <option value="35">GENERAL HELIODORO CASTILLO</option>
+                            <option value="36">HUAMUXTITLÁN</option>
+                            <option value="37">HUITZUCO DE LOS FIGUEROA</option>
+                            <option value="38">IGUALA DE LA INDEPENDENCIA</option>
+                            <option value="39">IGUALAPA</option>
+                            <option value="40">ILIATENCO</option>
+                            <option value="41">IXCATEOPAN DE CUAUHTÉMOC</option>
+                            <option value="42">JOSÉ JOAQUÍN DE HERRERA</option>
+                            <option value="43">JUAN R. ESCUDERO</option>
+                            <option value="44">JUCHITÁN</option>
+                            <option value="45">LA UNIÓN DE ISIDORO MONTES DE OCA</option>
+                            <option value="46">LAS VIGAS</option>
+                            <option value="47">LEONARDO BRAVO</option>
+                            <option value="48">MALINALTEPEC</option>
+                            <option value="49">MARQUELIA</option>
+                            <option value="50">MÁRTIR DE CUILAPAN</option>
+                            <option value="51">METLATONOC</option>
+                            <option value="52">MOCHITLÁN</option>
+                            <option value="53">NUU SAVI</option>
+                            <option value="54">OLINALA</option>
+                            <option value="55">OMETEPEC</option>
+                            <option value="56">PEDRO ASCENCIO ALQUISIRAS</option>
+                            <option value="57">PETATLÁN</option>
+                            <option value="58">PILCAYA</option>
+                            <option value="59">PUNGARABATO</option>
+                            <option value="60">QUECHULTENANGO</option>
+                            <option value="61">SAN LUIS ACATLÁN</option>
+                            <option value="62">SAN MARCOS</option>
+                            <option value="63">SAN MIGUEL TOTOLAPAN</option>
+                            <option value="64">SAN NICOLÁS</option>
+                            <option value="65">SANTA CRUZ DEL RINCÓN</option>
+                            <option value="66">TAXCO DE ALARCÓN</option>
+                            <option value="67">TECOANAPA</option>
+                            <option value="68">TECPAN DE GALEANA</option>
+                            <option value="69">TELOLOAPAN</option>
+                            <option value="70">TEPECOACUILCO DE TRUJANO</option>
+                            <option value="71">TETIPAC</option>
+                            <option value="72">TIXTLA DE GUERRERO</option>
+                            <option value="73">TLACOACHISTLAHUACA</option>
+                            <option value="74">TLACOAPA</option>
+                            <option value="75">TLALCHAPA</option>
+                            <option value="76">TLALIXTAQUILLA DE MALDONADO</option>
+                            <option value="77">TLAPA DE COMONFORT</option>
+                            <option value="78">TLAPEHUALA</option>
+                            <option value="79">XALPATLAHUAC</option>
+                            <option value="80">XOCHIHUEHUETLÁN</option>
+                            <option value="81">XOCHISTLAHUACA</option>
+                            <option value="82">ZAPOTITLÁN TABLAS</option>
+                            <option value="83">ZIHUATANEJO DE AZUETA</option>
+                            <option value="84">ZIRANDARO</option>
+                            <option value="85">ZITLALA</option>
+                        </select>
+                    </div>
+                    <div class="grid lg:grid-cols-2 gap-10">
+                        <div class="bg-white/5 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                            <h4
+                                class="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-[0.2em] text-center">
+                                Nivel de Participación Histórica</h4>
+                            <div class="h-80"><canvas id="participation-chart"></canvas></div>
+                        </div>
+                        <div class="bg-white/5 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                            <h4
+                                class="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-[0.2em] text-center">
+                                Distribución de Fuerzas Políticas</h4>
+                            <div class="h-80"><canvas id="results-chart"></canvas></div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- ENCUESTA: SELECCIÓN DE CANDIDATO -->
-                <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8 mb-8 animate-slide-up">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                        <span class="mr-3 text-3xl">1️⃣</span> 
-                        <span>Selecciona tu Candidato(a) Preferido(a)</span>
-                    </h2>
-                    
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" id="candidates-container">
-                        <!-- Skeleton Loading -->
-                        <div class="col-span-full grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div class="shimmer h-64 rounded-xl"></div>
-                            <div class="shimmer h-64 rounded-xl"></div>
-                            <div class="shimmer h-64 rounded-xl"></div>
+            <div id="tab-predicciones" class="tab-content transition-all">
+                <div class="glass-card p-10 rounded-[3rem]">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                        <div>
+                            <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Inteligencia
+                                Predictiva</span>
+                            <h3 class="text-3xl font-black italic uppercase tracking-tighter">Predicciones <span
+                                    class="text-amber-500">2027</span></h3>
                         </div>
+                        <select id="pred-muni-selector" onchange="loadPredictionsForMunicipality(this.value)"
+                            class="bg-slate-900 border border-white/10 p-4 rounded-xl font-black outline-none w-full md:w-80 shadow-xl focus:border-amber-600">
+                            <option value="">SELECCIONA MUNICIPIO</option>
+                            <option value="1">ACAPULCO DE JUÁREZ</option>
+                            <option value="2">ACATEPEC</option>
+                            <option value="3">AHUACUOTZINGO</option>
+                            <option value="4">AJUCHITLAN DEL PROGRESO</option>
+                            <option value="5">ALCOZAUCA DE GUERRERO</option>
+                            <option value="6">ALPOYECA</option>
+                            <option value="7">APAXTLA</option>
+                            <option value="8">ARCELIA</option>
+                            <option value="9">ATENANGO DEL RÍO</option>
+                            <option value="10">ATLAMAJALCINGO DEL MONTE</option>
+                            <option value="11">ATLIXTAC</option>
+                            <option value="12">ATOYAC DE ÁLVAREZ</option>
+                            <option value="13">AYUTLA DE LOS LIBRES</option>
+                            <option value="14">AZOYU</option>
+                            <option value="15">BENITO JUÁREZ</option>
+                            <option value="16">BUENAVISTA DE CUÉLLAR</option>
+                            <option value="17">CHILAPA DE ÁLVAREZ</option>
+                            <option value="18">CHILPANCINGO DE LOS BRAVO</option>
+                            <option value="19">COAHUAYUTLA DE JOSÉ MARÍA IZAZAGA</option>
+                            <option value="20">COCHOAPA EL GRANDE</option>
+                            <option value="21">COCULA</option>
+                            <option value="22">COPALA</option>
+                            <option value="23">COPALILLO</option>
+                            <option value="24">COPANATOYAC</option>
+                            <option value="25">COYUCA DE BENÍTEZ</option>
+                            <option value="26">COYUCA DE CATALÁN</option>
+                            <option value="27">CUAJINICUILAPA</option>
+                            <option value="28">CUALAC</option>
+                            <option value="29">CUAUTEPEC</option>
+                            <option value="30">CUETZALA DEL PROGRESO</option>
+                            <option value="31">CUTZAMALA DE PINZÓN</option>
+                            <option value="32">EDUARDO NERI</option>
+                            <option value="33">FLORENCIO VILLARREAL</option>
+                            <option value="34">GENERAL CANUTO A. NERI</option>
+                            <option value="35">GENERAL HELIODORO CASTILLO</option>
+                            <option value="36">HUAMUXTITLÁN</option>
+                            <option value="37">HUITZUCO DE LOS FIGUEROA</option>
+                            <option value="38">IGUALA DE LA INDEPENDENCIA</option>
+                            <option value="39">IGUALAPA</option>
+                            <option value="40">ILIATENCO</option>
+                            <option value="41">IXCATEOPAN DE CUAUHTÉMOC</option>
+                            <option value="42">JOSÉ JOAQUÍN DE HERRERA</option>
+                            <option value="43">JUAN R. ESCUDERO</option>
+                            <option value="44">JUCHITÁN</option>
+                            <option value="45">LA UNIÓN DE ISIDORO MONTES DE OCA</option>
+                            <option value="46">LAS VIGAS</option>
+                            <option value="47">LEONARDO BRAVO</option>
+                            <option value="48">MALINALTEPEC</option>
+                            <option value="49">MARQUELIA</option>
+                            <option value="50">MÁRTIR DE CUILAPAN</option>
+                            <option value="51">METLATONOC</option>
+                            <option value="52">MOCHITLÁN</option>
+                            <option value="53">NUU SAVI</option>
+                            <option value="54">OLINALA</option>
+                            <option value="55">OMETEPEC</option>
+                            <option value="56">PEDRO ASCENCIO ALQUISIRAS</option>
+                            <option value="57">PETATLÁN</option>
+                            <option value="58">PILCAYA</option>
+                            <option value="59">PUNGARABATO</option>
+                            <option value="60">QUECHULTENANGO</option>
+                            <option value="61">SAN LUIS ACATLÁN</option>
+                            <option value="62">SAN MARCOS</option>
+                            <option value="63">SAN MIGUEL TOTOLAPAN</option>
+                            <option value="64">SAN NICOLÁS</option>
+                            <option value="65">SANTA CRUZ DEL RINCÓN</option>
+                            <option value="66">TAXCO DE ALARCÓN</option>
+                            <option value="67">TECOANAPA</option>
+                            <option value="68">TECPAN DE GALEANA</option>
+                            <option value="69">TELOLOAPAN</option>
+                            <option value="70">TEPECOACUILCO DE TRUJANO</option>
+                            <option value="71">TETIPAC</option>
+                            <option value="72">TIXTLA DE GUERRERO</option>
+                            <option value="73">TLACOACHISTLAHUACA</option>
+                            <option value="74">TLACOAPA</option>
+                            <option value="75">TLALCHAPA</option>
+                            <option value="76">TLALIXTAQUILLA DE MALDONADO</option>
+                            <option value="77">TLAPA DE COMONFORT</option>
+                            <option value="78">TLAPEHUALA</option>
+                            <option value="79">XALPATLAHUAC</option>
+                            <option value="80">XOCHIHUEHUETLÁN</option>
+                            <option value="81">XOCHISTLAHUACA</option>
+                            <option value="82">ZAPOTITLÁN TABLAS</option>
+                            <option value="83">ZIHUATANEJO DE AZUETA</option>
+                            <option value="84">ZIRANDARO</option>
+                            <option value="85">ZITLALA</option>
+                        </select>
                     </div>
 
-                    <!-- Opción "Aún no decido" -->
-                    <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl">
-                        <label class="flex items-center cursor-pointer group">
-                            <input type="checkbox" id="undecided" class="w-5 h-5 text-amber-600 rounded focus:ring-amber-500 mr-3 cursor-pointer">
-                            <span class="text-slate-800 font-semibold group-hover:text-amber-700 transition">
-                                🤔 Aún no decido <span class="text-sm font-normal text-slate-600">(20.9% de ciudadanos)</span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
+                    <div id="predictions-content">
+                        <!-- Contenedor para candidatos -->
+                        <div id="candidates-grid"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 hidden">
+                            <!-- Candidates loaded here -->
+                        </div>
 
-                <!-- SLIDER DE CONFIANZA -->
-                <div id="confidence-section" class="hidden bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8 mb-8 animate-slide-up">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                        <span class="mr-3 text-3xl">2️⃣</span> 
-                        <span>¿Qué tan seguro estás de tu elección?</span>
-                    </h2>
-
-                    <div class="max-w-3xl mx-auto">
-                        <div class="relative mb-8">
-                            <input type="range" id="confidence-slider" min="50" max="100" step="25" value="75"
-                                   class="w-full cursor-pointer">
-                            <div class="flex justify-between mt-6 text-sm font-bold">
-                                <div class="text-center">
-                                    <div class="text-red-600 text-lg">50%</div>
-                                    <div class="text-xs text-slate-600 mt-1">Dudoso</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-amber-600 text-lg">75%</div>
-                                    <div class="text-xs text-slate-600 mt-1">Probable</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-emerald-600 text-lg">100%</div>
-                                    <div class="text-xs text-slate-600 mt-1">Seguro</div>
-                                </div>
+                        <!-- Contenedor para resultados -->
+                        <div id="predictions-results" class="hidden">
+                            <h4 class="text-xl font-black italic uppercase tracking-tighter mb-8 text-center">Ranking de
+                                Tendencias</h4>
+                            <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Results loaded here -->
                             </div>
                         </div>
 
-                        <div class="text-center p-8 bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 rounded-2xl border-3 border-blue-200 shadow-inner">
-                            <div class="text-sm text-slate-600 mb-3 font-medium">Tu nivel de confianza actual:</div>
-                            <div class="text-6xl font-black bg-gradient-to-r from-blue-900 to-emerald-600 bg-clip-text text-transparent mb-3" id="confidence-value">75%</div>
-                            <div class="text-base text-slate-700 font-medium" id="confidence-label">Probablemente votaré por este candidato</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BOTÓN DE ENVÍO -->
-                <div id="submit-section" class="hidden text-center mb-8 animate-slide-up">
-                    <button onclick="submitPrediction()" id="btn-submit-prediction"
-                            class="px-16 py-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-emerald-700 text-white font-black text-2xl rounded-2xl shadow-2xl transition transform hover:scale-105 hover:shadow-emerald-500/50">
-                        ✅ Enviar Predicción (+100 Puntos)
-                    </button>
-                    <p class="text-sm text-slate-500 mt-4 font-medium">🔐 Tu predicción es completamente anónima y cifrada</p>
-                </div>
-
-                <!-- RESULTADOS EN VIVO -->
-                <div id="results-section" class="hidden animate-slide-up">
-                    <div class="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 rounded-2xl shadow-2xl p-8 mb-8 text-white">
-                        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-                            <h2 class="text-3xl font-bold flex items-center">
-                                <span class="mr-3">📊</span> Resultados en Tiempo Real
-                            </h2>
-                            <span class="flex items-center text-sm bg-emerald-500 px-5 py-2.5 rounded-full font-bold shadow-lg">
-                                <span class="w-2.5 h-2.5 bg-white rounded-full mr-2 pulse"></span>
-                                ACTUALIZANDO EN VIVO
-                            </span>
-                        </div>
-                        <p class="text-blue-100 mb-8 text-lg">Predicciones agregadas de todos los ciudadanos participantes en Guerrero</p>
-                        
-                        <div class="grid md:grid-cols-2 gap-8">
-                            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                                <canvas id="resultsChart" height="300"></canvas>
-                            </div>
-                            <div id="results-list" class="space-y-4">
-                                <!-- Llenado dinámicamente -->
-                            </div>
-                        </div>
-
-                        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
-                                <div class="text-4xl font-black mb-1" id="total-predictions">0</div>
-                                <div class="text-sm text-blue-200 font-medium">Predicciones Totales</div>
-                            </div>
-                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
-                                <div class="text-4xl font-black mb-1" id="total-municipalities">85</div>
-                                <div class="text-sm text-blue-200 font-medium">Municipios Cubiertos</div>
-                            </div>
-                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 text-center border border-white/20">
-                                <div class="text-4xl font-black mb-1" id="avg-confidence">78%</div>
-                                <div class="text-sm text-blue-200 font-medium">Confianza Promedio</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- COMPARATIVA HISTÓRICA -->
-                    <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-8">
-                        <h3 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                            <span class="mr-3">📈</span> Comparativa con Resultados Históricos
-                        </h3>
-                        <p class="text-slate-600 mb-6">Contrasta las predicciones actuales con datos reales del INE</p>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gradient-to-r from-slate-50 to-blue-50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-sm font-bold text-slate-700">Partido/Coalición</th>
-                                        <th class="px-6 py-4 text-center text-sm font-bold text-blue-700">Predicción 2027</th>
-                                        <th class="px-6 py-4 text-center text-sm font-bold text-slate-600">Real 2021</th>
-                                        <th class="px-6 py-4 text-center text-sm font-bold text-slate-500">Real 2018</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="comparison-table" class="divide-y divide-slate-100">
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-8 text-center text-slate-400">
-                                            Cargando datos comparativos...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- Estado inicial -->
+                        <div id="predictions-placeholder"
+                            class="col-span-full py-20 text-center opacity-20 uppercase font-black italic tracking-widest">
+                            Selecciona un municipio para ver candidatos municipales
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
+    </main>
 
+    <!-- SURVEY MODAL -->
+    <div id="survey-modal"
+        class="fixed inset-0 z-[100] hidden bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4">
+        <div
+            class="w-full max-w-5xl glass-card rounded-[3.5rem] border-white/5 max-h-[95vh] overflow-y-auto relative shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
+            <button onclick="closeSurvey()"
+                class="absolute top-10 right-10 w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-3xl font-thin transition">&times;</button>
+            <div class="p-16">
+                <header class="mb-16 border-l-4 border-amber-600 pl-8">
+                    <span id="modal-level"
+                        class="text-amber-500 font-black uppercase tracking-[0.4em] text-[10px]">CÁMARA DE VOTO</span>
+                    <h2 id="modal-title"
+                        class="text-5xl font-black mt-4 leading-none tracking-tighter uppercase italic">Cruce de <span
+                            class="text-amber-500">Tendencias</span></h2>
+                </header>
+
+                <div id="modal-content" class="space-y-20">
+                    <!-- Dynamic Questions -->
+                </div>
+
+                <!-- PANEL RESULTADOS EN VIVO -->
+                <div id="live-results-panel" class="mt-12 pt-12 border-t border-white/10 hidden">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xl font-black uppercase italic text-white">Resultados <span
+                                class="text-[#FF8C00]">Preliminares</span></h3>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-[#E63946] rounded-full animate-pulse"></span>
+                            <span class="text-[9px] font-bold text-[#B0B0B0] uppercase tracking-widest">Actualizando
+                                cada 5s</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#1A2633] p-6 rounded-3xl border border-white/5">
+                        <canvas id="resultsChart" style="max-height: 300px;"></canvas>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-6">
+                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
+                            <div id="total-votes-live" class="text-2xl font-black text-[#FF8C00]">0</div>
+                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Votos Totales</div>
+                        </div>
+                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
+                            <div id="avg-confidence-live" class="text-2xl font-black text-[#FF8C00]">--</div>
+                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Confianza Promedio</div>
+                        </div>
+                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
+                            <div id="last-update-live" class="text-xs font-bold text-[#FF8C00]">--:--</div>
+                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Última Actualización</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-24">
+                    <button onclick="submitSurvey()"
+                        class="w-full bg-amber-600 p-8 rounded-[2rem] font-black text-2xl shadow-3xl shadow-amber-900/40 hover:bg-amber-700 transition transform hover:scale-[1.02] uppercase tracking-tighter italic">Sellar
+                        Predicción Democrática</button>
+                    <p class="text-center text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-6">Este acto
+                        es irreversible y queda grabado en la caja negra del sistema</p>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- LOGIC -->
     <script>
-        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
-        let authToken = localStorage.getItem('authToken');
-        let currentUser = null;
-        let selectedCandidate = null;
-        let candidates = [];
+        const API_URL = '/api';
+        let currentSurveyId = null;
+        let selectedCandidateId = null;
+        let auth_token = localStorage.getItem('guardianToken');
 
-        // ==================== AUTENTICACIÓN ====================
+        const MUNICIPIOS_GUERRERO = [
+            { id: 1, name: "Acapulco de Juárez" }, { id: 2, name: "Acatepec" }, { id: 3, name: "Ahuacuotzingo" },
+            { id: 4, name: "Ajuchitlan del Progreso" }, { id: 5, name: "Alcozauca de Guerrero" }, { id: 6, name: "Alpoyeca" },
+            { id: 7, name: "Apaxtla" }, { id: 8, name: "Arcelia" }, { id: 9, name: "Atenango del Río" },
+            { id: 10, name: "Atlamajalcingo del Monte" }, { id: 11, name: "Atlixtac" }, { id: 12, name: "Atoyac de Álvarez" },
+            { id: 13, name: "Ayutla de los Libres" }, { id: 14, name: "Azoyu" }, { id: 15, name: "Benito Juárez" },
+            { id: 16, name: "Buenavista de Cuéllar" }, { id: 17, name: "Chilapa de Álvarez" }, { id: 18, name: "Chilpancingo de los Bravo" },
+            { id: 19, name: "Coahuayutla de José María Izazaga" }, { id: 20, name: "Cochoapa el Grande" }, { id: 21, name: "Cocula" },
+            { id: 22, name: "Copala" }, { id: 23, name: "Copalillo" }, { id: 24, name: "Copanatoyac" },
+            { id: 25, name: "Coyuca de Benítez" }, { id: 26, name: "Coyuca de Catalán" }, { id: 27, name: "Cuajinicuilapa" },
+            { id: 28, name: "Cualac" }, { id: 29, name: "Cuautepec" }, { id: 30, name: "Cuetzala del Progreso" },
+            { id: 31, name: "Cutzamala de Pinzón" }, { id: 32, name: "Eduardo Neri" }, { id: 33, name: "Florencio Villarreal" },
+            { id: 34, name: "General Canuto A. Neri" }, { id: 35, name: "General Heliodoro Castillo" }, { id: 36, name: "Huamuxtitlán" },
+            { id: 37, name: "Huitzuco de los Figueroa" }, { id: 38, name: "Iguala de la Independencia" }, { id: 39, name: "Igualapa" },
+            { id: 40, name: "Iliatenco" }, { id: 41, name: "Ixcateopan de Cuauhtémoc" }, { id: 42, name: "José Joaquín de Herrera" },
+            { id: 43, name: "Juan R. Escudero" }, { id: 44, name: "Juchitán" }, { id: 45, name: "La Unión de Isidoro Montes de Oca" },
+            { id: 46, name: "Las Vigas" }, { id: 47, name: "Leonardo Bravo" }, { id: 48, name: "Malinaltepec" },
+            { id: 49, name: "Marquelia" }, { id: 50, name: "Mártir de Cuilapan" }, { id: 51, name: "Metlatonoc" },
+            { id: 52, name: "Mochitlán" }, { id: 53, name: "Nuu Savi" }, { id: 54, name: "Olinala" },
+            { id: 55, name: "Ometepec" }, { id: 56, name: "Pedro Ascencio Alquisiras" }, { id: 57, name: "Petatlán" },
+            { id: 58, name: "Pilcaya" }, { id: 59, name: "Pungarabato" }, { id: 60, name: "Quechultenango" },
+            { id: 61, name: "San Luis Acatlán" }, { id: 62, name: "San Marcos" }, { id: 63, name: "San Miguel Totolapan" },
+            { id: 64, name: "San Nicolás" }, { id: 65, name: "Santa Cruz del Rincón" }, { id: 66, name: "Taxco de Alarcón" },
+            { id: 67, name: "Tecoanapa" }, { id: 68, name: "Tecpan de Galeana" }, { id: 69, name: "Teloloapan" },
+            { id: 70, name: "Tepecoacuilco de Trujano" }, { id: 71, name: "Tetipac" }, { id: 72, name: "Tixtla de Guerrero" },
+            { id: 73, name: "Tlacoachistlahuaca" }, { id: 74, name: "Tlacoapa" }, { id: 75, name: "Tlalchapa" },
+            { id: 76, name: "Tlalixtaquilla de Maldonado" }, { id: 77, name: "Tlapa de Comonfort" }, { id: 78, name: "Tlapehuala" },
+            { id: 79, name: "Xalpatlahuac" }, { id: 80, name: "Xochihuehuetlán" }, { id: 81, name: "Xochistlahuaca" },
+            { id: 82, name: "Zapotitlán Tablas" }, { id: 83, name: "Zihuatanejo de Azueta" }, { id: 84, name: "Zirandaro" },
+            { id: 85, name: "Zitlala" }
+        ];
 
-        document.getElementById('phone').addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '').slice(0, 10);
-            e.target.value = value;
-            
-            const preview = document.getElementById('phone-preview');
-            if (value.length === 10) {
-                preview.textContent = `✓ Se enviará código a: +52 ${value.slice(0,3)} ${value.slice(3,6)} ${value.slice(6)}`;
-                preview.classList.remove('hidden');
-            } else {
-                preview.classList.add('hidden');
-            }
-        });
+        const ASPIRANTES = [
+            { id: "felix_salgado", name: "Félix Salgado", party: "Morena", img: "/img/felix_salgado.jpg" },
+            { id: "esthela_damian", name: "Esthela Damian Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
+            { id: "beatriz_mojica", name: "Beatriz Mojica", party: "Morena", img: "/img/beatriz_mojica.jpg" },
+            { id: "abelina_lopez", name: "Abelina Lopez Rodriguez", party: "Morena", img: "/img/abelina_lopez.jpg" },
+            { id: "victoriano_wences", name: "Victoriano Wences Real", party: "PT", img: "/img/victoriano_wences.jpg" },
+            { id: "ruben_cayetano", name: "Ruben Cayetano Garcia", party: "Morena", img: "/img/ruben_cayetano.jpg" },
+            { id: "pablo_sandoval", name: "Pablo Amilcar Sandoval", party: "Morena", img: "/img/pablo_sandoval.jpg" },
+            { id: "jacinto_gonzalez", name: "Jacinto Gonzalez Varona", party: "Morena", img: "/img/jacinto_gonzalez.jpg" },
+            { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
+            { id: "gabriela_bernal", name: "Gabriela Bernal Resendiz", party: "MC", img: "/img/gabriela_bernal.jpg" },
+            { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
+            { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
+            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
+        ];
 
-        async function requestCode() {
-            const phone = document.getElementById('phone').value.trim();
-            if (!/^\d{10}$/.test(phone)) {
-                showMessage('auth-message', 'Por favor ingresa exactamente 10 dígitos', 'error');
-                return;
-            }
+        // --- AUTH ---
+        let userPhone = '';
 
-            const btn = document.getElementById('btn-request-code');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Enviando código...';
+        async function sendCode() {
+            const phone = document.getElementById('user-phone').value.trim();
+            if (phone.length < 10) return showToast('Número telefónico inválido', 'error');
 
+            userPhone = phone;
             try {
-                const response = await fetch(`${API_URL}/auth/request-code`, {
+                const res = await fetch(`${API_URL}/auth/request-code`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone })
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const formatted = `+52 ${phone.slice(0,3)} ${phone.slice(3,6)} ${phone.slice(6)}`;
-                    document.getElementById('sent-to-phone').textContent = formatted;
-                    
-                    showMessage('auth-message', 
-                        data.debug_otp ? `✅ Código de desarrollo: ${data.debug_otp}` : '✅ Código enviado por SMS. Revisa tu teléfono.', 
-                        'success');
-                    
-                    document.getElementById('phone-form').classList.add('hidden');
-                    document.getElementById('code-form').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('code').focus(), 100);
+                if (res.ok) {
+                    document.getElementById('phone-step').classList.add('hidden');
+                    document.getElementById('code-step').classList.remove('hidden');
+                    showToast('📩 Código de verificación enviado');
                 } else {
-                    showMessage('auth-message', data.error || 'Error al solicitar código. Intenta de nuevo.', 'error');
+                    const err = await res.json();
+                    showToast(err.error || 'Error al enviar código', 'error');
                 }
-            } catch (error) {
-                showMessage('auth-message', 'Error de conexión con el servidor', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Solicitar Código de Verificación';
-            }
+            } catch (e) { showToast('Falla de Red', 'error'); }
         }
 
         async function verifyCode() {
-            const phone = document.getElementById('phone').value.trim();
-            const code = document.getElementById('code').value.trim();
-
-            if (!code || code.length < 4) {
-                showMessage('auth-message', 'El código debe tener al menos 4 dígitos', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('btn-verify');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Verificando...';
+            const code = document.getElementById('verify-code').value.trim();
+            if (code.length < 6) return showToast('Código incompleto', 'error');
 
             try {
-                const response = await fetch(`${API_URL}/auth/verify-code`, {
+                const res = await fetch(`${API_URL}/auth/verify-code`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, code })
+                    body: JSON.stringify({ phone: userPhone, code })
                 });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('guardianToken', data.token);
+                    auth_token = data.token;
 
-                const data = await response.json();
+                    // Actualizar UI con datos del usuario
+                    document.getElementById('user-points').textContent = `${data.user.points || 0} PTS de Influencia`;
 
-                if (response.ok) {
-                    authToken = data.token;
-                    currentUser = data.user;
-                    localStorage.setItem('authToken', authToken);
-                    
-                    showAuthenticatedUI();
+                    showPortal();
+                    showToast('✅ Acceso Autorizado', 'success');
                 } else {
-                    showMessage('auth-message', data.error || 'Código incorrecto. Verifica e intenta de nuevo.', 'error');
-                    document.getElementById('code').value = '';
-                    document.getElementById('code').focus();
+                    showToast(data.error || 'Código Inválido', 'error');
                 }
-            } catch (error) {
-                showMessage('auth-message', 'Error de conexión con el servidor', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Verificar';
-            }
+            } catch (e) { showToast('Falla de Sincronización', 'error'); }
         }
 
-        function cancelVerification() {
-            document.getElementById('phone-form').classList.remove('hidden');
-            document.getElementById('code-form').classList.add('hidden');
-            document.getElementById('code').value = '';
-            document.getElementById('phone-preview').classList.add('hidden');
-            document.getElementById('auth-message').innerHTML = '';
-        }
-
-        function showAuthenticatedUI() {
+        async function showPortal() {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('portal-section').classList.remove('hidden');
-            document.getElementById('user-menu').classList.remove('hidden');
-            
-            updateUserInfo();
-            loadCandidates();
-        }
+            document.getElementById('user-info').classList.remove('hidden');
 
-        function updateUserInfo() {
-            if (currentUser) {
-                document.getElementById('user-points').textContent = currentUser.points || 0;
-                document.getElementById('user-points-display').textContent = `${currentUser.points || 0} puntos`;
-                document.getElementById('user-level').textContent = currentUser.level || 'Observador';
-            }
-        }
-
-        function logout() {
-            if (confirm('¿Seguro que deseas cerrar sesión?')) {
-                localStorage.removeItem('authToken');
-                authToken = null;
-                currentUser = null;
-                location.reload();
-            }
-        }
-
-        // ==================== CANDIDATOS ====================
-
-        async function loadCandidates() {
-            try {
-                const response = await fetch(`${API_URL}/candidates?election_type=Gubernatura`);
-                candidates = await response.json();
-                
-                const container = document.getElementById('candidates-container');
-                container.innerHTML = candidates.map(c => `
-                    <div class="candidate-card bg-white border-2 border-slate-200 rounded-2xl p-6 cursor-pointer shadow-md" 
-                         data-id="${c.id}" onclick="selectCandidate(${c.id})">
-                        <div class="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br ${getPartyColor(c.party)} flex items-center justify-center text-white text-4xl font-black shadow-lg">
-                            ${c.name.split(' ').map(n => n[0]).join('').slice(0,2)}
-                        </div>
-                        <h3 class="font-bold text-xl text-slate-900 text-center mb-2">${c.name}</h3>
-                        <p class="text-sm text-white text-center font-bold py-2 px-4 rounded-full ${getPartyBadge(c.party)} inline-block w-full">${c.party}</p>
-                        <div class="mt-4 pt-4 border-t border-slate-200 text-xs text-slate-600 text-center leading-relaxed">
-                            ${c.bio || 'Aspirante a la Gubernatura de Guerrero 2027'}
-                        </div>
-                    </div>
-                `).join('');
-
-                document.getElementById('undecided').addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        document.querySelectorAll('.candidate-card').forEach(card => {
-                            card.classList.remove('selected');
-                        });
-                        selectedCandidate = null;
-                        document.getElementById('confidence-section').classList.add('hidden');
-                        document.getElementById('submit-section').classList.remove('hidden');
+            // Cargar datos reales si ya tenemos token pero no pasamos por verifyCode (ej: reload)
+            if (!document.getElementById('user-points').textContent.includes('PTS')) {
+                try {
+                    const res = await fetch(`${API_URL}/auth/me`, {
+                        headers: { 'Authorization': `Bearer ${auth_token}` }
+                    });
+                    if (res.ok) {
+                        const user = await res.json();
+                        document.getElementById('user-points').textContent = `${user.points || 0} PTS de Influencia`;
                     } else {
-                        document.getElementById('submit-section').classList.add('hidden');
+                        return logout(); // Token expirado
                     }
-                });
-            } catch (error) {
-                console.error('Error cargando candidatos:', error);
-                document.getElementById('candidates-container').innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <p class="text-red-600 font-semibold">Error al cargar candidatos. Recarga la página.</p>
-                    </div>
-                `;
+                } catch (e) { }
+            }
+
+            loadSurveys();
+            populateMunicipios();
+        }
+
+        // --- DASHBOARD ---
+        async function loadSurveys() {
+            try {
+                console.log('🔄 Cargando encuestas activas...');
+                const res = await fetch(`${API_URL}/surveys/active`);
+                const data = await res.json();
+
+                console.log('📊 Respuesta de /api/surveys/active:', data);
+
+                const grid = document.getElementById('surveys-grid');
+
+                if (!data.surveys || data.surveys.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full border-2 border-dashed border-white/5 rounded-[3rem] p-20 text-center uppercase font-black opacity-10 tracking-[0.5em] italic">Sin Encuestas Activas</div>';
+                    return;
+                }
+
+                grid.innerHTML = data.surveys.map(s => {
+                    const typeLabel = s.electionType === 'gubernatura' ? 'ESTATAL' : 'MUNICIPAL';
+                    const typeColor = s.electionType === 'gubernatura' ? 'amber' : 'emerald';
+
+                    return `
+                        <div onclick="openSurvey(${s.id})" class="glass-card p-10 rounded-[2.5rem] cursor-pointer hover:bg-slate-900 border-white/5 transition-all group relative overflow-hidden">
+                          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition">
+                            <svg class="w-20 h-20 text-${typeColor}-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
+                          </div>
+                          <span class="bg-${typeColor}-600/10 text-${typeColor}-500 font-extrabold text-[9px] px-3 py-1 rounded-full uppercase tracking-widest border border-${typeColor}-600/20">${typeLabel}</span>
+                          <h3 class="text-3xl font-black mt-6 tracking-tight group-hover:text-${typeColor}-500 transition-colors uppercase italic">${s.title}</h3>
+                          <p class="mt-4 text-slate-500 text-sm font-medium line-clamp-2">${s.description || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
+                          <div class="mt-10 flex justify-between items-end">
+                            <div>
+                              <div class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Impacto</div>
+                              <span class="text-${typeColor}-500 font-black text-xl italic">${s.totalRespondents || 0} <span class="text-xs uppercase not-italic tracking-widest opacity-40 ml-1">Votos</span></span>
+                            </div>
+                            <span class="w-12 h-12 rounded-2xl bg-${typeColor}-600 flex items-center justify-center group-hover:translate-x-2 transition-transform shadow-lg shadow-${typeColor}-900/40">
+                              <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </span>
+                          </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error('❌ Error cargando encuestas:', e);
+                showToast('Falla de Red al cargar encuestas', 'error');
             }
         }
 
-        function getPartyColor(party) {
-            const colors = {
-                'Morena': 'from-red-600 to-red-700',
-                'PRI-PAN-PRD': 'from-blue-600 to-blue-700',
-                'PVEM': 'from-green-600 to-green-700',
-                'Independiente': 'from-slate-600 to-slate-700'
-            };
-            return colors[party] || 'from-slate-500 to-slate-600';
-        }
+        async function openSurvey(id) {
+            try {
+                currentSurveyId = id;
+                document.getElementById('survey-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
 
-        function getPartyBadge(party) {
-            const badges = {
-                'Morena': 'bg-red-600',
-                'PRI-PAN-PRD': 'bg-blue-600',
-                'PVEM': 'bg-green-600',
-                'Independiente': 'bg-slate-600'
-            };
-            return badges[party] || 'bg-slate-500';
-        }
+                const content = document.getElementById('modal-content');
+                content.innerHTML = '<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest">Cargando encuesta...</div>';
 
-        function selectCandidate(id) {
-            selectedCandidate = id;
-            document.getElementById('undecided').checked = false;
-            
-            document.querySelectorAll('.candidate-card').forEach(card => {
-                if (parseInt(card.dataset.id) === id) {
-                    card.classList.add('selected');
+                const res = await fetch(`${API_URL}/surveys/${id}/questions`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error);
+                if (!data.survey) throw new Error('Estructura de datos incorrecta');
+
+                document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
+                document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
+
+                // ✅ CARGAR CANDIDATOS DINÁMICAMENTE DESDE LA BD
+                let candidates = [];
+                let candidateGridRendered = false;
+
+                if (data.survey.electionType === 'gubernatura') {
+                    // Cargar candidatos de gubernatura
+                    try {
+                        const candidatesRes = await fetch(`${API_URL}/data/candidates/gubernatura`);
+                        if (candidatesRes.ok) {
+                            const candidatesData = await candidatesRes.json();
+                            console.log('✅ Candidatos gubernatura:', candidatesData);
+                            candidates = candidatesData.map(c => ({
+                                id: c.id,
+                                name: c.name,
+                                party: c.party,
+                                img: c.photo_url || c.img || null
+                            }));
+                        } else {
+                            console.error('❌ Error fetch gubernatura:', candidatesRes.status);
+                        }
+                    } catch (e) {
+                        console.error('❌ Error cargando candidatos gubernatura:', e);
+                    }
                 } else {
-                    card.classList.remove('selected');
+                    // Cargar candidatos municipales
+                    const munId = data.survey.municipalityId || data.survey.municipality_id;
+
+                    if (!munId) {
+                        console.error('❌ No hay municipalityId para encuesta municipal');
+                        candidates = [];
+                    } else {
+                        try {
+                            const candidatesRes = await fetch(`${API_URL}/data/candidates/${munId}`);
+                            if (candidatesRes.ok) {
+                                const candidatesData = await candidatesRes.json();
+                                console.log('✅ Candidatos municipales:', candidatesData);
+                                candidates = candidatesData.map(c => ({
+                                    id: c.id,
+                                    name: c.name,
+                                    party: c.party,
+                                    img: c.photo_url || c.img || null
+                                }));
+                            } else {
+                                console.error('❌ Error fetch candidatos:', candidatesRes.status);
+                                candidates = [];
+                            }
+                        } catch (e) {
+                            console.error('❌ Error cargando candidatos municipales:', e);
+                            candidates = [];
+                        }
+                    }
+                }
+
+
+                // Verificar que hay candidatos
+                if (candidates.length === 0) {
+                    console.warn('⚠️ No se encontraron candidatos para renderizar');
+                    if (data.survey.electionType === 'gubernatura') {
+                        candidates = ASPIRANTES; // Fallback
+                        console.log('📌 Usando ASPIRANTES fallback');
+                    }
+                }
+
+                console.log('📊 Total candidatos a renderizar:', candidates.length);
+                console.log('📋 Candidatos:', candidates);
+
+                content.innerHTML = data.questions.map((q, qIdx) => {
+                    // Manejo de preguntas de opción única/múltiple
+                    if (q.questionType === 'choice' || q.questionType === 'single_choice' || q.questionType === 'candidate_selection') {
+
+                        // ✅ VERIFICAR SI LA PREGUNTA TIENE OPCIONES PROPIAS
+                        let customOptions = [];
+                        try {
+                            if (q.options) {
+                                customOptions = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+                            }
+                        } catch (e) {
+                            console.warn('Error parseando opciones de pregunta:', q.id, e);
+                        }
+
+                        // ✅ CASO 1: Pregunta con candidatos (tiene photo)
+                        if (customOptions && customOptions.length > 0 && customOptions[0].photo) {
+                            console.log(`✅ [ADMIN] Candidatos en options: ${customOptions.length}`);
+
+                            return `
+                                <div class="space-y-10 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
+                                        <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
+                                    </div>
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                        ${customOptions.map(opt => {
+                                const label = opt.label || opt.name || opt.value || 'Sin nombre';
+                                const photo = opt.photo || opt.photo_url || opt.img || null;
+                                const value = opt.value || opt.label || label;
+
+                                return `
+                                                <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
+                                                     data-question="${q.id}" 
+                                                     class="option-card candidate-card glass-card p-6 rounded-3xl text-center group transition-all cursor-pointer hover:scale-[1.03] active:scale-95 border border-white/5 relative overflow-hidden">
+                                                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition"></div>
+                                                    <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
+                                                        <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                                                            ${photo ?
+                                        `<img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${label.charAt(0)}'">` :
+                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${label.charAt(0)}</div>`
+                                    }
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="text-sm font-black uppercase tracking-tight text-white mb-2 line-clamp-2">${label}</h5>
+                                                    <input type="radio" name="q-${q.id}" value="${value.replace(/'/g, "\\'")}" class="hidden">
+                                                </div>
+                                            `;
+                            }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // ✅ CASO 2: Pregunta con opciones simples (sin photo)
+                        if (customOptions && customOptions.length > 0 && !customOptions[0].photo) {
+                            return `
+                                <div class="space-y-8 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center font-black text-slate-950">${qIdx + 1}</div>
+                                        <h4 class="text-2xl font-black uppercase tracking-tighter">${q.questionText}</h4>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        ${customOptions.map(opt => {
+                                const label = typeof opt === 'object' ? (opt.text || opt.label || opt.name || JSON.stringify(opt)) : opt;
+                                const val = typeof opt === 'object' ? (opt.id || opt.value || label) : opt;
+                                return `
+                                                <div onclick="selectOption(${q.id}, '${val}', this)" 
+                                                     data-question="${q.id}" 
+                                                     class="option-card glass-card p-6 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-amber-600/10 transition-all border border-white/5">
+                                                    <div class="w-6 h-6 rounded-full border-2 border-amber-600/30 flex items-center justify-center">
+                                                        <div class="w-3 h-3 rounded-full bg-amber-600 opacity-0 transition"></div>
+                                                    </div>
+                                                    <span class="font-bold text-lg uppercase italic">${label}</span>
+                                                    <input type="radio" name="q-${q.id}" value="${val}" class="hidden">
+                                                </div>
+                                            `;
+                            }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // ✅ CASO 3: Pregunta sin opciones - Usar candidatos de BD
+                        const isReasonQuestion = q.questionText.toLowerCase().includes('razón') ||
+                            q.questionText.toLowerCase().includes('motivo') ||
+                            q.questionText.toLowerCase().includes('reason');
+
+                        if (candidateGridRendered) {
+                            if (isReasonQuestion) {
+                                return `
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-500">${qIdx + 1}</div>
+                                            <h4 class="text-xl font-bold text-slate-400 italic">${q.questionText}</h4>
+                                        </div>
+                                        <textarea class="survey-input w-full p-6 bg-slate-900/50 rounded-2xl border border-white/10" 
+                                                  placeholder="Escribe aquí tu motivo..."
+                                                  data-question-id="${q.id}"
+                                                  oninput="surveyResponses[${q.id}] = this.value"></textarea>
+                                    </div>
+                                `;
+                            } else {
+                                console.log(`⚠️ [DEBUG] Pregunta duplicada saltada: "${q.questionText}"`);
+                                return '';
+                            }
+                        }
+
+                        candidateGridRendered = true;
+
+                        if (candidates.length === 0) {
+                            return `
+                                <div class="space-y-8">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center font-black text-slate-950">${qIdx + 1}</div>
+                                        <h4 class="text-2xl font-black uppercase tracking-tighter">${q.questionText}</h4>
+                                    </div>
+                                    <div class="p-10 border-2 border-dashed border-white/5 rounded-3xl text-center opacity-40 uppercase font-bold tracking-widest text-sm text-amber-500/60">
+                                        Candidatos no detectados en la BD para este municipio
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="space-y-10 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
+                                    <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
+                                </div>
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                    ${candidates.map(c => `
+                                        <div onclick="selectOption(${q.id}, '${c.id}', this)" 
+                                             data-question="${q.id}" 
+                                             class="option-card candidate-card glass-card p-6 rounded-3xl text-center group transition-all cursor-pointer hover:scale-[1.03] active:scale-95 border border-white/5 relative overflow-hidden">
+                                            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition"></div>
+                                            <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
+                                                <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                                                    ${c.img ?
+                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${c.name.charAt(0)}'">` :
+                                `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${c.name.charAt(0)}</div>`
+                            }
+                                                </div>
+                                            </div>
+                                            <h5 class="text-sm font-black uppercase tracking-tight text-white mb-2 line-clamp-1">${c.name}</h5>
+                                            <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                                                <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">${c.party}</span>
+                                            </div>
+                                            <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Pregunta de Confianza
+                    if (q.questionType === 'confidence_scale') {
+                        return `
+                            <div class="space-y-12 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
+                                    <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
+                                </div>
+                                
+                                <div class="text-center mb-6">
+                                    <p class="text-slate-400 text-sm font-medium">
+                                        🎯 Desliza el control para indicar qué tan seguro estás de tu decisión
+                                    </p>
+                                </div>
+                                
+                                <div class="max-w-2xl mx-auto p-12 glass-card rounded-[3rem] border-white/5 relative">
+                                    <div class="flex justify-between items-center mb-12">
+                                        <div class="text-center">
+                                            <div class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Nivel</div>
+                                            <div class="text-sm font-bold text-slate-300">DUDOSO</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-7xl font-black text-amber-500 italic drop-shadow-[0_0_20px_rgba(217,119,6,0.3)]">
+                                                <span id="conf-val-${q.id}">50</span>%
+                                            </div>
+                                            <div class="text-xs text-slate-500 mt-2 font-bold uppercase tracking-widest" id="conf-label-${q.id}">Moderado</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Nivel</div>
+                                            <div class="text-sm font-bold text-amber-500">SEGURO</div>
+                                        </div>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="50" 
+                                           class="survey-input w-full h-4 bg-slate-800 rounded-full appearance-none cursor-pointer accent-amber-500" 
+                                           data-question-id="${q.id}" 
+                                           data-type="confidence"
+                                           oninput="
+                                               document.getElementById('conf-val-${q.id}').textContent = this.value;
+                                               const labels = {
+                                                   0: 'Muy Dudoso', 10: 'Muy Dudoso', 20: 'Muy Dudoso',
+                                                   30: 'Dudoso', 40: 'Dudoso',
+                                                   50: 'Moderado', 60: 'Moderado',
+                                                   70: 'Seguro', 80: 'Seguro',
+                                                   90: 'Muy Seguro', 100: 'Muy Seguro'
+                                               };
+                                               const val = Math.round(this.value / 10) * 10;
+                                               document.getElementById('conf-label-${q.id}').textContent = labels[val] || 'Moderado';
+                                           ">
+                                    <div class="flex justify-between mt-4 text-xs text-slate-600 font-bold uppercase tracking-widest">
+                                        <span>0%</span>
+                                        <span>25%</span>
+                                        <span>50%</span>
+                                        <span>75%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return '';
+                }).join('');
+
+                startLivePolling(id);
+
+            } catch (e) {
+                console.error('❌ ERROR CRÍTICO en openSurvey:', e);
+                showToast('Error al cargar encuesta: ' + e.message, 'error');
+                closeSurvey();
+            }
+        }
+
+
+        let surveyResponses = {};
+
+        function selectOption(qId, val, el) {
+            document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
+                c.classList.remove('ring-4', 'ring-amber-500', 'bg-slate-900');
+                const radio = c.querySelector('input[type="radio"]');
+                if (radio) radio.checked = false;
+            });
+
+            el.classList.add('ring-4', 'ring-amber-500', 'bg-slate-900');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+
+            surveyResponses[qId] = val;
+            showToast('Candidato Seleccionado');
+        }
+
+        // ====== RESULTADOS EN VIVO ======
+        let chartInstance = null;
+        let pollInterval = null;
+
+        async function fetchLiveResults(surveyId) {
+            try {
+                const response = await fetch(`${API_URL}/surveys/${surveyId}/results`);
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.log('Sin resultados aún:', error);
+                return null;
+            }
+        }
+
+        function updateLiveChart(data) {
+            if (!data || !data.candidates) return;
+
+            const ctx = document.getElementById('resultsChart')?.getContext('2d');
+            if (!ctx) return;
+
+            // Mapear nombres usando ASPIRANTES (si coincide)
+            const labels = data.candidates.map(c => {
+                const cand = ASPIRANTES.find(a => a.id === c.id);
+                return cand ? cand.name.split(' ')[0] : c.id.split('_')[0];
+            });
+            const votes = data.candidates.map(c => c.votes || 0);
+
+            // Destruir gráfico anterior
+            if (chartInstance) chartInstance.destroy();
+
+            // Crear nuevo gráfico
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Votos',
+                        data: votes,
+                        backgroundColor: labels.map((_, i) =>
+                            ['#FF8C00', '#E63946', '#A78BFA'][i % 3]
+                        ),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#B0B0B0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#B0B0B0' }
+                        }
+                    }
                 }
             });
 
-            document.getElementById('confidence-section').classList.remove('hidden');
-            document.getElementById('submit-section').classList.remove('hidden');
-            
-            setTimeout(() => {
-                document.getElementById('confidence-section').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-            }, 100);
+            // Actualizar contadores
+            document.getElementById('total-votes-live').textContent = data.totalVotes || 0;
+            document.getElementById('avg-confidence-live').textContent = (data.avgConfidence || 0).toFixed(1);
+            document.getElementById('last-update-live').textContent = new Date().toLocaleTimeString('es-MX');
         }
 
-        // ==================== SLIDER DE CONFIANZA ====================
+        function startLivePolling(surveyId) {
+            const panel = document.getElementById('live-results-panel');
+            if (!panel) return;
 
-        const slider = document.getElementById('confidence-slider');
-        const confidenceValue = document.getElementById('confidence-value');
-        const confidenceLabel = document.getElementById('confidence-label');
+            // Mostrar panel
+            panel.classList.remove('hidden');
 
-        slider?.addEventListener('input', (e) => {
-            const value = e.target.value;
-            confidenceValue.textContent = `${value}%`;
-            
-            const labels = {
-                '50': 'Dudoso - Podría cambiar de opinión',
-                '75': 'Probablemente votaré por este candidato',
-                '100': 'Totalmente seguro de mi decisión'
+            // Fetch inicial
+            fetchLiveResults(surveyId).then(data => {
+                if (data) updateLiveChart(data);
+            });
+
+            // Poll cada 5 segundos
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(() => {
+                fetchLiveResults(surveyId).then(data => {
+                    if (data) updateLiveChart(data);
+                });
+            }, 5000);
+        }
+
+        function stopLivePolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = null;
+            const panel = document.getElementById('live-results-panel');
+            if (panel) panel.classList.add('hidden');
+        }
+        // ====== FIN RESULTADOS EN VIVO ======
+
+        async function submitSurvey() {
+            const inputs = document.querySelectorAll('.survey-input');
+            const responses = [];
+
+            // Recoger respuestas de inputs (texto, sliders de confianza, etc.)
+            inputs.forEach(input => {
+                const qId = parseInt(input.dataset.questionId);
+                const type = input.dataset.type;
+                const value = input.value;
+
+                const response = { questionId: qId, answer: value };
+                if (type === 'confidence') {
+                    response.confidence = parseInt(value);
+                }
+                responses.push(response);
+            });
+
+            // Recoger respuestas de clics (las guardadas en surveyResponses)
+            Object.entries(surveyResponses).forEach(([qId, val]) => {
+                const qIdInt = parseInt(qId);
+                if (!responses.find(r => r.questionId === qIdInt)) {
+                    responses.push({
+                        questionId: qIdInt,
+                        answer: val
+                    });
+                }
+            });
+
+            if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
+
+            try {
+                const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth_token}` },
+                    body: JSON.stringify({ responses })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('✅ Sello Digital Verificado: +50 PTS', 'success');
+                    if (data.pointsEarned) {
+                        const ptsEl = document.getElementById('user-points');
+                        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+                        ptsEl.textContent = `${current + data.pointsEarned} PTS de Influencia`;
+                    }
+                    closeSurvey();
+                    loadSurveys();
+                } else {
+                    showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
+                }
+            } catch (e) { showToast('Fallo de Sincronización', 'error'); }
+        }
+
+        function closeSurvey() {
+            stopLivePolling();
+            document.getElementById('survey-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- INCIDENTS ---
+        async function reportIncident() {
+            const desc = document.getElementById('incident-desc').value.trim();
+            const type = document.getElementById('incident-type').value;
+            const municipalityId = document.getElementById('incident-muni-selector').value;
+
+            if (!municipalityId) return showToast('Selecciona un municipio para el reporte', 'error');
+            if (!desc) return showToast('Escribe una descripción de los hechos', 'error');
+
+            const btn = document.getElementById('report-btn');
+            btn.disabled = true;
+            btn.textContent = 'TRIANGULANDO GPS...';
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                    const res = await fetch(`${API_URL}/incidents`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth_token}` },
+                        body: JSON.stringify({
+                            description: desc,
+                            latitude,
+                            longitude,
+                            type,
+                            municipalityId: parseInt(municipalityId)
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast('✅ Alerta Ciudadana Activada: +50 PTS', 'success');
+                        document.getElementById('incident-desc').value = '';
+                        // Actualizar puntos en UI
+                        const ptsEl = document.getElementById('user-points');
+                        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+                        ptsEl.textContent = `${current + (data.pointsEarned || 50)} PTS de Influencia`;
+                    } else {
+                        showToast('Error: ' + (data.error || 'Falla en el reporte'), 'error');
+                    }
+                } catch (e) { showToast('Error de red', 'error'); }
+                btn.disabled = false;
+                btn.textContent = 'Enviar Alerta con Geolocalización';
+            }, (err) => {
+                showToast('Error GPS: Requerido para veracidad', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Enviar Alerta con Geolocalización';
+            }, { enableHighAccuracy: true, timeout: 5000 });
+        }
+
+        let charts = {};
+
+        function renderCharts(data) {
+            const chartConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9, weight: 'bold' } }, grid: { display: false } },
+                    y: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
             };
-            confidenceLabel.textContent = labels[value] || '';
-        });
 
-        // ==================== ENVIAR PREDICCIÓN ====================
+            // Part Chart
+            if (charts.part) charts.part.destroy();
+            charts.part = new Chart(document.getElementById('participation-chart'), {
+                type: 'line',
+                data: {
+                    labels: data.participation.map(p => p.year),
+                    datasets: [{
+                        data: data.participation.map(p => p.participacion),
+                        borderColor: '#ca8a04',
+                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: chartConfig
+            });
 
-        async function submitPrediction() {
-            if (!selectedCandidate && !document.getElementById('undecided').checked) {
-                alert('⚠️ Selecciona un candidato o marca "Aún no decido"');
+            // Results Chart - Distribución de Fuerzas Políticas
+            if (charts.res) charts.res.destroy();
+
+            // Transformar datos del endpoint a formato esperado
+            const comparisonGrouped = {};
+
+            data.comparison.forEach(row => {
+                const tipo = row.tipo_eleccion;
+                const year = row.election_year.toString();
+                const votes = parseFloat(row.votes || 0);
+
+                if (!comparisonGrouped[tipo]) {
+                    comparisonGrouped[tipo] = {
+                        tipo_eleccion: tipo,
+                        '2024': 0,
+                        '2021': 0,
+                        '2018': 0
+                    };
+                }
+
+                // Sumar votos por año
+                if (comparisonGrouped[tipo][year] !== undefined) {
+                    comparisonGrouped[tipo][year] += votes;
+                }
+            });
+
+            const comparisonArray = Object.values(comparisonGrouped);
+
+            console.log('📊 Comparación transformada:', comparisonArray);
+
+            // Crear labels únicos (sin duplicados)
+            const labels = comparisonArray.map(p => {
+                // Simplificar nombres
+                const nombre = p.tipo_eleccion;
+                if (nombre.includes('Presidencias')) return 'Ayuntamientos';
+                if (nombre.includes('Diputaciones')) return 'Diputación Local';
+                if (nombre.includes('Gubernatura')) return 'Gubernatura';
+                return nombre;
+            });
+
+            const years = ['2024', '2021', '2018'];
+            const datasets = years.map((year, idx) => ({
+                label: year,
+                data: comparisonArray.map(p => p[year] || 0),
+                backgroundColor: idx === 0 ? '#ca8a04' : (idx === 1 ? '#b8860b' : '#8b4513'),
+                borderRadius: 5
+            }));
+
+            charts.res = new Chart(document.getElementById('results-chart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    ...chartConfig,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: 'white',
+                                font: { size: 10, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed.y;
+                                    return `${context.dataset.label}: ${value.toLocaleString()} votos`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'rgba(255,255,255,0.4)',
+                                callback: function (value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.4)',
+                                font: { size: 10, weight: 'bold' }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            showToast('Visualización histórica actualizada');
+        }
+
+        async function loadHistorical(muniId) {
+            if (!muniId) return;
+            try {
+                const [partRes, compRes] = await Promise.all([
+                    fetch(`${API_URL}/data/participation/${muniId}`),
+                    fetch(`${API_URL}/data/comparison/${muniId}`)
+                ]);
+                const participation = await partRes.json();
+                const comparison = await compRes.json();
+                renderCharts({ participation, comparison });
+            } catch (e) {
+                console.error('Error loading historical data:', e);
+                showToast('Error al cargar datos históricos', 'error');
+            }
+        }
+
+        // Esta función ya no se usa - reemplazada por loadPredictionsForMunicipality
+        async function loadPredictions(muniId) {
+            // Legacy function - redirect to new implementation
+            loadPredictionsForMunicipality(muniId);
+        }
+
+        // --- UTILS ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('nav-active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('nav-active');
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = `toast shadow-2xl border ${type === 'success' ? 'bg-emerald-600/90 border-emerald-500' : 'bg-red-600/90 border-red-500'} backdrop-blur-xl`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(20px)';
+                setTimeout(() => t.remove(), 500);
+            }, 3500);
+        }
+
+        function logout() {
+            localStorage.removeItem('guardianToken');
+            location.reload();
+        }
+
+        async function populateMunicipios() {
+            try {
+                const res = await fetch(`${API_URL}/data/municipalities`);
+                const data = await res.json();
+                const selectors = [
+                    document.getElementById('muni-selector'),
+                    document.getElementById('pred-muni-selector'),
+                    document.getElementById('incident-muni-selector')
+                ];
+
+                selectors.forEach(select => {
+                    if (!select) return;
+                    const isGlobal = select.id === 'muni-selector';
+
+                    // Filtrar datos inválidos/vacíos
+                    const validData = data.filter(m => m.name && m.name.trim().length > 0);
+
+                    const optionsHTML = validData.map(m => {
+                        // Limpiar nombre: Quitar números al inicio si existen
+                        const cleanName = m.name.replace(/^[0-9\s\-]+/, '').toUpperCase();
+                        if (!cleanName.trim()) return ''; // Doble check por si el replace deja vacío
+
+                        // Marcar Acapulco como seleccionado por defecto si coincide
+                        const isAcapulco = cleanName.includes('ACAPULCO');
+                        const isSelected = isAcapulco ? 'selected' : '';
+
+                        return `<option value="${m.id}" ${isSelected}>${cleanName}</option>`;
+                    }).join('');
+
+                    select.innerHTML = '<option value="">' + (isGlobal ? 'ESTADO DE GUERRERO (TODO)' : 'SELECCIONA MUNICIPIO') + '</option>' + optionsHTML;
+                });
+            } catch (e) {
+                const selectors = [
+                    document.getElementById('muni-selector'),
+                    document.getElementById('pred-muni-selector'),
+                    document.getElementById('incident-muni-selector')
+                ];
+                selectors.forEach(select => {
+                    if (!select) return;
+                    const isGlobal = select.id === 'muni-selector';
+                    select.innerHTML = '<option value="">' + (isGlobal ? 'ESTADO DE GUERRERO (TODO)' : 'SELECCIONA MUNICIPIO') + '</option>' +
+                        MUNICIPIOS_GUERRERO.map(m => {
+                            return `<option value="${m.id}">${m.name.toUpperCase()}</option>`;
+                        }).join('');
+                });
+            }
+        }
+        // --- PREDICTIONS FUNCTIONS ---
+
+        async function loadPredictionsForMunicipality(municipalityId) {
+            console.log('🔄 Cargando predicciones para municipio ID:', municipalityId);
+
+            if (!municipalityId) {
+                document.getElementById('candidates-grid').classList.add('hidden');
+                document.getElementById('predictions-results').classList.add('hidden');
+                document.getElementById('predictions-placeholder').classList.remove('hidden');
                 return;
             }
 
-            const btn = document.getElementById('btn-submit-prediction');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Enviando predicción...';
+            try {
+                const res = await fetch(`${API_URL}/data/candidates/${municipalityId}`);
+                if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+
+                const rawData = await res.json();
+                console.log('📥 Datos crudos predicciones:', rawData);
+
+                // MAPEO EXPLÍCITO PARA PREDICCIONES
+                const candidates = rawData.map(c => ({
+                    id: String(c.id || ''),
+                    name: String(c.name || 'Sin nombre'),
+                    party: String(c.party || 'Sin partido'),
+                    img: c.photo_url || c.img || null
+                }));
+
+                console.log('✅ Candidatos predicciones procesados:', candidates);
+
+                if (candidates.length === 0) {
+                    document.getElementById('candidates-grid').classList.add('hidden');
+                    document.getElementById('predictions-results').classList.add('hidden');
+                    document.getElementById('predictions-placeholder').classList.remove('hidden');
+                    return;
+                }
+
+                // Mostrar candidatos
+                document.getElementById('predictions-placeholder').classList.add('hidden');
+                document.getElementById('candidates-grid').classList.remove('hidden');
+                document.getElementById('predictions-results').classList.add('hidden');
+
+                const candidatesGrid = document.getElementById('candidates-grid');
+                candidatesGrid.innerHTML = candidates.map(candidate => `
+            <div class="candidate-card glass-card p-6 rounded-2xl cursor-pointer hover:scale-105 transition-all border-2 border-transparent" 
+                 onclick="selectCandidateForPrediction('${candidate.id}', this)">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-white/10">
+                        ${candidate.img
+                        ? `<img src="${candidate.img}" class="w-full h-full object-cover" 
+                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${candidate.name.charAt(0)}</span>'"
+                                 alt="${candidate.name}">`
+                        : `<span class="text-2xl font-bold text-slate-500">${candidate.name.charAt(0)}</span>`
+                    }
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${candidate.name}</h4>
+                        <span class="text-xs text-amber-500 font-bold">${candidate.party}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+            } catch (error) {
+                console.error('❌ Error en loadPredictionsForMunicipality:', error);
+                showToast('Error al cargar predicciones: ' + error.message, 'error');
+            }
+        }
+
+        // Función auxiliar para manejar la selección de un candidato
+        function selectCandidateForPrediction(candidateId, element) {
+            // Remover selección previa
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10');
+            });
+
+            // Añadir selección actual
+            element.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
+
+            // Aquí podrías guardar el candidato seleccionado si necesitas hacer algo más
+            console.log('Candidato seleccionado para predicción:', candidateId);
+
+            // Opcional: mostrar resultados o una simulación
+            // showPredictionResults(candidateId);
+        }
+
+        let selectedPredictionCandidate = null;
+
+        // Función para seleccionar candidato en predicciones
+        function selectPredictionCard(candidateId, municipalityId, element) {
+            console.log('🎯 Candidato seleccionado:', candidateId);
+            console.log('🎯 Municipio:', municipalityId);
+
+            // Remover selección previa
+            document.querySelectorAll('#candidates-grid .candidate-card').forEach(card => {
+                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10');
+            });
+
+            // Marcar como seleccionado
+            element.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
+
+            // Mostrar modal de confianza
+            showConfidenceSlider(candidateId, municipalityId);
+        }
+
+        // Alias para compatibilidad
+        function selectCandidateForPrediction(candidateId, element) {
+            const municipalityId = element.dataset.municipalityId ||
+                document.getElementById('pred-muni-selector')?.value;
+            selectPredictionCard(candidateId, municipalityId, element);
+        }
+
+        function showConfidenceSlider(candidateId, municipalityId) {
+            console.log('🎚️ Abriendo slider de confianza');
+            console.log('   Candidato:', candidateId);
+            console.log('   Municipio:', municipalityId);
+
+            // Crear modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4';
+            modal.innerHTML = `
+        <div class="glass-card p-10 rounded-[3rem] w-full max-w-md text-center relative">
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    class="absolute top-6 right-6 text-3xl font-thin hover:text-amber-500 transition">&times;</button>
+            
+            <h3 class="text-2xl font-black italic uppercase tracking-tighter mb-8">
+                Nivel de <span class="text-amber-500">Confianza</span>
+            </h3>
+            
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div id="confidence-display" class="text-5xl font-black text-amber-500 mb-2">75%</div>
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">Probable</div>
+                </div>
+                
+                <input type="range" 
+                       id="confidence-slider" 
+                       min="10" 
+                       max="100" 
+                       step="5" 
+                       value="75"
+                       class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                       oninput="updateConfidenceDisplay(this.value)">
+                
+                <div class="flex justify-between text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                    <span>Dudoso</span>
+                    <span>Seguro</span>
+                </div>
+                
+                <button onclick="savePrediction('${candidateId}', '${municipalityId}', document.getElementById('confidence-slider').value)"
+                        class="w-full bg-amber-600 hover:bg-amber-700 p-6 rounded-2xl font-black text-lg shadow-2xl shadow-amber-900/20 uppercase tracking-tight transition">
+                    Guardar Predicción
+                </button>
+            </div>
+        </div>
+    `;
+
+            document.body.appendChild(modal);
+        }
+
+        function updateConfidenceDisplay(value) {
+            const display = document.getElementById('confidence-display');
+            const label = display.nextElementSibling;
+
+            display.textContent = value + '%';
+
+            const labels = {
+                10: 'Muy Dudoso', 20: 'Muy Dudoso',
+                30: 'Dudoso', 40: 'Dudoso',
+                50: 'Neutral', 60: 'Neutral',
+                70: 'Probable', 80: 'Probable',
+                90: 'Muy Seguro', 100: 'Muy Seguro'
+            };
+
+            label.textContent = labels[Math.round(value / 10) * 10] || 'Probable';
+        }
+
+        function updateConfidenceDisplay(value) {
+            const display = document.getElementById('confidence-display');
+            const labels = { 10: 'Muy Dudoso', 25: 'Dudoso', 50: 'Neutral', 75: 'Probable', 100: 'Muy Seguro' };
+            display.textContent = value + '%';
+            display.nextElementSibling.textContent = labels[Math.round(value / 25) * 25] || 'Probable';
+        }
+        async function savePrediction(candidateId, municipalityId, confidence) {
+            console.log('💾 Guardando predicción:');
+            console.log('   Candidato:', candidateId);
+            console.log('   Municipio:', municipalityId);
+            console.log('   Confianza:', confidence);
 
             try {
-                const payload = {
-                    electionId: 1,
-                    municipalityId: 1,
-                    candidateId: selectedCandidate,
-                    confidence: parseInt(slider.value)
-                };
-
-                const response = await fetch(`${API_URL}/predictions`, {
+                const res = await fetch(`${API_URL}/predictions`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': `Bearer ${auth_token}`
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        municipalityId: parseInt(municipalityId),
+                        candidateId: parseInt(candidateId),
+                        confidence: parseInt(confidence)
+                    })
                 });
 
-                const data = await response.json();
+                const data = await res.json();
 
-                if (response.ok) {
-                    currentUser.points += (data.pointsEarned || 100);
-                    updateUserInfo();
-                    
-                    document.getElementById('submit-section').classList.add('hidden');
-                    document.getElementById('results-section').classList.remove('hidden');
-                    
-                    await loadResults();
-                    
-                    setTimeout(() => {
-                        document.getElementById('results-section').scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
-                        });
-                    }, 100);
+                if (res.ok) {
+                    showToast('✅ Predicción guardada: +' + (data.pointsEarned || 30) + ' PTS', 'success');
+
+                    // Actualizar puntos en UI
+                    const ptsEl = document.getElementById('user-points');
+                    const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+                    ptsEl.textContent = `${current + (data.pointsEarned || 30)} PTS de Influencia`;
+
+                    // Cerrar modal
+                    document.querySelectorAll('.fixed.inset-0.z-\\[200\\]').forEach(m => m.remove());
+
+                    // Recargar resultados
+                    loadPredictionResults(municipalityId);
                 } else {
-                    alert('❌ ' + (data.error || 'Error al enviar predicción'));
+                    showToast('Error: ' + (data.error || 'No se pudo guardar'), 'error');
                 }
-            } catch (error) {
-                alert('❌ Error de conexión con el servidor');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+            } catch (e) {
+                console.error('Error guardando predicción:', e);
+                showToast('Error de conexión', 'error');
             }
         }
 
-        // ==================== RESULTADOS ====================
-
-        async function loadResults() {
+        async function loadPredictionResults(municipalityId) {
             try {
-                const response = await fetch(`${API_URL}/predictions/1/1`);
-                const data = await response.json();
-                
-                if (Array.isArray(data) && data.length > 0) {
-                    // Gráfico
-                    const ctx = document.getElementById('resultsChart')?.getContext('2d');
-                    if (ctx) {
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: data.map(d => d.name || 'N/A'),
-                                datasets: [{
-                                    label: 'Porcentaje de Predicciones',
-                                    data: data.map(d => parseFloat(d.percentage) || 0),
-                                    backgroundColor: data.map(d => {
-                                        if (d.party?.includes('Morena')) return '#dc2626';
-                                        if (d.party?.includes('PRI')) return '#2563eb';
-                                        if (d.party?.includes('PVEM')) return '#16a34a';
-                                        return '#64748b';
-                                    }),
-                                    borderRadius: 8,
-                                    borderWidth: 0
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { 
-                                    legend: { display: false },
-                                    tooltip: {
-                                        backgroundColor: 'rgba(0,0,0,0.8)',
-                                        padding: 12,
-                                        titleFont: { size: 14, weight: 'bold' },
-                                        bodyFont: { size: 13 }
-                                    }
-                                },
-                                scales: {
-                                    y: { 
-                                        beginAtZero: true, 
-                                        max: 100,
-                                        ticks: { color: 'rgba(255,255,255,0.8)' },
-                                        grid: { color: 'rgba(255,255,255,0.1)' }
-                                    },
-                                    x: {
-                                        ticks: { color: 'rgba(255,255,255,0.8)' },
-                                        grid: { display: false }
-                                    }
-                                }
-                            }
-                        });
-                    }
+                const res = await fetch(`${API_URL}/predictions/results/${municipalityId}`);
+                const data = await res.json();
 
-                    // Lista
-                    const resultsList = document.getElementById('results-list');
-                    resultsList.innerHTML = data.map(d => `
-                        <div class="bg-white/20 backdrop-blur-md rounded-xl p-5 border border-white/30 hover:bg-white/30 transition">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-bold text-lg">${d.name || 'N/A'}</span>
-                                <span class="text-3xl font-black">${parseFloat(d.percentage || 0).toFixed(1)}%</span>
+                const resultsContainer = document.getElementById('predictions-results');
+                const resultsGrid = document.getElementById('results-grid');
+
+                if (data.rankings && data.rankings.length > 0) {
+                    resultsGrid.innerHTML = data.rankings.slice(0, 6).map((r, idx) => `
+                        <div class="glass-card p-6 rounded-[2rem] ${idx === 0 ? 'border-amber-600 bg-amber-600/5' : ''}">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center font-black text-slate-950 text-sm">${idx + 1}</div>
+                                <div class="flex-1">
+                                    <h5 class="font-black text-sm uppercase tracking-tight text-white">${r.candidate_name}</h5>
+                                    <div class="text-[8px] font-bold text-amber-500 uppercase tracking-widest">${r.party || 'INDEPENDIENTE'}</div>
+                                </div>
                             </div>
-                            <div class="text-sm text-blue-100">${d.count || 0} predicciones</div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-[10px] font-bold uppercase">
+                                    <span class="text-slate-500">Predicciones</span>
+                                    <span class="text-white">${r.total_predictions || 0}</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] font-bold uppercase">
+                                    <span class="text-slate-500">Confianza Promedio</span>
+                                    <span class="text-amber-500">${Math.round(r.avg_confidence || 0)}%</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] font-bold uppercase">
+                                    <span class="text-slate-500">Puntuación de Tendencia</span>
+                                    <span class="text-emerald-500">${Math.round(r.trend_score || 0)}</span>
+                                </div>
+                            </div>
                         </div>
                     `).join('');
-
-                    // Stats
-                    const totalPred = data.reduce((sum, d) => sum + (parseInt(d.count) || 0), 0);
-                    document.getElementById('total-predictions').textContent = totalPred.toLocaleString();
+                    resultsContainer.classList.remove('hidden');
+                } else {
+                    resultsContainer.classList.add('hidden');
                 }
-
-            } catch (error) {
-                console.error('Error cargando resultados:', error);
+            } catch (e) {
+                console.log('Sin resultados de predicciones aún:', e);
             }
         }
-
-        // ==================== UTILIDADES ====================
-
-        function showMessage(containerId, message, type) {
-            const container = document.getElementById(containerId);
-            const colors = {
-                success: 'bg-green-50 border-green-300 text-green-800',
-                error: 'bg-red-50 border-red-300 text-red-800',
-                info: 'bg-blue-50 border-blue-300 text-blue-800'
-            };
-            container.innerHTML = `
-                <div class="${colors[type]} border-2 rounded-xl p-4 text-sm font-semibold shadow-sm">
-                    ${message}
-                </div>
-            `;
-        }
-
-        // ==================== INICIALIZACIÓN ====================
-
-        async function init() {
-            if (authToken) {
-                try {
-                    const response = await fetch(`${API_URL}/auth/me`, {
-                        headers: { 'Authorization': `Bearer ${authToken}` }
-                    });
-                    if (response.ok) {
-                        currentUser = await response.json();
-                        showAuthenticatedUI();
-                    } else {
-                        logout();
-                    }
-                } catch (error) {
-                    console.error('Error verificando sesión:', error);
-                }
-            }
-        }
-
-        init();
+        if (auth_token) showPortal();
     </script>
 </body>
+
+</html>
+
 </html>

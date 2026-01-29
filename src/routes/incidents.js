@@ -2,22 +2,38 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../middleware/auth');
 
 /**
  * POST /api/incidents
  * Crear reporte de incidente con geolocalización
  */
-router.post('/', verifyToken, async (req, res) => {
-  const client = await db.connect();
+router.post('/', async (req, res) => {
+  let client;
+
   try {
+    // Verificar autenticación
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Token de autenticación requerido' });
+    }
+
+    let userId = null;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-2027-guerrero');
+      userId = decoded.userId;
+    } catch (err) {
+      return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+
+    client = await db.connect();
     const { municipalityId, type, description, latitude, longitude, photoUrl } = req.body;
-    const userId = req.userId;
 
     // Validar campos requeridos
     if (!municipalityId || !type || !description) {
-      return res.status(400).json({ 
-        error: 'Campos requeridos: municipalityId, type, description' 
+      return res.status(400).json({
+        error: 'Campos requeridos: municipalityId, type, description'
       });
     }
 
@@ -31,10 +47,10 @@ router.post('/', verifyToken, async (req, res) => {
       'fraude',
       'otro'
     ];
-    
+
     if (!validTypes.includes(type)) {
-      return res.status(400).json({ 
-        error: `Tipo inválido. Valores: ${validTypes.join(', ')}` 
+      return res.status(400).json({
+        error: `Tipo inválido. Valores: ${validTypes.join(', ')}`
       });
     }
 
@@ -79,30 +95,92 @@ router.post('/', verifyToken, async (req, res) => {
 
     await client.query('COMMIT');
 
+    console.log(`✅ Incidente creado: ${incident.id} por usuario ${userId}`);
+
     res.json({
       success: true,
-      incidentId: incident.id,
-      pointsEarned: 50,
-      createdAt: incident.created_at
+      incident: {
+        id: incident.id,
+        municipalityId,
+        type,
+        description,
+        latitude,
+        longitude,
+        photoUrl,
+        status: 'pending',
+        createdAt: incident.created_at
+      },
+      pointsEarned: 50
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Error al crear incidente:', error);
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Error en rollback:', rollbackError);
+      }
+    }
+    console.error('❌ Error al crear incidente:', error);
     res.status(500).json({ error: 'Error al registrar incidente' });
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+/**
+ * GET /api/incidents/stats
+ * Obtener estadísticas de incidentes
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'verified' THEN 1 END) as verified,
+        COUNT(CASE WHEN created_at > NOW() - INTERVAL '24 hours' THEN 1 END) as last_24h
+      FROM incidents
+    `);
+
+    const byType = await db.query(`
+      SELECT type, COUNT(*) as count 
+      FROM incidents 
+      GROUP BY type
+      ORDER BY count DESC
+    `);
+
+    const byMunicipality = await db.query(`
+      SELECT 
+        m.name as municipality,
+        COUNT(i.id) as count
+      FROM incidents i
+      JOIN municipalities m ON m.id = i.municipality_id
+      GROUP BY m.id, m.name
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      summary: result.rows[0],
+      byType: byType.rows,
+      byMunicipality: byMunicipality.rows
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo estadísticas:', error);
+    res.status(500).json({ error: 'Error obteniendo estadísticas' });
   }
 });
 
 /**
  * GET /api/incidents
  * Listar incidentes con filtros
- * Query params: municipalityId, status, limit
+ * Query params: municipalityId, status, limit, offset
  */
 router.get('/', async (req, res) => {
   try {
-    const { municipalityId, status, limit = 50 } = req.query;
+    const { municipalityId, status, limit = 50, offset = 0 } = req.query;
 
     let query = `
       SELECT 
@@ -116,9 +194,12 @@ router.get('/', async (req, res) => {
         i.photo_url,
         i.status,
         i.created_at,
+        u.name as reporter_name,
+        u.phone_last4 as reporter_phone,
         COUNT(*) OVER() as total_count
       FROM incidents i
       JOIN municipalities m ON m.id = i.municipality_id
+      LEFT JOIN users u ON u.id = i.user_id
       WHERE 1=1
     `;
 
@@ -135,13 +216,15 @@ router.get('/', async (req, res) => {
       params.push(status);
     }
 
-    query += ` ORDER BY i.created_at DESC LIMIT $${paramIndex}`;
-    params.push(parseInt(limit));
+    query += ` ORDER BY i.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
+    params.push(parseInt(limit), parseInt(offset));
 
     const result = await db.query(query, params);
 
     res.json({
       total: result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
       incidents: result.rows.map(i => ({
         id: i.id,
         municipalityId: i.municipality_id,
@@ -152,13 +235,75 @@ router.get('/', async (req, res) => {
         longitude: i.longitude,
         photoUrl: i.photo_url,
         status: i.status,
+        createdAt: i.created_at,
+        reporter: {
+          name: i.reporter_name || 'Anónimo',
+          phoneLast4: i.reporter_phone || null
+        }
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener incidentes:', error);
+    res.status(500).json({ error: 'Error al obtener incidentes' });
+  }
+});
+
+/**
+ * GET /api/incidents/map
+ * Obtener incidentes para visualización en mapa
+ */
+router.get('/map', async (req, res) => {
+  try {
+    const { municipalityId, status } = req.query;
+
+    let query = `
+      SELECT 
+        i.id,
+        i.type,
+        i.latitude,
+        i.longitude,
+        i.status,
+        i.created_at,
+        m.name as municipality_name
+      FROM incidents i
+      JOIN municipalities m ON m.id = i.municipality_id
+      WHERE i.latitude IS NOT NULL 
+        AND i.longitude IS NOT NULL
+    `;
+
+    const params = [];
+    let paramIndex = 1;
+
+    if (municipalityId) {
+      query += ` AND i.municipality_id = $${paramIndex++}`;
+      params.push(parseInt(municipalityId));
+    }
+
+    if (status) {
+      query += ` AND i.status = $${paramIndex++}`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY i.created_at DESC LIMIT 500`;
+
+    const result = await db.query(query, params);
+
+    res.json({
+      incidents: result.rows.map(i => ({
+        id: i.id,
+        type: i.type,
+        latitude: parseFloat(i.latitude),
+        longitude: parseFloat(i.longitude),
+        status: i.status,
+        municipalityName: i.municipality_name,
         createdAt: i.created_at
       }))
     });
 
   } catch (error) {
-    console.error('Error al obtener incidentes:', error);
-    res.status(500).json({ error: 'Error al obtener incidentes' });
+    console.error('❌ Error obteniendo incidentes para mapa:', error);
+    res.status(500).json({ error: 'Error obteniendo incidentes' });
   }
 });
 
@@ -177,9 +322,16 @@ router.get('/:id', async (req, res) => {
     const result = await db.query(`
       SELECT 
         i.*,
-        m.name as municipality_name
+        m.name as municipality_name,
+        m.region as municipality_region,
+        u.name as reporter_name,
+        u.phone_last4 as reporter_phone,
+        u.level as reporter_level,
+        v.username as verified_by_username
       FROM incidents i
       JOIN municipalities m ON m.id = i.municipality_id
+      LEFT JOIN users u ON u.id = i.user_id
+      LEFT JOIN admins v ON v.id = i.verified_by
       WHERE i.id = $1
     `, [incidentId]);
 
@@ -188,63 +340,223 @@ router.get('/:id', async (req, res) => {
     }
 
     const incident = result.rows[0];
+
     res.json({
       id: incident.id,
-      municipalityId: incident.municipality_id,
-      municipalityName: incident.municipality_name,
+      municipality: {
+        id: incident.municipality_id,
+        name: incident.municipality_name,
+        region: incident.municipality_region
+      },
       type: incident.type,
       description: incident.description,
-      latitude: incident.latitude,
-      longitude: incident.longitude,
+      location: {
+        latitude: incident.latitude,
+        longitude: incident.longitude
+      },
       photoUrl: incident.photo_url,
       status: incident.status,
-      createdAt: incident.created_at
+      reporter: {
+        name: incident.reporter_name || 'Anónimo',
+        phoneLast4: incident.reporter_phone || null,
+        level: incident.reporter_level || null
+      },
+      verifiedBy: incident.verified_by_username || null,
+      createdAt: incident.created_at,
+      updatedAt: incident.updated_at
     });
 
   } catch (error) {
-    console.error('Error al obtener incidente:', error);
+    console.error('❌ Error al obtener incidente:', error);
     res.status(500).json({ error: 'Error al obtener incidente' });
   }
 });
 
-/**
- * PATCH /api/incidents/:id/status
- * Actualizar status de incidente (solo admin)
- * TODO: Agregar middleware de rol admin
- */
-router.patch('/:id/status', verifyToken, async (req, res) => {
+const { verifyAdminToken } = require('../middleware/auth');
+router.patch('/:id/status', verifyAdminToken, async (req, res) => {
   try {
     const incidentId = parseInt(req.params.id, 10);
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
     const validStatuses = ['pending', 'verified', 'rejected', 'resolved'];
-    
+
     if (!status || !validStatuses.includes(status)) {
-      return res.status(400).json({ 
-        error: `Status inválido. Valores: ${validStatuses.join(', ')}` 
+      return res.status(400).json({
+        error: `Status inválido. Valores: ${validStatuses.join(', ')}`
       });
+    }
+
+    // Verificar que el incidente existe
+    const checkResult = await db.query(
+      'SELECT id FROM incidents WHERE id = $1',
+      [incidentId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado' });
     }
 
     const result = await db.query(`
       UPDATE incidents 
-      SET status = $1, verified_by = $2
-      WHERE id = $3
-      RETURNING id, status
-    `, [status, req.userId, incidentId]);
+      SET 
+        status = $1, 
+        verified_by = $2,
+        notes = COALESCE($3, notes),
+        updated_at = NOW()
+      WHERE id = $4
+      RETURNING id, status, notes
+    `, [status, req.userId, notes, incidentId]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Incidente no encontrado' });
-    }
+    console.log(`✅ Incidente ${incidentId} actualizado a ${status} por usuario ${req.userId}`);
 
     res.json({
       success: true,
-      incidentId: result.rows[0].id,
-      newStatus: result.rows[0].status
+      incident: {
+        id: result.rows[0].id,
+        status: result.rows[0].status,
+        notes: result.rows[0].notes
+      }
     });
 
   } catch (error) {
-    console.error('Error al actualizar status:', error);
+    console.error('❌ Error al actualizar status:', error);
     res.status(500).json({ error: 'Error al actualizar incidente' });
+  }
+});
+
+/**
+ * DELETE /api/incidents/:id
+ * Eliminar un incidente (solo admin o creador)
+ */
+router.delete('/:id', verifyToken, async (req, res) => {
+  try {
+    const incidentId = parseInt(req.params.id, 10);
+    const userId = req.userId;
+
+    if (isNaN(incidentId) || incidentId <= 0) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    // Verificar permisos (el usuario debe ser el creador o admin)
+    const checkResult = await db.query(
+      'SELECT user_id FROM incidents WHERE id = $1',
+      [incidentId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado' });
+    }
+
+    // TODO: Agregar verificación de rol admin
+    if (checkResult.rows[0].user_id !== userId) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar este incidente' });
+    }
+
+    await db.query('DELETE FROM incidents WHERE id = $1', [incidentId]);
+
+    console.log(`✅ Incidente ${incidentId} eliminado por usuario ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Incidente eliminado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('❌ Error al eliminar incidente:', error);
+    res.status(500).json({ error: 'Error al eliminar incidente' });
+  }
+});
+
+/**
+ * POST /api/incidents/:id/comments
+ * Agregar comentario a un incidente
+ */
+router.post('/:id/comments', verifyToken, async (req, res) => {
+  try {
+    const incidentId = parseInt(req.params.id, 10);
+    const { comment } = req.body;
+    const userId = req.userId;
+
+    if (!comment || comment.trim().length === 0) {
+      return res.status(400).json({ error: 'El comentario no puede estar vacío' });
+    }
+
+    // Verificar que el incidente existe
+    const checkResult = await db.query(
+      'SELECT id FROM incidents WHERE id = $1',
+      [incidentId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado' });
+    }
+
+    const result = await db.query(`
+      INSERT INTO incident_comments (incident_id, user_id, comment, created_at)
+      VALUES ($1, $2, $3, NOW())
+      RETURNING id, comment, created_at
+    `, [incidentId, userId, comment.trim()]);
+
+    res.json({
+      success: true,
+      comment: {
+        id: result.rows[0].id,
+        incidentId,
+        userId,
+        comment: result.rows[0].comment,
+        createdAt: result.rows[0].created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error al agregar comentario:', error);
+    res.status(500).json({ error: 'Error al agregar comentario' });
+  }
+});
+
+/**
+ * GET /api/incidents/:id/comments
+ * Obtener comentarios de un incidente
+ */
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const incidentId = parseInt(req.params.id, 10);
+
+    if (isNaN(incidentId) || incidentId <= 0) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    const result = await db.query(`
+      SELECT 
+        ic.id,
+        ic.comment,
+        ic.created_at,
+        u.name as user_name,
+        u.phone_last4 as user_phone,
+        u.level as user_level
+      FROM incident_comments ic
+      JOIN users u ON u.id = ic.user_id
+      WHERE ic.incident_id = $1
+      ORDER BY ic.created_at DESC
+    `, [incidentId]);
+
+    res.json({
+      incidentId,
+      comments: result.rows.map(c => ({
+        id: c.id,
+        comment: c.comment,
+        createdAt: c.created_at,
+        user: {
+          name: c.user_name || 'Anónimo',
+          phoneLast4: c.user_phone || null,
+          level: c.user_level || null
+        }
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener comentarios:', error);
+    res.status(500).json({ error: 'Error al obtener comentarios' });
   }
 });
 

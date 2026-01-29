@@ -4,25 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardianes Guerrero 2027 | El Vigía de la Democracia</title>
+    <meta name="description" content="Sistema ciudadano de predicción electoral para Guerrero 2027. Participa de forma anónima y segura.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
         .gradient-hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%); }
-        .gradient-cta { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .gradient-cta { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        
         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-        .float-animation { animation: float 3s ease-in-out infinite; }
+        .float-animation { animation: float 6s ease-in-out infinite; }
+        
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); } 50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.6); } }
+        .glow-animation { animation: glow 2s ease-in-out infinite; }
+        
+        .step-card { transition: all 0.3s ease; }
+        .step-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
+        
+        .faq-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .faq-content.open { max-height: 500px; }
     </style>
 </head>
-<body class="bg-slate-50">
 
+<body class="bg-slate-50">
     <!-- NAVBAR -->
     <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-md shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
                         <span class="text-white font-bold text-xl">🛡️</span>
                     </div>
                     <span class="text-xl font-bold text-slate-900">Guardianes <span class="text-blue-600">2027</span></span>
@@ -32,7 +43,7 @@
                     <a href="#seguridad" class="text-slate-600 hover:text-blue-600 font-medium transition">Seguridad</a>
                     <a href="#faq" class="text-slate-600 hover:text-blue-600 font-medium transition">FAQ</a>
                 </div>
-                <a href="/index.html" class="px-6 py-2.5 bg-blue-900 text-white rounded-full font-semibold hover:bg-blue-800 transition shadow-lg">
+                <a href="/" class="px-6 py-2.5 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-full font-semibold hover:from-blue-800 hover:to-blue-600 transition shadow-lg">
                     Participar Ahora
                 </a>
             </div>
@@ -41,196 +52,303 @@
 
     <!-- HERO SECTION -->
     <section class="gradient-hero min-h-screen flex items-center pt-16 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')]"></div>
-        
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==');"></div>
+        </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
             <div class="grid lg:grid-cols-2 gap-12 items-center">
                 <div class="space-y-8 text-white">
                     <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-800/50 border border-blue-600/30 text-blue-200 text-sm font-medium mb-4">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                        Sistema Auditado • 100K Predicciones/Día
+                        Sistema Auditado • Datos Encriptados
                     </div>
-                    
                     <h1 class="text-5xl lg:text-7xl font-bold leading-tight">
-                        El Vigía del Faro de la <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Democracia</span>
+                        El Vigía del Faro de la <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-400">Democracia</span>
                     </h1>
-                    
                     <p class="text-xl text-blue-100 max-w-lg leading-relaxed">
-                        Ciudadanos de Guerrero predicen juntos, con <strong>datos reales</strong>, de forma <strong>anónima</strong> y <strong>segura</strong>
+                        Ciudadanos de Guerrero predicen juntos, con <strong>datos reales</strong>, de forma <strong>anónima</strong> y <strong>segura</strong>.
                     </p>
-                    
                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                        <a href="/index.html" class="px-8 py-4 gradient-cta text-white rounded-xl font-bold hover:shadow-2xl transition text-lg text-center">
+                        <a href="/" class="px-8 py-4 gradient-cta text-white rounded-xl font-bold hover:shadow-2xl transition text-lg text-center glow-animation">
                             🗳️ Participar en la Predicción Piloto
                         </a>
-                        <button onclick="scrollToSection('como-funciona')" class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 transition text-lg">
+                        <button onclick="scrollToSection('como-funciona')"
+                            class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 transition text-lg">
                             Ver Cómo Funciona
                         </button>
                     </div>
-                    
-                    <!-- Mini Stats -->
                     <div class="grid grid-cols-3 gap-6 pt-8 border-t border-blue-700/50">
                         <div>
-                            <div class="text-3xl font-bold text-emerald-400">100%</div>
+                            <div class="text-3xl font-bold text-yellow-400">100%</div>
                             <div class="text-sm text-blue-200">Anónimo</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold text-emerald-400" id="hero-users">0</div>
+                            <div class="text-3xl font-bold text-yellow-400" id="hero-users">0</div>
                             <div class="text-sm text-blue-200">Ciudadanos</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold text-emerald-400">85</div>
-                            <div class="text-sm text-blue-200">Municipios</div>
+                            <div class="text-3xl font-bold text-yellow-400" id="hero-predictions">0</div>
+                            <div class="text-sm text-blue-200">Predicciones</div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Visual Interactivo -->
-                <div class="relative h-[500px] hidden lg:block">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 rounded-full blur-3xl"></div>
-                    <div class="glass p-8 rounded-3xl shadow-2xl relative float-animation">
-                        <div class="text-center mb-6">
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">Predicción en Vivo</h3>
-                            <span class="text-xs text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">● ACTUALIZANDO</span>
+                <div class="relative float-animation">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+                        <h3 class="text-white text-xl font-bold mb-6 text-center">Tendencia Actual Guerrero 2027</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm text-blue-200 mb-1">
+                                    <span>MORENA</span>
+                                    <span class="font-bold">46.2%</span>
+                                </div>
+                                <div class="w-full bg-blue-900/50 rounded-full h-4">
+                                    <div class="bg-red-600 h-4 rounded-full" style="width: 46.2%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm text-blue-200 mb-1">
+                                    <span>PRI-PAN-PRD</span>
+                                    <span class="font-bold">28.7%</span>
+                                </div>
+                                <div class="w-full bg-blue-900/50 rounded-full h-4">
+                                    <div class="bg-green-500 h-4 rounded-full" style="width: 28.7%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm text-blue-200 mb-1">
+                                    <span>PVEM-MC</span>
+                                    <span class="font-bold">14.2%</span>
+                                </div>
+                                <div class="w-full bg-blue-900/50 rounded-full h-4">
+                                    <div class="bg-green-400 h-4 rounded-full" style="width: 14.2%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm text-blue-200 mb-1">
+                                    <span>Indecisos</span>
+                                    <span class="font-bold">20.9%</span>
+                                </div>
+                                <div class="w-full bg-blue-900/50 rounded-full h-4">
+                                    <div class="bg-amber-500 h-4 rounded-full" style="width: 20.9%"></div>
+                                </div>
+                            </div>
                         </div>
-                        <canvas id="heroChart" height="300"></canvas>
-                        <div class="mt-4 text-center">
-                            <div class="text-sm text-slate-600">Participación Total</div>
-                            <div class="text-2xl font-bold text-slate-900" id="hero-participation">Cargando...</div>
-                        </div>
+                        <p class="text-xs text-blue-300 text-center mt-4">Datos basados en predicciones ciudadanas agregadas</p>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/50 animate-bounce">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+        </div>
     </section>
 
-    <!-- CÓMO FUNCIONA (4 PASOS) -->
+    <!-- CÓMO FUNCIONA -->
     <section id="como-funciona" class="py-24 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-slate-900 mb-4">El Proceso de Validación Ciudadana</h2>
-                <p class="text-slate-600 max-w-2xl mx-auto">Cuatro pasos simples para que tu voz cuente en la democracia de Guerrero</p>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Cómo Funciona el Sistema</h2>
+                <p class="text-xl text-slate-600 max-w-2xl mx-auto">Un proceso simple y seguro en 4 pasos</p>
             </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Paso 1 -->
-                <div class="group relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-emerald-100 rounded-2xl transform group-hover:scale-105 transition"></div>
-                    <div class="relative p-8 bg-white rounded-2xl border-2 border-blue-100 hover:border-blue-300 transition">
-                        <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-6 mx-auto">
-                            1
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3 text-center">Elige tu Candidato(a)</h3>
-                        <p class="text-slate-600 text-sm text-center leading-relaxed">
-                            Selecciona entre los 7 aspirantes reales a la Gubernatura 2027, con fotos y perfiles completos
-                        </p>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="step-card text-center p-8 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <span class="text-3xl">1️⃣</span>
                     </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Elige tu Candidato(a)</h3>
+                    <p class="text-slate-600">Selecciona de la lista de aspirantes reales para Guerrero 2027.</p>
                 </div>
-
-                <!-- Paso 2 -->
-                <div class="group relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-emerald-100 to-cyan-100 rounded-2xl transform group-hover:scale-105 transition"></div>
-                    <div class="relative p-8 bg-white rounded-2xl border-2 border-emerald-100 hover:border-emerald-300 transition">
-                        <div class="w-16 h-16 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-6 mx-auto">
-                            2
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3 text-center">Mide tu Confianza</h3>
-                        <p class="text-slate-600 text-sm text-center leading-relaxed">
-                            Usa el slider de 3 niveles: 50% (Dudoso), 75% (Probable) o 100% (Seguro). También puedes marcar "Aún no decido"
-                        </p>
+                <div class="step-card text-center p-8 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <span class="text-3xl">2️⃣</span>
                     </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Mide tu Confianza</h3>
+                    <p class="text-slate-600">Indica cuán seguro estás: 50% Dudoso, 75% Probable, 100% Seguro.</p>
                 </div>
-
-                <!-- Paso 3 -->
-                <div class="group relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl transform group-hover:scale-105 transition"></div>
-                    <div class="relative p-8 bg-white rounded-2xl border-2 border-cyan-100 hover:border-cyan-300 transition">
-                        <div class="w-16 h-16 bg-cyan-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-6 mx-auto">
-                            3
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3 text-center">Envío Anónimo</h3>
-                        <p class="text-slate-600 text-sm text-center leading-relaxed">
-                            Tu predicción se cifra con hash SHA-256. Tu número de teléfono NUNCA se almacena, solo un código irreversible
-                        </p>
+                <div class="step-card text-center p-8 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <span class="text-3xl">3️⃣</span>
                     </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Envío Anónimo</h3>
+                    <p class="text-slate-600">Tu voto se envía de forma segura, sin rastreo de IP ni datos personales.</p>
                 </div>
-
-                <!-- Paso 4 -->
-                <div class="group relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl transform group-hover:scale-105 transition"></div>
-                    <div class="relative p-8 bg-white rounded-2xl border-2 border-amber-100 hover:border-amber-300 transition">
-                        <div class="w-16 h-16 bg-amber-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-6 mx-auto">
-                            4
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3 text-center">Visualiza el Poder</h3>
-                        <p class="text-slate-600 text-sm text-center leading-relaxed">
-                            Ve gráficos en tiempo real de las predicciones agregadas y compara con históricos 2018-2024
-                        </p>
+                <div class="step-card text-center p-8 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <span class="text-3xl">4️⃣</span>
                     </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Visualiza el Poder Ciudadano</h3>
+                    <p class="text-slate-600">Ve resultados agregados en tiempo real de toda la comunidad.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECCIÓN DE SEGURIDAD -->
-    <section id="seguridad" class="py-24 bg-slate-900 text-white">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold mb-8">Niveles de Integridad del Sistema</h2>
-            
-            <div class="mb-12">
-                <input type="range" min="0" max="100" value="100" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500" id="securitySlider">
-                <div class="flex justify-between mt-4 text-xs font-mono text-slate-400 uppercase tracking-widest">
-                    <span>Básico</span>
-                    <span class="text-emerald-400 font-bold">Actual</span>
-                    <span>Máximo</span>
-                </div>
+    <!-- RESULTADOS EN VIVO -->
+    <section id="resultados-vivo" class="py-24 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Resultados en Vivo</h2>
+                <p class="text-xl text-slate-600">El pulso ciudadano de Guerrero en tiempo real</p>
             </div>
-
-            <div id="securityContent" class="glass text-slate-900 p-8 rounded-2xl border border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
-                <div class="text-6xl mb-4">🔐</div>
-                <h3 class="text-2xl font-bold mb-2">Máxima Integridad (Actual)</h3>
-                <p class="text-slate-700">
-                    Hash SHA-256 + Verificación SMS 2FA + Audit Trail Inmutable + Monitoreo 24/7 + Sin almacenamiento de IPs
-                </p>
+            <div id="landing-live-results-widget" class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">📊</span>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">Participación Ciudadana</h3>
+                            <p class="text-sm text-slate-500">Actualización automática cada 30 segundos</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" id="landing-live-indicator"></div>
+                        <span class="text-sm text-slate-600" id="landing-last-update">Actualizando...</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="landing-global-participants">0</div>
+                        <div class="text-sm text-slate-600">Participantes</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg text-center">
+                        <div class="text-3xl font-bold text-green-600" id="landing-global-responses">0</div>
+                        <div class="text-sm text-slate-600">Respuestas</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg text-center">
+                        <div class="text-3xl font-bold text-purple-600" id="landing-active-surveys">0</div>
+                        <div class="text-sm text-slate-600">Encuestas Activas</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg text-center">
+                        <div class="text-lg font-bold text-orange-600" id="landing-participation-rate">0%</div>
+                        <div class="text-sm text-slate-600">Tasa Participación</div>
+                    </div>
+                </div>
+                <div id="landing-live-surveys-list" class="space-y-4">
+                    <div class="text-center py-8 text-slate-500">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p class="mt-2">Cargando resultados en vivo...</p>
+                    </div>
+                </div>
+                <div class="text-center mt-8">
+                    <a href="/" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-xl transition shadow-lg">
+                        <span class="mr-2">🗳️</span> Participar Ahora
+                    </a>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- FAQ INTERACTIVO -->
+    <!-- SEGURIDAD -->
+    <section id="seguridad" class="py-24 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Seguridad y Privacidad</h2>
+                <p class="text-xl text-slate-600">Tu anonimato es nuestra prioridad absoluta</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-500 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-2xl">🔐</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-slate-900">Anonimato Total</h3>
+                    <p class="text-slate-600 mb-4">Usamos <strong>hashing SHA-256</strong> para tu número de teléfono. Nunca guardamos números reales ni direcciones IP.</p>
+                    <p class="text-slate-600">Tu identidad queda protegida <strong>incluso de nosotros</strong>. Es matemáticamente imposible revertir el hash a tu número real.</p>
+                </div>
+                <div class="p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
+                    <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-amber-400 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-2xl">🛡️</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-slate-900">Datos Seguros</h3>
+                    <p class="text-slate-600 mb-4">Conexión <strong>HTTPS/SSL</strong> y base de datos encriptada. Cumplimos con estándares INAI de protección de datos.</p>
+                    <p class="text-slate-600">Solo agregamos datos para mostrar <strong>tendencias colectivas</strong>. Nunca compartimos información individual.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6 mt-12">
+                <div class="flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg">
+                    <span class="text-2xl">🔒</span>
+                    <span class="font-semibold text-slate-700">SSL Encriptado</span>
+                </div>
+                <div class="flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg">
+                    <span class="text-2xl">🚫</span>
+                    <span class="font-semibold text-slate-700">Sin Tracking IP</span>
+                </div>
+                <div class="flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg">
+                    <span class="text-2xl">✅</span>
+                    <span class="font-semibold text-slate-700">INAI Compliant</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
     <section id="faq" class="py-24 bg-white">
-        <div class="max-w-3xl mx-auto px-4">
-            <h2 class="text-4xl font-bold text-slate-900 mb-12 text-center">Preguntas Frecuentes</h2>
-            
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Preguntas Frecuentes</h2>
+                <p class="text-xl text-slate-600">Todo lo que necesitas saber sobre el sistema</p>
+            </div>
             <div class="space-y-4">
                 <div class="border border-slate-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(1)" class="w-full px-6 py-4 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
-                        ¿Cómo protegen mi identidad?
-                        <span id="faq-icon-1">▼</span>
+                    <button onclick="toggleFaq(1)" class="w-full px-6 py-5 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
+                        <span>🔐 ¿Cómo se protege mi privacidad?</span>
+                        <span id="faq-icon-1" class="text-2xl transition-transform">+</span>
                     </button>
-                    <div id="faq-content-1" class="hidden px-6 py-4 text-slate-600">
-                        Usamos <strong>hashing criptográfico</strong>. Tu número de teléfono se convierte en un código irreversible (ej: "a3f9b2..."). 
-                        Ni siquiera nosotros podemos saber quién eres. Tu IP tampoco se guarda.
+                    <div id="faq-content-1" class="faq-content px-6 bg-white">
+                        <div class="py-5 text-slate-600 border-t border-slate-100">
+                            <p class="mb-3">Usamos <strong>hashing SHA-256</strong> para convertir tu número de teléfono en una cadena irreversible de caracteres. Este proceso es de una sola vía: es imposible obtener tu número real a partir del hash.</p>
+                            <p><strong>Además:</strong> No guardamos direcciones IP, no usamos cookies de seguimiento, y todos los datos están encriptados en tránsito y en reposo.</p>
+                        </div>
                     </div>
                 </div>
-
                 <div class="border border-slate-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(2)" class="w-full px-6 py-4 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
-                        ¿Esto es una encuesta electoral oficial?
-                        <span id="faq-icon-2">▼</span>
+                    <button onclick="toggleFaq(2)" class="w-full px-6 py-5 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
+                        <span>🗳️ ¿Esto es una encuesta oficial?</span>
+                        <span id="faq-icon-2" class="text-2xl transition-transform">+</span>
                     </button>
-                    <div id="faq-content-2" class="hidden px-6 py-4 text-slate-600">
-                        No. Somos una plataforma <strong>independiente de validación ciudadana</strong>. Los datos se comparan con históricos del INE (2018-2024) 
-                        para detectar anomalías, pero no sustituimos al IEPC.
+                    <div id="faq-content-2" class="faq-content px-6 bg-white">
+                        <div class="py-5 text-slate-600 border-t border-slate-100">
+                            <p><strong>No.</strong> Es una plataforma independiente de validación ciudadana. Comparamos resultados con históricos del INE para contexto, pero no sustituimos ni representamos al IEPC ni a ningún organismo electoral oficial.</p>
+                        </div>
                     </div>
                 </div>
-
                 <div class="border border-slate-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(3)" class="w-full px-6 py-4 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
-                        ¿Puedo cambiar mi predicción?
-                        <span id="faq-icon-3">▼</span>
+                    <button onclick="toggleFaq(3)" class="w-full px-6 py-5 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
+                        <span>🔄 ¿Puedo cambiar mi predicción?</span>
+                        <span id="faq-icon-3" class="text-2xl transition-transform">+</span>
                     </button>
-                    <div id="faq-content-3" class="hidden px-6 py-4 text-slate-600">
-                        Sí, hasta 24 horas antes del cierre de la encuesta. El sistema mantiene solo tu última predicción válida.
+                    <div id="faq-content-3" class="faq-content px-6 bg-white">
+                        <div class="py-5 text-slate-600 border-t border-slate-100">
+                            <p>Sí, puedes actualizar tu predicción hasta <strong>24 horas antes del cierre</strong> de la encuesta. Solo mantenemos tu última predicción válida.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(4)" class="w-full px-6 py-5 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
+                        <span>📱 ¿Por qué necesitan mi número de teléfono?</span>
+                        <span id="faq-icon-4" class="text-2xl transition-transform">+</span>
+                    </button>
+                    <div id="faq-content-4" class="faq-content px-6 bg-white">
+                        <div class="py-5 text-slate-600 border-t border-slate-100">
+                            <p class="mb-3">Usamos verificación SMS para:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Evitar votos duplicados de bots</li>
+                                <li>Garantizar que solo ciudadanos reales participen</li>
+                                <li>Mantener la integridad estadística</li>
+                            </ul>
+                            <p class="mt-3"><strong>Recuerda:</strong> Tu número NUNCA se guarda. Solo guardamos su hash irreversible.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(5)" class="w-full px-6 py-5 text-left font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center">
+                        <span>📊 ¿Cómo se usan los resultados?</span>
+                        <span id="faq-icon-5" class="text-2xl transition-transform">+</span>
+                    </button>
+                    <div id="faq-content-5" class="faq-content px-6 bg-white">
+                        <div class="py-5 text-slate-600 border-t border-slate-100">
+                            <p>Los resultados son públicos y se muestran de forma agregada. Sirven como termómetro ciudadano para que la comunidad de Guerrero conozca las tendencias de opinión. Los datos nunca se venden ni comparten con terceros.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,98 +356,166 @@
     </section>
 
     <!-- CTA FINAL -->
-    <section class="py-24 gradient-hero text-white">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-4xl font-bold mb-6">Únete a los Guardianes de la Democracia</h2>
-            <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-                Sé parte del primer sistema ciudadano de validación electoral en Guerrero
+    <section class="py-24 gradient-hero text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==');"></div>
+        </div>
+        <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <h2 class="text-4xl lg:text-5xl font-bold mb-6">Únete a los Guardianes de la Democracia</h2>
+            <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
+                Sé parte del primer sistema ciudadano de validación electoral en Guerrero. Tu voz importa.
             </p>
-            <a href="/index.html" class="inline-block px-10 py-5 gradient-cta text-white rounded-xl font-bold text-xl hover:shadow-2xl transition transform hover:scale-105">
-                🚀 Comenzar Ahora
+            <a href="/" class="inline-block px-12 py-5 gradient-cta text-white rounded-xl font-bold text-xl hover:shadow-2xl transition transform hover:scale-105 glow-animation">
+                🚀 Comenzar Ahora — Es Gratis
             </a>
-            <div class="mt-8 text-sm text-blue-200">
-                100% Gratuito • Sin Publicidad • Código Abierto
+            <div class="mt-10 flex flex-wrap justify-center gap-8 text-sm text-blue-200">
+                <span class="flex items-center gap-2"><span>✅</span> 100% Gratuito</span>
+                <span class="flex items-center gap-2"><span>✅</span> Sin Publicidad</span>
+                <span class="flex items-center gap-2"><span>✅</span> Código Auditado</span>
             </div>
         </div>
     </section>
 
     <!-- FOOTER -->
     <footer class="bg-slate-950 text-slate-400 py-12">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center space-x-2 mb-6">
-                <span class="text-2xl">🛡️</span>
-                <span class="text-lg font-bold text-white">Guardianes 2027</span>
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <span class="text-2xl">🛡️</span>
+                    <span class="text-lg font-bold text-white">Guardianes 2027</span>
+                </div>
+                <div class="flex space-x-6 text-sm">
+                    <a href="#" class="hover:text-white transition">Privacidad</a>
+                    <a href="#" class="hover:text-white transition">Términos</a>
+                    <a href="/admin" class="hover:text-white transition">Admin</a>
+                </div>
             </div>
-            <p class="text-sm mb-6">Sistema de Alta Disponibilidad para Guerrero</p>
-            <div class="flex justify-center space-x-6 text-sm">
-                <a href="#" class="hover:text-white transition">Privacidad</a>
-                <a href="#" class="hover:text-white transition">Términos</a>
-                <a href="/admin.html" class="hover:text-white transition">Admin</a>
-                <a href="/api" class="hover:text-white transition">API Docs</a>
+            <div class="text-center text-sm border-t border-slate-800 pt-8">
+                <p>Sistema de Predicción Electoral Ciudadana para Guerrero</p>
+                <p class="mt-2">Desarrollado con ❤️ para la democracia mexicana</p>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // FAQ Toggle
+        // ========================================
+        // CONFIGURACIÓN
+        // ========================================
+        const API_URL = '/api';
+
+        // ========================================
+        // FUNCIONES UTILITARIAS
+        // ========================================
         function toggleFaq(num) {
             const content = document.getElementById(`faq-content-${num}`);
             const icon = document.getElementById(`faq-icon-${num}`);
-            
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.textContent = '▲';
-            } else {
-                content.classList.add('hidden');
-                icon.textContent = '▼';
-            }
-        }
-
-        // Scroll suave
-        function scrollToSection(id) {
-        const element = document.getElementById(id);
-        if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-        // Cargar stats en vivo
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/data/stats');
-                const data = await response.json();
-                document.getElementById('hero-users').textContent = data.users || '0';
-                document.getElementById('hero-participation').textContent = (data.predictions || 0).toLocaleString() + ' predicciones';
-            } catch (err) {
-                console.error('Error cargando stats:', err);
-            }
-        }
-
-        // Gráfico hero
-        const ctx = document.getElementById('heroChart')?.getContext('2d');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Morena', 'PRI-PAN', 'PVEM', 'Independiente'],
-                    datasets: [{
-                        data: [45, 30, 15, 10],
-                        backgroundColor: ['#b91c1c', '#1e40af', '#16a34a', '#64748b'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
+            document.querySelectorAll('.faq-content').forEach(el => {
+                if (el.id !== `faq-content-${num}`) el.classList.remove('open');
+            });
+            document.querySelectorAll('[id^="faq-icon-"]').forEach(el => {
+                if (el.id !== `faq-icon-${num}`) {
+                    el.textContent = '+';
+                    el.style.transform = 'rotate(0deg)';
                 }
             });
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.textContent = '+';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                icon.textContent = '−';
+                icon.style.transform = 'rotate(180deg)';
+            }
         }
 
-        // Inicializar
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ========================================
+        // CARGA DE DATOS
+        // ========================================
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/data/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('hero-users').textContent = (data.users || 0).toLocaleString();
+                    document.getElementById('hero-predictions').textContent = (data.predictions || 0).toLocaleString();
+                }
+            } catch (err) { console.log('Stats no disponibles'); }
+        }
+
+        async function loadLandingLiveResults() {
+            try {
+                const res = await fetch(`${API_URL}/surveys/live-results`);
+                const data = await res.json();
+                if (data.success) updateLandingLiveResultsWidget(data);
+            } catch (err) {
+                console.error('Error cargando resultados en vivo:', err);
+                document.getElementById('landing-live-indicator').className = 'w-2 h-2 bg-red-500 rounded-full';
+                document.getElementById('landing-last-update').textContent = 'Error de conexión';
+            }
+        }
+
+        function updateLandingLiveResultsWidget(data) {
+            document.getElementById('landing-global-participants').textContent = data.globalStats.totalParticipants.toLocaleString();
+            document.getElementById('landing-global-responses').textContent = data.globalStats.totalResponses.toLocaleString();
+            document.getElementById('landing-active-surveys').textContent = data.globalStats.activeSurveys;
+            const participationRate = data.globalStats.totalParticipants > 0 ?
+                Math.round((data.globalStats.totalResponses / data.globalStats.totalParticipants) * 100) : 0;
+            document.getElementById('landing-participation-rate').textContent = `${participationRate}%`;
+            document.getElementById('landing-live-indicator').className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+            document.getElementById('landing-last-update').textContent = `Actualizado ${new Date(data.timestamp).toLocaleTimeString()}`;
+            
+            const container = document.getElementById('landing-live-surveys-list');
+            if (data.surveys.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-500">No hay encuestas activas.</div>';
+                return;
+            }
+            
+            container.innerHTML = data.surveys.slice(0, 3).map(survey => `
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-6 border border-slate-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-lg">${survey.title}</h4>
+                            <p class="text-sm text-slate-600 mt-1">${survey.description || 'Encuesta ciudadana activa'}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-blue-600">${survey.totalResponses}</div>
+                            <div class="text-xs text-slate-500">respuestas</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-white rounded p-3 text-center">
+                            <div class="font-bold text-slate-900">${survey.totalParticipants}</div>
+                            <div class="text-slate-600">Participantes</div>
+                        </div>
+                        <div class="bg-white rounded p-3 text-center">
+                            <div class="font-bold text-slate-900">${survey.questions.length}</div>
+                            <div class="text-slate-600">Preguntas</div>
+                        </div>
+                    </div>
+                    ${survey.lastResponseAt ? `
+                        <div class="mt-4 text-xs text-slate-500 text-center">
+                            Última respuesta: ${new Date(survey.lastResponseAt).toLocaleString()}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            if (window.landingLiveResultsInterval) clearInterval(window.landingLiveResultsInterval);
+            window.landingLiveResultsInterval = setInterval(loadLandingLiveResults, 30000);
+        }
+
+        // ========================================
+        // INICIALIZACIÓN
+        // ========================================
         loadStats();
-        setInterval(loadStats, 30000); // Actualizar cada 30 seg
+        loadLandingLiveResults();
+        setInterval(loadStats, 60000);
     </script>
 </body>
 </html>

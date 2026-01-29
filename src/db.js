@@ -44,7 +44,6 @@ try {
   // No detenemos el proceso, pero el primer intento de query fallará.
 }
 
-
 const getDbPool = () => {
   if (!pool) {
     // Esto no debería pasar si initializePool funcionó, pero es un respaldo.
@@ -86,8 +85,15 @@ const transaction = async (callback) => {
   }
 };
 
+// Función connect para obtener un client del pool (usado por surveys.js)
+const connect = async () => {
+  const p = getDbPool();
+  return await p.connect();
+};
+
 module.exports = {
   query,
   transaction,
-  getDbPool
+  getDbPool,
+  connect
 };

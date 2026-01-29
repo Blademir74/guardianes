@@ -1,75 +1,76 @@
-const db = require('../db');
+const { query } = require('../db');
 
-// Constantes de puntos (gamification)
-const POINTS = {
-    PREDICTION: 10,
-    SURVEY_COMPLETE: 50,
-    INCIDENT_REPORT: 20,
-    INCIDENT_VERIFIED: 100, // Bonus si se valida
-    DAILY_LOGIN: 5
+const BADGES = {
+    first_prediction: { name: 'Primer Voto', points: 50, icon: '🗳️', description: 'Realizaste tu primera predicción' },
+    first_incident: { name: 'Vigilante', points: 75, icon: '🚨', description: 'Reportaste tu primer incidente' },
+    ten_predictions: { name: 'Ciudadano Activo', points: 200, icon: '🌟', description: 'Realizaste 10 predicciones' },
+    municipality_leader: { name: 'Líder Municipal', points: 500, icon: '👑', description: 'Top 1 en tu municipio' },
+    verified_reporter: { name: 'Reportero Verificado', points: 300, icon: '✅', description: '3 reportes verificados como reales' }
 };
 
 /**
- * Añade puntos a un usuario y actualiza su registro.
- * @param {number} userId - ID del usuario.
- * @param {string} action - Tipo de acción (PREDICTION, SURVEY, etc.)
- * @param {object} client - Cliente de BD opcional para transacciones.
+ * Otorga puntos y verifica badges
  */
-async function addPoints(userId, action, client = null) {
-    const pointsToAdd = POINTS[action] || 0;
-    if (pointsToAdd === 0) return 0;
-
-    const query = `
-    UPDATE users 
-    SET points = points + $1 
-    WHERE id = $2 
-    RETURNING points
-  `;
-
-    const executor = client || db;
-
+async function awardPoints(userId, action, points) {
     try {
-        const result = await executor.query(query, [pointsToAdd, userId]);
-        if (result.rows.length > 0) {
-            console.log(`🏆 Usuario ${userId} recibió ${pointsToAdd} puntos por ${action}. Total: ${result.rows[0].points}`);
-        }
-        return pointsToAdd;
-    } catch (err) {
-        console.error(`❌ Error sumando puntos a usuario ${userId}:`, err.message);
-        return 0; // No fallamos la request principal por esto
+        // 1. Dar puntos
+        await query('UPDATE users SET points = points + $1 WHERE id = $2', [points, userId]);
+
+        // 2. Verificar badges (lógica simplificada)
+        await checkBadges(userId, action);
+
+        return { success: true, pointsAdded: points };
+    } catch (error) {
+        console.error('Error awarding points:', error);
+        return { success: false };
     }
+}
+
+async function checkBadges(userId, action) {
+    // Aquí iría la lógica compleja de verificar si cumple condiciones
+    // Por ahora es un placeholder para expansión futura
+    console.log(`Checking badges for user ${userId} after action ${action}`);
 }
 
 /**
- * Obtiene el ranking global de usuarios (Top 10).
- * Anonimiza los nombres/teléfonos solo mostrando los últimos dígitos.
+ * Obtener leaderboard global
  */
-async function getLeaderboard() {
-    const query = `
-    SELECT id, phone_hash, points, accuracy_pct 
+async function getLeaderboard(limit = 10) {
+    const result = await query(`
+    SELECT id, points, predictions_count, 
+           SUBSTRING(phone_hash, 1, 6) as short_hash
     FROM users 
-    ORDER BY points DESC, accuracy_pct DESC 
-    LIMIT 10
-  `;
+    ORDER BY points DESC 
+    LIMIT $1
+  `, [limit]);
+    return result.rows;
+}
 
-    try {
-        const result = await db.query(query);
-        return result.rows.map(user => ({
-            position: 0, // Se llenará en el map
-            userId: user.id,
-            // Alias anónimo: "Guardian...1234" (usando últimos caracteres del hash)
-            alias: `Guardian-${user.phone_hash.substring(0, 6)}`,
-            points: user.points,
-            accuracy: user.accuracy_pct
-        }));
-    } catch (err) {
-        console.error('❌ Error obteniendo leaderboard:', err.message);
-        return [];
-    }
+/**
+ * Obtener leaderboard por municipio
+ * Se basa en las predicciones o incidentes realizados en ese municipio
+ */
+async function getMunicipalityLeaderboard(municipalityId, limit = 10) {
+    // Buscamos usuarios que tengan actividad (predicciones o incidentes) en el municipio
+    // y los ordenamos por sus puntos totales (o puntos locales si tuviéramos esa métrica separada)
+    // Para simplificar, usamos puntos totales de usuarios activos en el municipio.
+
+    const result = await query(`
+    SELECT DISTINCT u.id, u.points, u.predictions_count,
+           SUBSTRING(u.phone_hash, 1, 6) as short_hash
+    FROM users u
+    JOIN predictions p ON p.user_id = u.id
+    WHERE p.municipality_id = $1
+    ORDER BY u.points DESC
+    LIMIT $2
+  `, [municipalityId, limit]);
+
+    return result.rows;
 }
 
 module.exports = {
-    addPoints,
+    BADGES,
+    awardPoints,
     getLeaderboard,
-    POINTS
+    getMunicipalityLeaderboard
 };

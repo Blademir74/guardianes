@@ -1,0 +1,127 @@
+1. Títulos distintos a “Encuesta de Chilpancingo”
+Te dejo dos opciones pensadas para tu sistema (puedes cambiar el municipio en cada una):
+
+“Chilpancingo Decide 2027: Radar Ciudadano”
+
+“Voces de Chilpancingo 2027: ¿Quién debe encabezar el cambio?”
+
+Si quieres algo más general, sólo sustituyes “Chilpancingo” por Acapulco, Zihuatanejo, etc.
+
+2. Descripciones con impacto (para el campo description)
+Opción A
+Esta no es una encuesta de Facebook. Es el Radar Ciudadano de Guardianes Guerrero 2027, donde tu opinión se integra en tiempo real a un modelo de inteligencia artificial electoral. Responde con libertad: no medimos likes, medimos tendencias que ayudarán a entender hacia dónde se mueve Chilpancingo rumbo a 2027.
+
+Opción B
+Guardianes Guerrero convierte cada respuesta en datos vivos: mapas, predicciones y escenarios que irán cambiando conforme la ciudadanía participa. Esta medición no es para decidir por ti, sino para que tu voz pese igual que la de cualquier actor político en la conversación de 2027. Participa y comprueba cómo se actualizan las tendencias.
+
+Cualquiera de las dos la puedes adaptar por municipio (solo cambiar “Chilpancingo” por Acapulco o Zihuatanejo).
+
+3. Aspirantes más mencionados rumbo a 2027 (Acapulco, Chilpancingo, Zihuatanejo)
+Importante: esto NO son candidaturas oficiales, sino nombres que aparecen con más frecuencia en encuestas y notas públicas hasta enero de 2026.
+
+3.1. Acapulco
+Encuestras recientes de GobernArte y otras notas perfilan varios nombres para la alcaldía de Acapulco 2027, sobre todo dentro de Morena y la oposición.
+
+Aspirantes más mencionados:
+
+Municipio	Nombre	Partido / Bloque aproximado
+Acapulco	Ricardo Salinas Méndez	Morena
+Acapulco	Yoloczin Domínguez Serna	Morena
+Acapulco	Joaquín Badillo Escamilla	Morena
+Acapulco	Fermín Alvarado Arroyo	PRI–PAN (alianza opositora)
+?
+Acapulco	Yoshio Ávila	Movimiento Ciudadano
+Acapulco	Perla Edith Martínez	PRD
+?
+Para tu primera encuesta no necesitas usar todos; puedes tomar, por ejemplo, 3–5 nombres (los de Morena + uno de la alianza y uno de MC).
+
+3.2. Chilpancingo
+GobernArte publicó un estudio específico para la presidencia municipal de Chilpancingo rumbo a 2027, con mediciones internas por partido.
+?
+
+Aspirantes más mencionados:
+
+Municipio	Nombre	Partido principal
+Chilpancingo	Héctor Suárez Basurto	Morena
+?
+Chilpancingo	Jorge Salgado Parra	Morena
+?
+Chilpancingo	Mario Moreno Arcos	Morena (ex PRI)
+?
+Chilpancingo	Carlos Sánchez Barrios	Morena
+?
+Chilpancingo	Gustavo Alarcón Herrera	PRI
+?
+Chilpancingo	Beatriz Vélez Núñez	PRI
+?
+Chilpancingo	Humberto Díaz Villanueva	Movimiento Ciudadano
+?
+Chilpancingo	Alejandro Peralta	Movimiento Ciudadano
+?
+Chilpancingo	Eloy Salmerón Díaz	PAN
+?
+Chilpancingo	Diana Natividad Carbajal	PAN
+?
+Para una primera encuesta corta de prueba en Chilpancingo, podrías incluir algo como:
+
+Héctor Suárez Basurto – Morena
+
+Jorge Salgado Parra – Morena
+
+Gustavo Alarcón Herrera – PRI
+
+Humberto Díaz Villanueva – Movimiento Ciudadano
+
+Eloy Salmerón Díaz – PAN
+
+Eso te da representación de las principales fuerzas sin hacer la boleta demasiado larga.
+
+3.3. Zihuatanejo
+La información pública está menos estructurada en encuestas formales, pero hay varias notas y transmisiones que mencionan aspirantes locales rumbo a 2027.
+
+Nombres más visibles en notas recientes:
+
+Municipio	Nombre	Tipo / Partido principal
+Zihuatanejo	José Francisco Sotelo Luna	Aspirante independiente (antes cercano a Morena)
+Zihuatanejo	Jorge Sánchez Allec	PRI (exalcalde, figura ligada a Zihuatanejo y mencionada en escenarios estatales)
+?
+Con eso tienes al menos dos perfiles claros para Zihuatanejo (uno independiente, uno ligado al PRI). Si después salen encuestas específicas municipales, se pueden ir sumando más nombres.
+
+4. Cómo llenar la primera encuesta en tu dashboard (sugerencia práctica)
+Para probar que todo está sincronizado (admin ? BD ? portal ciudadano ? predicciones), te propongo este primer ejercicio:
+
+Municipio: Chilpancingo
+
+Tipo de elección (election_type): municipal
+
+Título (title):
+
+Chilpancingo Decide 2027: Radar Ciudadano
+
+Descripción (description):
+
+Usa la Opción A adaptada:
+
+Esta no es una encuesta de Facebook. Es el Radar Ciudadano de Guardianes Guerrero 2027, donde tu opinión se integra en tiempo real a un modelo de inteligencia artificial electoral. Responde con libertad: no medimos likes, medimos tendencias que ayudarán a entender hacia dónde se mueve Chilpancingo rumbo a 2027.
+
+Candidatos (en tu módulo de preguntas / opciones):
+
+Héctor Suárez Basurto – Morena
+
+Jorge Salgado Parra – Morena
+
+Gustavo Alarcón Herrera – PRI
+
+Humberto Díaz Villanueva – Movimiento Ciudadano
+
+Eloy Salmerón Díaz – PAN
+
+Con eso puedes:
+
+Crear la encuesta desde el dashboard admin para Chilpancingo.
+
+Ver que aparezca en el portal ciudadano.
+
+Más adelante, cuando metas candidatos municipales en tu tabla candidates, conectarás esta misma encuesta con el tab de Predicciones.
+
+Si quieres, en el siguiente mensaje te preparo el texto exacto tal como lo pediría tu formulario (por ejemplo, JSON o los campos tal cual aparecen en tu admin).

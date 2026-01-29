@@ -1,531 +1,697 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Guardianes Guerrero 2027</title>
+    <title>Admin Dashboard | Guardianes 2027</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.446.0/dist/umd/lucide.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .sidebar { transition: transform 0.3s ease; }
-        .sidebar.collapsed { transform: translateX(-100%); }
-        @media (min-width: 768px) {
-            .sidebar.collapsed { transform: translateX(0); }
+        :root {
+            --primary: #060f3b;
+            --accent: #ca8a04;
         }
-        .stat-card { transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
-        #map { height: 500px; border-radius: 12px; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .pulse { animation: pulse 2s infinite; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--primary);
+            color: #f8fafc;
+        }
+
+        .sidebar {
+            background: #0f172a;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #020617;
+            transition: all 0.2s;
+            font-weight: 900;
+        }
+
+        .btn-accent:hover {
+            background: #eab308;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(234, 179, 8, 0.2);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-paused {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
     </style>
 </head>
-<body class="bg-slate-50 h-screen overflow-hidden">
 
-    <!-- LOGIN OVERLAY -->
-    <div id="loginOverlay" class="fixed inset-0 z-50 gradient-bg flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-lg">
-                    🛡️
-                </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-2">Panel Administrativo</h2>
-                <p class="text-slate-600">Acceso restringido solo para administradores autorizados</p>
+<body class="flex min-h-screen">
+    <!-- SIDEBAR -->
+    <aside class="w-80 sidebar flex flex-col p-10 gap-12">
+        <div class="flex items-center gap-4">
+            <div
+                class="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center font-black text-3xl shadow-xl shadow-amber-900/40">
+                A</div>
+            <div>
+                <h1 class="text-xl font-black tracking-tighter uppercase italic">Control <span
+                        class="text-amber-500">2027</span></h1>
+                <p class="text-[14px] font-black opacity-30 uppercase tracking-[0.4em]">Estrategia Gubernamental</p>
             </div>
-            <form onsubmit="handleLogin(event)" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Usuario Administrador</label>
-                    <input type="text" id="admin-username" required
-                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition"
-                        placeholder="admin">
+        </div>
+
+        <nav class="flex flex-col gap-4">
+            <button onclick="switchView('dashboard')"
+                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </button>
+            <button onclick="switchView('surveys')"
+                class="nav-item active flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest bg-amber-600 text-slate-950 shadow-2xl shadow-amber-900/40 text-left">
+                <i data-lucide="clipboard-list" class="w-5 h-5"></i> Gestión de Encuestas
+            </button>
+            <button onclick="switchView('incidents')"
+                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i> Panel de Alertas
+            </button>
+            <button onclick="switchView('users')"
+                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+                <i data-lucide="users" class="w-5 h-5"></i> Registro Civil
+            </button>
+        </nav>
+
+        <div class="mt-auto pt-10 border-t border-white/5">
+            <div class="flex items-center gap-3 px-4 mb-6">
+                <div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=0f172a&color=fff" alt="Profile">
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Contraseña Segura</label>
-                    <input type="password" id="admin-password" required
-                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition">
+                <div class="flex-1">
+                    <p class="text-[10px] font-black uppercase">Administrador</p>
+                    <p class="text-[8px] font-bold text-slate-500">Sesión Segura Activada</p>
                 </div>
-                <button type="submit"
-                    class="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold py-4 rounded-xl transition shadow-lg">
-                    🔐 Iniciar Sesión Segura
+            </div>
+            <button onclick="adminLogout()"
+                class="w-full flex items-center justify-center gap-3 text-red-400 font-black text-[10px] uppercase tracking-widest p-4 rounded-xl hover:bg-red-500/5 transition">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Terminar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-16 overflow-y-auto">
+
+        <!-- LOGIN OVERLAY -->
+        <div id="login-overlay" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-4">
+            <div
+                class="w-full max-w-sm glass-card p-12 rounded-[3rem] text-center border-white/10 shadow-2xl animate-in zoom-in-95 duration-500">
+                <div
+                    class="w-20 h-20 bg-amber-600 mx-auto rounded-3xl mb-8 flex items-center justify-center font-black text-4xl shadow-2xl shadow-amber-900/40 italic">
+                    G</div>
+                <h2 class="text-3xl font-black mb-1 italic uppercase tracking-tighter">Entorno <span
+                        class="text-amber-500">Privado</span></h2>
+                <p class="text-[9px] font-bold text-slate-500 mb-10 uppercase tracking-widest">Ingrese credenciales de
+                    Comandancia</p>
+                <div class="space-y-4">
+                    <input type="text" id="admin-user" placeholder="Usuario"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-widest">
+                    <input type="password" id="admin-pass" placeholder="••••••••"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-[0.3em]">
+                </div>
+                <button onclick="handleLogin()"
+                    class="w-full btn-accent p-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-8 shadow-xl">Autenticar
+                    Sistema</button>
+                <p class="text-[8px] mt-8 opacity-20 uppercase font-bold tracking-widest">Acceso monitoreado y grabado
+                    en archivo</p>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
+            <header class="flex justify-between items-center mb-16">
+                <div>
+                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Estado del <span
+                            class="text-amber-500">Sistema</span></h2>
+                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Métricas Globales
+                        de Intervención</p>
+                </div>
+            </header>
+            <div id="stats-dashboard-grid" class="grid grid-cols-4 gap-8 mb-16">
+                <!-- Stats injected here -->
+            </div>
+            <!-- Recent Activity Placeholder -->
+            <div
+                class="glass-card p-12 rounded-[3rem] border-white/5 opacity-30 text-center uppercase font-black italic tracking-widest">
+                Monitoreo de Actividad en Tiempo Real
+            </div>
+        </div>
+
+        <!-- SURVEYS VIEW -->
+        <div id="view-surveys" class="admin-view animate-in fade-in slide-in-from-right-8 duration-500">
+            <header class="flex justify-between items-center mb-16">
+                <div>
+                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Terminal de <span
+                            class="text-amber-500">Encuestas</span></h2>
+                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Intervención
+                        Democrática en Tiempo Real</p>
+                </div>
+                <button onclick="openCreateModal()"
+                    class="btn-accent px-8 py-4 rounded-[1.25rem] text-[10px] flex items-center gap-3 shadow-2xl uppercase tracking-widest transition transform hover:scale-105">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Desplegar Nueva Encuesta
                 </button>
-            </form>
-            <p class="text-xs text-slate-500 text-center mt-6">
-                🔒 Conexión cifrada • Sistema auditado
-            </p>
+            </header>
+
+            <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
+                <table class="w-full text-left">
+                    <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
+                        <tr>
+                            <th class="px-10 py-8">Cartografía / Título</th>
+                            <th class="px-10 py-8">Nivel Estratégico</th>
+                            <th class="px-10 py-8">Estado Operativo</th>
+                            <th class="px-10 py-8 text-center">Votos Registrados</th>
+                            <th class="px-10 py-8 text-right">Protocolos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="surveys-table-body" class="divide-y divide-white/5 italic">
+                        <!-- Table rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- INCIDENTS VIEW -->
+        <div id="view-incidents" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
+            <header class="flex justify-between items-center mb-16">
+                <div>
+                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Centro de <span
+                            class="text-red-500">Alertas</span></h2>
+                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Reportes de
+                        Anomalías Territoriales</p>
+                </div>
+            </header>
+            <div id="incidents-container" class="grid grid-cols-1 gap-6">
+                <!-- Incidents injected here -->
+                <div
+                    class="glass-card p-20 rounded-[3rem] text-center opacity-20 uppercase font-black italic tracking-[0.3em]">
+                    Buscando reportes activos en la red...
+                </div>
+            </div>
+        </div>
+
+        <!-- USERS VIEW -->
+        <div id="view-users" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
+    <header class="flex justify-between items-center mb-16">
+        <div>
+            <h2 class="text-5xl font-black tracking-tighter uppercase italic">Registro <span
+                    class="text-emerald-500">Civil</span></h2>
+            <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Base de Datos de
+                Influencia Ciudadana</p>
+        </div>
+    </header>
+    
+    <!-- TABLA DE USUARIOS -->
+    <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
+        <table class="w-full text-left">
+            <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
+                <tr>
+                    <th class="px-10 py-8">Teléfono</th>
+                    <th class="px-10 py-8">Nombre</th>
+                    <th class="px-10 py-8 text-center">Puntos</th>
+                    <th class="px-10 py-8">Nivel</th>
+                    <th class="px-10 py-8 text-right">Total Votos</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-white/5 italic">
+                <!-- Rows injected by loadUsers() -->
+                <tr>
+                    <td colspan="5" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest">
+                        Cargando registros...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+    </main>
+
+    <!-- MODAL -->
+    <div id="create-modal"
+        class="fixed inset-0 z-[500] hidden bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
+        <div
+            class="w-full max-w-xl glass-card p-14 rounded-[3.5rem] relative border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300">
+            <button onclick="closeCreateModal()"
+                class="absolute top-10 right-10 opacity-30 hover:opacity-100 transition text-2xl font-thin">&times;</button>
+            <h3 class="text-4xl font-black mb-10 italic uppercase tracking-tighter leading-none">Nueva <span
+                    class="text-amber-500">Misión</span></h3>
+
+            <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
+                <div>
+                    <label
+                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Título
+                        de Inteligencia</label>
+                    <input type="text" id="s-title" placeholder="Ej: Tendencia Gubernatura Guerrero 2027"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-lg tracking-tight italic">
+                </div>
+                <div>
+                    <label
+                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Descripción
+                        de Operación</label>
+                    <textarea id="s-desc"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-medium h-24 outline-none focus:border-amber-600 transition placeholder:opacity-20 italic"
+                        placeholder="Breve contexto para el ciudadano..."></textarea>
+                </div>
+                    <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label
+                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Ámbito
+                            Geográfico</label>
+                        <select id="s-level" onchange="toggleMunicipalitySelector()"
+                            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+                            <option value="Gubernatura">Gubernatura</option>
+                            <option value="Municipio">Municipio</option>
+                            <option value="Distrito Local">Distrito Local</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Tipo
+                            de Evento</label>
+                        <select id="s-type"
+                            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+                            <option value="gubernatura">ELECCIONES 2027</option>
+                            <option value="ayuntamiento">AYUNTAMIENTOS</option>
+                            <option value="general">CONSULTA GENERAL</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SELECTOR DE MUNICIPIO (solo visible cuando es Municipal) -->
+                <div id="municipality-selector" class="hidden">
+                    <label
+                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Municipio
+                        Específico</label>
+                    <select id="s-municipality"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+                        <option value="">CARGANDO MUNICIPIOS...</option>
+                    </select>
+                </div>
+
+                <!-- OPTIONS BUILDER -->
+                <div class="pt-6 border-t border-white/5">
+                    <div class="flex justify-between items-center mb-4">
+                        <label
+                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block pl-1">Candidatos
+                            / Opciones</label>
+                        <button onclick="addOptionField()"
+                            class="text-amber-500 text-[10px] font-black uppercase tracking-widest hover:underline">+
+                            Añadir</button>
+                    </div>
+                    <div id="options-list" class="space-y-3">
+                        <!-- Dynamic fields -->
+                    </div>
+                </div>
+
+                <div class="p-6 bg-amber-600/5 border border-amber-600/10 rounded-[2rem] flex gap-4 items-center">
+                    <div
+                        class="w-10 h-10 rounded-full bg-amber-600/10 flex items-center justify-center flex-shrink-0 text-amber-500">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic leading-relaxed">
+                        Se incluirá automáticamente el <span class="text-amber-500">slider de confianza</span> al final
+                        de la encuesta.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-6 mt-12">
+                <button onclick="closeCreateModal()"
+                    class="flex-1 p-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-white transition">Interrumpir</button>
+                <button onclick="createSurvey()"
+                    class="flex-[3] btn-accent p-5 rounded-2xl text-[11px] uppercase tracking-[0.3em] shadow-2xl">Confirmar
+                    Despliegue</button>
+            </div>
         </div>
     </div>
 
-    <!-- LAYOUT PRINCIPAL -->
-    <div id="adminPanel" class="hidden h-screen flex">
-        
-        <!-- SIDEBAR -->
-        <aside class="sidebar w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
-            <div class="p-6 border-b border-slate-800">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
-                        🛡️
-                    </div>
-                    <div>
-                        <div class="font-bold text-white text-lg">Guardianes</div>
-                        <div class="text-xs text-slate-400">Admin Panel</div>
-                    </div>
-                </div>
-            </div>
-
-            <nav class="flex-1 overflow-y-auto py-6 space-y-1">
-                <a href="#" onclick="showSection('dashboard')" class="nav-item active flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">📊</span> Dashboard
-                </a>
-                <a href="#" onclick="showSection('surveys')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">📋</span> Encuestas
-                </a>
-                <a href="#" onclick="showSection('predictions')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">🔮</span> Predicciones
-                </a>
-                <a href="#" onclick="showSection('incidents')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">🚨</span> Incidentes
-                </a>
-                <a href="#" onclick="showSection('map')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">🗺️</span> Mapa en Vivo
-                </a>
-                <a href="#" onclick="showSection('users')" class="nav-item flex items-center px-6 py-3 hover:bg-slate-800 transition">
-                    <span class="mr-3">👥</span> Usuarios
-                </a>
-            </nav>
-
-            <div class="p-6 border-t border-slate-800">
-                <button onclick="logout()" class="flex items-center text-red-400 hover:text-red-300 transition text-sm font-medium w-full">
-                    <span class="mr-2">🚪</span> Cerrar Sesión
-                </button>
-            </div>
-        </aside>
-
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="flex-1 overflow-y-auto bg-slate-50">
-            
-            <!-- HEADER -->
-            <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-8 py-5 shadow-sm">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-slate-900" id="page-title">Dashboard General</h1>
-                        <p class="text-sm text-slate-600 mt-1">Sistema de monitoreo electoral en tiempo real</p>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <span class="flex items-center text-sm font-medium">
-                            <span class="w-2.5 h-2.5 bg-green-500 rounded-full mr-2 pulse"></span>
-                            Sistema Operativo
-                        </span>
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center text-white font-bold border-2 border-blue-200 shadow">
-                            A
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div class="p-8 max-w-[1600px] mx-auto">
-
-                <!-- SECCIÓN: DASHBOARD -->
-                <section id="section-dashboard" class="space-y-8">
-                    
-                    <!-- KPI CARDS -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="text-4xl">👥</div>
-                                <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">+12%</span>
-                            </div>
-                            <div class="text-sm text-slate-500 font-medium mb-1">Usuarios Registrados</div>
-                            <div class="text-3xl font-black text-slate-900" id="kpi-users">0</div>
-                        </div>
-
-                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="text-4xl">🗳️</div>
-                                <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">Hoy</span>
-                            </div>
-                            <div class="text-sm text-slate-500 font-medium mb-1">Predicciones Totales</div>
-                            <div class="text-3xl font-black text-blue-900" id="kpi-predictions">0</div>
-                        </div>
-
-                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="text-4xl">📋</div>
-                                <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">Activas</span>
-                            </div>
-                            <div class="text-sm text-slate-500 font-medium mb-1">Encuestas en Curso</div>
-                            <div class="text-3xl font-black text-emerald-600" id="kpi-surveys">0</div>
-                        </div>
-
-                        <div class="stat-card bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="text-4xl">🚨</div>
-                                <span class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-bold">Nuevos</span>
-                            </div>
-                            <div class="text-sm text-slate-500 font-medium mb-1">Incidentes Reportados</div>
-                            <div class="text-3xl font-black text-red-600" id="kpi-incidents">0</div>
-                        </div>
-                    </div>
-
-                    <!-- GRÁFICOS -->
-                    <div class="grid lg:grid-cols-2 gap-8">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <h3 class="font-bold text-lg text-slate-900 mb-6">Tendencia de Predicciones (Gubernatura)</h3>
-                            <canvas id="trendChart" height="250"></canvas>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100">
-                            <h3 class="font-bold text-lg text-slate-900 mb-6">Participación por Municipio (Top 10)</h3>
-                            <canvas id="participationChart" height="250"></canvas>
-                        </div>
-                    </div>
-
-                </section>
-
-                <!-- SECCIÓN: ENCUESTAS -->
-                <section id="section-surveys" class="hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-slate-900">Gestión de Encuestas</h2>
-                        <button onclick="createSurveyModal()" class="px-6 py-3 bg-gradient-to-r from-blue-900 to-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition">
-                            + Nueva Encuesta
-                        </button>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200 overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-slate-50 border-b-2 border-slate-200">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Título</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Tipo</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Respuestas</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Estado</th>
-                                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="surveys-table" class="divide-y divide-slate-100">
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-slate-400">
-                                        Cargando encuestas...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- SECCIÓN: PREDICCIONES -->
-                <section id="section-predictions" class="hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Análisis de Predicciones</h2>
-                    
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-200">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-slate-900">Distribución por Candidato</h3>
-                            <select id="municipality-filter" onchange="filterPredictions()" class="px-4 py-2 border-2 border-slate-300 rounded-lg font-medium">
-                                <option value="">Todos los municipios</option>
-                            </select>
-                        </div>
-                        <canvas id="predictionsChart" height="300"></canvas>
-                    </div>
-                </section>
-
-                <!-- SECCIÓN: INCIDENTES -->
-                <section id="section-incidents" class="hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-slate-900">Reportes de Incidentes</h2>
-                        <button onclick="exportIncidents()" class="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition">
-                            📥 Exportar CSV
-                        </button>
-                    </div>
-
-                    <div class="grid md:grid-cols-3 gap-6 mb-6">
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Pendientes</div>
-                            <div class="text-3xl font-bold text-amber-600" id="incidents-pending">0</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Verificados</div>
-                            <div class="text-3xl font-bold text-green-600" id="incidents-verified">0</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Críticos</div>
-                            <div class="text-3xl font-bold text-red-600" id="incidents-critical">0</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200 overflow-hidden">
-                        <div class="overflow-x-auto max-h-[600px]">
-                            <table class="w-full">
-                                <thead class="bg-slate-50 border-b-2 border-slate-200 sticky top-0">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">ID</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Tipo</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Municipio</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Descripción</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Estado</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase">Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="incidents-table" class="divide-y divide-slate-100">
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-8 text-center text-slate-400">
-                                            Cargando incidentes...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- SECCIÓN: MAPA -->
-                <section id="section-map" class="hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Mapa de Incidentes Geolocalizados</h2>
-                    
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-200 relative">
-                        <div id="map"></div>
-                        <div class="absolute top-10 right-10 bg-white p-4 rounded-xl shadow-xl z-[1000] border-2 border-slate-200">
-                            <div class="font-bold text-sm mb-3 text-slate-900">Capas del Mapa</div>
-                            <label class="flex items-center space-x-2 cursor-pointer mb-2">
-                                <input type="checkbox" checked class="w-4 h-4 text-blue-600 rounded">
-                                <span class="text-sm font-medium text-slate-700">Incidentes</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded">
-                                <span class="text-sm font-medium text-slate-700">Participación</span>
-                            </label>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- SECCIÓN: USUARIOS -->
-                <section id="section-users" class="hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Usuarios del Sistema</h2>
-                    
-                    <div class="grid md:grid-cols-4 gap-6 mb-6">
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Total Usuarios</div>
-                            <div class="text-3xl font-bold text-slate-900" id="users-total">0</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Activos Hoy</div>
-                            <div class="text-3xl font-bold text-emerald-600" id="users-active">0</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Nuevos (7d)</div>
-                            <div class="text-3xl font-bold text-blue-600" id="users-new">0</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border-2 border-slate-200">
-                            <div class="text-sm text-slate-600 mb-1">Puntos Promedio</div>
-                            <div class="text-3xl font-bold text-amber-600" id="users-avg-points">0</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border-2 border-slate-200">
-                        <div class="p-6">
-                            <canvas id="usersGrowthChart" height="200"></canvas>
-                        </div>
-                    </div>
-                </section>
-
-            </div>
-        </main>
-    </div>
-
+    <!-- SCRIPTS -->
     <script>
-        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
-        let adminToken = localStorage.getItem('adminToken');
-        let map = null;
+        const API_URL = '/api';
+        let adminToken = localStorage.getItem('guardianAdminToken');
 
-        // ==================== LOGIN ====================
+        // --- AUTH ---
+        async function handleLogin() {
+            const username = document.getElementById('admin-user').value;
+            const password = document.getElementById('admin-pass').value;
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('admin-username').value;
-            const password = document.getElementById('admin-password').value;
-
-            // Mock login (en producción usar /api/admin/login)
-            if (password === 'GuardianesGro2026!') {
-                adminToken = 'mock-admin-token';
-                localStorage.setItem('adminToken', adminToken);
-                initAdmin();
-            } else {
-                alert('❌ Credenciales incorrectas');
-            }
-        }
-
-        function initAdmin() {
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            loadDashboard();
-        }
-
-        function logout() {
-            if (confirm('¿Cerrar sesión de administrador?')) {
-                localStorage.removeItem('adminToken');
-                location.reload();
-            }
-        }
-
-        // ==================== NAVEGACIÓN ====================
-
-        function showSection(section) {
-            // Ocultar todas las secciones
-            ['dashboard', 'surveys', 'predictions', 'incidents', 'map', 'users'].forEach(s => {
-                document.getElementById(`section-${s}`).classList.add('hidden');
-            });
-
-            // Mostrar sección seleccionada
-            document.getElementById(`section-${section}`).classList.remove('hidden');
-
-            // Actualizar navegación activa
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active', 'bg-slate-800', 'text-white');
-            });
-            event.target.closest('.nav-item').classList.add('active', 'bg-slate-800', 'text-white');
-
-            // Actualizar título
-            const titles = {
-                'dashboard': 'Dashboard General',
-                'surveys': 'Gestión de Encuestas',
-                'predictions': 'Análisis de Predicciones',
-                'incidents': 'Reportes de Incidentes',
-                'map': 'Mapa de Incidentes en Vivo',
-                'users': 'Gestión de Usuarios'
-            };
-            document.getElementById('page-title').textContent = titles[section];
-
-            // Cargar datos según sección
-            if (section === 'map' && !map) {
-                initMap();
-            }
-            if (section === 'surveys') {
-                loadSurveys();
-            }
-            if (section === 'incidents') {
-                loadIncidents();
-            }
-        }
-
-        // ==================== DASHBOARD ====================
-
-        async function loadDashboard() {
             try {
-                // Cargar KPIs
-                const statsRes = await fetch(`${API_URL}/admin/stats`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                const res = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
-                
-                if (statsRes.ok) {
-                    const stats = await statsRes.json();
-                    document.getElementById('kpi-users').textContent = stats.users || 0;
-                    document.getElementById('kpi-predictions').textContent = stats.predictions || 0;
-                    document.getElementById('kpi-surveys').textContent = stats.surveys || 0;
-                    document.getElementById('kpi-incidents').textContent = stats.incidents || 0;
-                }
-
-                // Gráfico de tendencias
-                const trendCtx = document.getElementById('trendChart')?.getContext('2d');
-                if (trendCtx) {
-                    new Chart(trendCtx, {
-                        type: 'line',
-                        data: {
-                            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
-                            datasets: [{
-                                label: 'Predicciones',
-                                data: [120, 450, 890, 1250],
-                                borderColor: '#2563eb',
-                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-                }
-
-                // Gráfico de participación
-                const partCtx = document.getElementById('participationChart')?.getContext('2d');
-                if (partCtx) {
-                    new Chart(partCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Acapulco', 'Chilpancingo', 'Iguala', 'Zihuatanejo', 'Taxco'],
-                            datasets: [{
-                                label: 'Participantes',
-                                data: [450, 280, 150, 120, 95],
-                                backgroundColor: '#10b981'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-                }
-
-            } catch (error) {
-                console.error('Error cargando dashboard:', error);
-            }
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('guardianAdminToken', data.token);
+                    adminToken = data.token;
+                    showPortal();
+                } else { alert('Acceso Denegado: ' + (data.error || '')); }
+            } catch (e) { alert('Error de Red Critico'); }
         }
 
-        // ==================== ENCUESTAS ====================
+        function showPortal() {
+            document.getElementById('login-overlay').classList.add('hidden');
+            // document.getElementById('admin-portal').classList.remove('hidden'); // Eliminado ID inexistente
+            lucide.createIcons();
+            loadStats();
+            loadSurveys();
+        }
 
-        async function loadSurveys() {
+        // --- DATA ---
+        async function loadStats() {
             try {
-                const res = await fetch(`${API_URL}/surveys`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const surveys = await res.json();
-
-                const tbody = document.getElementById('surveys-table');
-                if (surveys.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No hay encuestas creadas</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = surveys.map(s => `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-4 font-semibold text-slate-900">${s.title}</td>
-                        <td class="px-6 py-4 text-slate-600">${s.election_type || 'N/A'}</td>
-                        <td class="px-6 py-4 text-slate-600">${s.total_responses || 0}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
-                                ${s.is_active ? 'ACTIVA' : 'PAUSADA'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <button class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded font-medium">Ver</button>
-                            <button class="text-slate-600 hover:bg-slate-50 px-3 py-1 rounded font-medium">Editar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Error cargando encuestas:', error);
-            }
-        }
-
-        function createSurveyModal() {
-            alert('Modal de creación de encuesta (implementar)');
-        }
-
-        // ==================== INCIDENTES ====================
-
-        async function loadIncidents() {
-            try {
-                const res = await fetch(`${API_URL}/incidents?limit=100`, {
+                const res = await fetch(`${API_URL}/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
-                const incidents = data.incidents || [];
+                const grids = document.querySelectorAll('#stats-dashboard-grid');
+                grids.forEach(grid => {
+                    grid.innerHTML = `
+                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Unidad Poblacional</span>
+                            <div class="text-4xl font-black italic tracking-tighter">${data.totalUsers || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Cels</span></div>
+                        </div>
+                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Predicciones Almacenadas</span>
+                            <div class="text-4xl font-black italic tracking-tighter">${data.governorVotes || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Vot.</span></div>
+                        </div>
+                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-l-[6px] border-amber-600">
+                            <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Operaciones Activas</span>
+                            <div class="text-4xl font-black italic tracking-tighter text-amber-500">${data.activeSurveys || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Enc.</span></div>
+                        </div>
+                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                            <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Focos de Alerta</span>
+                            <div class="text-4xl font-black italic tracking-tighter text-red-500">${data.pendingIncidents || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Inc.</span></div>
+                        </div>
+                    `;
+                });
+            } catch (e) { }
+        }
 
-                // Actualizar contadores
-                document.getElementById('incidents-pending').textContent = incidents.filter(i => i.status === 'pending').length;
-                document.getElementById('incidents-verified').textContent = incidents.filter(i => i.
+        async function loadSurveys() {
+            try {
+                const res = await fetch(`${API_URL}/admin/surveys`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const surveys = await res.json();
+                const tbody = document.getElementById('surveys-table-body');
+                tbody.innerHTML = surveys.map(s => `
+                    <tr class="hover:bg-amber-600/[0.03] transition-all group">
+                        <td class="px-10 py-10">
+                            <div class="font-black text-base uppercase tracking-tighter">${s.title}</div>
+                            <div class="text-[9px] font-bold text-slate-600 mt-2 line-clamp-1 uppercase tracking-widest overflow-hidden opacity-60">${s.description || '- SIN DESCRIPCIÓN -'}</div>
+                        </td>
+                        <td class="px-10 py-10 font-black text-[10px] text-amber-500 uppercase tracking-[0.2em] italic">${s.election_type || 'GENERAL'}</td>
+                        <td class="px-10 py-10">
+                            <span class="status-badge ${s.is_active ? 'status-active' : 'status-paused'}">
+                                ${s.is_active ? 'Operativo' : 'Inactivo'}
+                            </span>
+                        </td>
+                        <td class="px-10 py-10 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_responses || 0}</td>
+                        <td class="px-10 py-10 text-right">
+                            <div class="flex flex-col gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                                <button onclick="exportCSV(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">📥 Exportar</button>
+                                <button onclick="toggleStatus(${s.id}, ${s.is_active})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">🔄 ${s.is_active ? 'Pausar' : 'Activar'}</button>
+                                <button onclick="deleteSurvey(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-red-600 hover:text-red-500 transition shadow-inner shadow-black/20">🗑️ Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { }
+        }
+
+        async function toggleStatus(id, currentStatus) {
+            try {
+                const res = await fetch(`${API_URL}/admin/surveys/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ isActive: !currentStatus })
+                });
+                if (res.ok) loadSurveys();
+                else {
+                    const data = await res.json();
+                    alert('Error: ' + (data.error || 'No se pudo cambiar el estado'));
+                }
+            } catch (e) { alert('Falla de red'); }
+        }
+
+        async function deleteSurvey(id) {
+            if (!confirm('¿ADVERTENCIA CRÍTICA: Seguro que desea eliminar esta encuesta y TODOS sus votos? Esta acción es irreversible.')) return;
+            try {
+                const res = await fetch(`${API_URL}/admin/surveys/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                if (res.ok) {
+                    loadSurveys();
+                    loadStats();
+                } else {
+                    const data = await res.json();
+                    alert('Error: ' + (data.error || 'No se pudo eliminar'));
+                }
+            } catch (e) { alert('Falla de red'); }
+        }
+
+        function exportCSV(id) {
+            // El backend permite token por query string para descargas directas
+            window.open(`${API_URL}/admin/surveys/${id}/export?token=${adminToken}`, '_blank');
+        }
+
+        async function loadIncidents() {
+            try {
+                const res = await fetch(`${API_URL}/incidents`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                const container = document.getElementById('incidents-container');
+                container.innerHTML = (data.incidents || []).map(i => `
+                    <div class="glass-card p-8 rounded-[2rem] flex justify-between items-center border-white/5 group hover:border-red-500/30 transition">
+                        <div class="flex gap-6 items-center">
+                            <div class="w-14 h-14 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-500 font-black">!</div>
+                            <div>
+                                <h4 class="font-black uppercase tracking-tighter italic text-red-500">${i.type}</h4>
+                                <p class="text-xs text-slate-500 font-medium truncate w-96">${i.description}</p>
+                                <div class="flex gap-4 mt-2">
+                                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">Municipio: ${i.municipalityName}</span>
+                                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">Hace ${timeAgo(i.createdAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="updateIncidentStatus(${i.id}, 'verified')" class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-emerald-600 hover:text-slate-950 transition">Verificar</button>
+                            <button onclick="updateIncidentStatus(${i.id}, 'rejected')" class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-slate-950 transition">Descartar</button>
+                        </div>
+                    </div>
+                `).join('') || container.innerHTML;
+            } catch (e) { }
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + 'm';
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + 'h';
+            return Math.floor(hours / 24) + 'd';
+        }
+
+        // --- ACTIONS ---
+        function addOptionField() {
+            const list = document.getElementById('options-list');
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 animate-in fade-in zoom-in-95 duration-200';
+            div.innerHTML = `
+                <input type="text" placeholder="Nombre Candidato" class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-xs font-bold outline-none focus:border-amber-600">
+                <input type="text" placeholder="URL Foto (opcional)" class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-medium outline-none focus:border-amber-600">
+                <button onclick="this.parentElement.remove()" class="flex-none w-10 h-10 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition">×</button>
+            `;
+            list.appendChild(div);
+        }
+        // --- TOGGLE MUNICIPIO SELECTOR ---
+function toggleMunicipalitySelector() {
+    const level = document.getElementById('s-level').value;
+    const municipalityDiv = document.getElementById('municipality-selector');
+    
+    if (level === 'Municipio') {
+        municipalityDiv.classList.remove('hidden');
+        loadMunicipalities(); // Cargar municipios si aún no se han cargado
+    } else {
+        municipalityDiv.classList.add('hidden');
+        document.getElementById('s-municipality').value = ''; // Limpiar selección
+    }
+}
+
+// --- CARGAR MUNICIPIOS EN SELECTOR ---
+async function loadMunicipalities() {
+    const select = document.getElementById('s-municipality');
+    
+    // Si ya tiene opciones (más de 1), no recargar
+    if (select.options.length > 1) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/data/municipalities`);
+        const data = await res.json();
+        
+        const validData = data.filter(m => m.name && m.name.trim().length > 0);
+        
+        select.innerHTML = '<option value="">SELECCIONA MUNICIPIO</option>' + 
+            validData.map(m => {
+                const cleanName = m.name.replace(/^[0-9\s\-]+/, '').toUpperCase();
+                if (!cleanName.trim()) return '';
+                return `<option value="${m.id}">${cleanName}</option>`;
+            }).join('');
+            
+    } catch (e) {
+        console.error('Error cargando municipios:', e);
+        select.innerHTML = '<option value="">ERROR CARGANDO MUNICIPIOS</option>';
+    }
+}
+
+        async function createSurvey() {
+            const title = document.getElementById('s-title').value;
+            if (!title) return alert('Operación requiere nombre descriptivo');
+
+            const optionFields = document.getElementById('options-list').children;
+            const options = Array.from(optionFields).map(f => ({
+                label: f.children[0].value,
+                value: f.children[0].value,
+                photo: f.children[1].value || null
+            })).filter(o => o.label);
+
+                const payload = {
+                    title: title,
+                    description: document.getElementById('s-desc').value,
+                    level: document.getElementById('s-level').value,
+                    electionType: document.getElementById('s-type').value,
+                    municipalityId: document.getElementById('s-municipality').value || null,
+                    questions: [
+                    {
+                        text: '¿Quién crees que ganará?',
+                        type: 'single_choice',
+                        options: options
+                    },
+                    {
+                        text: 'Nivel de Confianza',
+                        type: 'confidence_scale',
+                        isRequired: true
+                    }
+                ]
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/admin/surveys`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeCreateModal();
+                    loadSurveys();
+                    loadStats();
+                } else {
+                    const data = await res.json();
+                    alert('Error en protocolo: ' + (data.error || 'Desconocido'));
+                }
+            } catch (e) { alert('Falla en la red'); }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_URL}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const users = await res.json();
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = (users || []).map(u => `
+                    <tr class="hover:bg-emerald-600/[0.03] transition-all">
+                        <td class="px-10 py-8 font-black text-slate-500">**** ${u.phone_last4 || '????'}</td>
+                        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">${u.name || 'ANÓNIMO'}</td>
+                        <td class="px-10 py-8 text-center font-black text-amber-500">${u.points || 0}</td>
+                        <td class="px-10 py-8 font-bold text-[10px] uppercase opacity-40">${u.level || 'OBSERVADOR'}</td>
+                        <td class="px-10 py-8 text-right font-black text-[10px] uppercase tracking-widest text-emerald-500">${u.total_votes || 0} Votos</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="5" class="p-20 text-center opacity-20">SIN REGISTROS</td></tr>';
+            } catch (e) { }
+        }
+
+        async function updateIncidentStatus(id, status) {
+            try {
+                const res = await fetch(`${API_URL}/incidents/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ status })
+                });
+                if (res.ok) loadIncidents();
+            } catch (e) { }
+        }
+
+        // --- VIEW ---
+        function switchView(viewId) {
+            // Hide all views
+            document.querySelectorAll('.admin-view').forEach(v => v.classList.add('hidden'));
+            // Show target view
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+
+            // Update sidebar buttons
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active', 'bg-amber-600', 'text-slate-950', 'opacity-100');
+                btn.classList.add('opacity-40');
+            });
+            const activeBtn = document.querySelector(`[onclick="switchView('${viewId}')"]`);
+            activeBtn.classList.add('active', 'bg-amber-600', 'text-slate-950', 'opacity-100');
+            activeBtn.classList.remove('opacity-40');
+
+            if (viewId === 'dashboard') loadStats();
+            if (viewId === 'surveys') loadSurveys();
+            if (viewId === 'incidents') loadIncidents();
+            if (viewId === 'users') loadUsers();
+        }
+
+        function openCreateModal() {
+            document.getElementById('create-modal').classList.remove('hidden');
+            document.getElementById('options-list').innerHTML = '';
+            // Add some default options
+            addOptionField();
+            addOptionField();
+        }
+        function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
+        function adminLogout() { localStorage.removeItem('guardianAdminToken'); location.reload(); }
+
+        if (adminToken) showPortal();
+    </script>
+</body>
+
+</html>

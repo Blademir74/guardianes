@@ -1,132 +1,240 @@
-const router = require('express').Router();
-const db = require('../db');
-const { verifyToken } = require('../middleware/auth');
-
-// POST /api/predictions (protegido)
 // src/routes/predictions.js
 
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+const jwt = require('jsonwebtoken');
+
 /**
- * POST /api/predictions
- * Crear predicción con validación estricta de IDs
+ * GET /api/predictions/municipalities/:municipalityId
+ * Obtener candidatos disponibles para predicción
  */
-router.post('/', verifyToken, async (req, res) => {
-  const client = await db.connect();
+router.get('/municipalities/:municipalityId', async (req, res) => {
   try {
-    const { electionId, municipalityId, candidateId, confidence } = req.body;
-    const userId = req.userId;
+    const { municipalityId } = req.params;
+    const { electionType } = req.query;
 
-    // Validar campos requeridos
-    if (!electionId || !municipalityId || !candidateId || confidence === undefined) {
-      return res.status(400).json({ error: 'Campos requeridos: electionId, municipalityId, candidateId, confidence' });
-    }
+    console.log(`🔍 Buscando candidatos para municipio: ${municipalityId}, tipo: ${electionType}`);
 
-    // Validar confianza
-    if (confidence < 0 || confidence > 100) {
-      return res.status(400).json({ error: 'Confianza debe estar entre 0 y 100' });
-    }
+    const result = await db.query(`
+      SELECT
+        id,
+        name,
+        party,
+        photo_url as "photoUrl",
+        bio
+      FROM candidates 
+      WHERE municipality_id = $1 
+        AND is_active = true
+        ${electionType ? `AND election_type = $2` : ''}
+      ORDER BY name ASC
+    `, electionType ? [municipalityId, electionType] : [municipalityId]);
 
-    await client.query('BEGIN');
-
-    // Validar que municipio existe
-    const municipioCheck = await client.query(
-      'SELECT id FROM municipalities WHERE id = $1',
-      [municipalityId]
-    );
+    console.log(`✅ Candidatos encontrados: ${result.rows.length}`);
     
-    if (municipioCheck.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Municipio inválido' });
-    }
-
-    // Validar que elección existe y está activa
-    const electionCheck = await client.query(
-      'SELECT id FROM elections WHERE id = $1 AND is_active = true',
-      [electionId]
-    );
+    res.json(result.rows);
     
-    if (electionCheck.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Elección inválida o inactiva' });
-    }
-
-    // Validar que candidato existe
-    const candidateCheck = await client.query(
-      'SELECT id FROM candidates WHERE id = $1 AND election_id = $2 AND municipality_id = $3',
-      [candidateId, electionId, municipalityId]
-    );
-    
-    if (candidateCheck.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Candidato inválido para esta elección/municipio' });
-    }
-
-    // Insertar predicción
-    const insertQuery = `
-      INSERT INTO predictions (user_id, election_id, municipality_id, candidate_id, confidence, created_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id
-    `;
-    const result = await client.query(insertQuery, [userId, electionId, municipalityId, candidateId, confidence]);
-    const predictionId = result.rows[0].id;
-    
-    // Actualizar puntos y contador del usuario
-    await client.query(
-      'UPDATE users SET points = points + 100, predictions_count = predictions_count + 1, last_active = NOW() WHERE id = $1',
-      [userId]
-    );
-    
-    await client.query('COMMIT');
-    
-    res.json({ success: true, predictionId, pointsEarned: 100 });
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Error al crear predicción:', error);
-    res.status(500).json({ error: 'Prediction failed' });
-  } finally {
-    client.release();
+    console.error('❌ Error obteniendo candidatos:', error);
+    res.status(500).json({ error: 'Error obteniendo candidatos municipales' });
   }
 });
 
-// GET /api/predictions/:electionId/:municipalityId
-router.get('/:electionId/:municipalityId', async (req, res) => {
+/**
+ * POST /api/predictions
+ * Crear nueva predicción
+ */
+router.post('/', async (req, res) => {
   try {
-    const electionId = parseInt(req.params.electionId, 10);
-    const municipioId = parseInt(req.params.municipalityId, 10);
-
-    if (!electionId || electionId <= 0 || !municipioId || municipioId <= 0) {
-      return res.status(400).json({ error: 'Invalid parameters' });
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Token de autenticación requerido' });
     }
     
-    const query = `
-      SELECT 
-        p.candidate_id,
-        c.name,
+    let userId = null;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+      userId = decoded.userId;
+    } catch (err) {
+      return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+    
+    const { municipalityId, candidateId, confidence } = req.body;
+
+    console.log('📥 Predicción recibida:', { userId, municipalityId, candidateId, confidence });
+
+    if (!municipalityId || !candidateId) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+
+    const confidenceNormalized = (confidence > 10) ? confidence : (confidence * 10 || 50);
+
+    // Verificar si ya existe
+    const existing = await db.query(`
+      SELECT id FROM predictions 
+      WHERE user_id = $1 AND municipality_id = $2
+    `, [userId, municipalityId]);
+
+    if (existing.rows.length > 0) {
+      // Actualizar
+      await db.query(`
+        UPDATE predictions 
+        SET candidate_id = $1, confidence = $2
+        WHERE user_id = $3 AND municipality_id = $4
+      `, [candidateId, confidenceNormalized, userId, municipalityId]);
+      
+      console.log('✅ Predicción actualizada');
+    } else {
+      // Insertar
+      await db.query(`
+        INSERT INTO predictions (user_id, municipality_id, candidate_id, confidence)
+        VALUES ($1, $2, $3, $4)
+      `, [userId, municipalityId, candidateId, confidenceNormalized]);
+      
+      console.log('✅ Predicción insertada');
+    }
+
+    // Otorgar puntos
+    let pointsEarned = 30;
+    try {
+      await db.query(`
+        UPDATE users 
+        SET points = points + $1 
+        WHERE id = $2
+      `, [pointsEarned, userId]);
+    } catch (err) {
+      console.error('⚠️ Error añadiendo puntos:', err);
+    }
+
+    res.json({
+      success: true,
+      message: 'Predicción guardada exitosamente',
+      pointsEarned
+    });
+
+  } catch (error) {
+    console.error('❌ Error creando predicción:', error);
+    res.status(500).json({ 
+      error: 'Error guardando predicción',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/predictions/stats/:municipalityId
+ * Obtener estadísticas de predicciones
+ */
+router.get('/stats/:municipalityId', async (req, res) => {
+  try {
+    const { municipalityId } = req.params;
+    const result = await db.query(`
+      SELECT
+        c.name as candidate_name,
         c.party,
-        COUNT(*) AS count
+        c.photo_url,
+        COUNT(p.id) as votes,
+        AVG(p.confidence) as avg_confidence
       FROM predictions p
       JOIN candidates c ON c.id = p.candidate_id
-      WHERE p.election_id = $1 AND p.municipality_id = $2
-      GROUP BY p.candidate_id, c.name, c.party
-      ORDER BY count DESC;
-    `;
+      WHERE p.municipality_id = $1
+      GROUP BY c.id, c.name, c.party, c.photo_url
+      ORDER BY votes DESC
+    `, [municipalityId]);
     
-    const result = await db.query(query, [electionId, municipioId]);
-    const predictions = result.rows;
-    
-    const totalPredictions = predictions.reduce((sum, row) => sum + parseInt(row.count), 0);
-
-    const response = predictions.map(p => ({
-      candidateId: p.candidate_id,
-      name: p.name,
-      party: p.party,
-      count: parseInt(p.count),
-      percentage: totalPredictions > 0 ? parseFloat(((p.count / totalPredictions) * 100).toFixed(2)) : 0
-    }));
-
-    res.json(response);
+    res.json(result.rows);
   } catch (error) {
-    console.error('Error al obtener predicciones:', error);
-    res.status(500).json({ error: 'Failed to fetch predictions' });
+    console.error('❌ Error obteniendo stats:', error);
+    res.status(500).json({ error: 'Error obteniendo estadísticas' });
+  }
+});
+
+/**
+ * GET /api/predictions/leaderboard
+ * Usuarios con más puntos/predicciones
+ */
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT name, points
+      FROM users
+      ORDER BY points DESC
+      LIMIT 10
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Error obteniendo leaderboard' });
+  }
+});
+
+/**
+ * GET /api/predictions/results/:municipalityId
+ * Ranking de tendencias por municipio
+ */
+router.get('/results/:municipalityId', async (req, res) => {
+  try {
+    const { municipalityId } = req.params;
+    const result = await db.query(`
+      SELECT
+        c.name as candidate_name,
+        c.party,
+        c.photo_url,
+        COUNT(p.id) as total_predictions,
+        AVG(p.confidence) as avg_confidence,
+        COUNT(p.id) * AVG(p.confidence) / 100 as trend_score
+      FROM predictions p
+      JOIN candidates c ON c.id = p.candidate_id
+      WHERE p.municipality_id = $1
+      GROUP BY c.id, c.name, c.party, c.photo_url
+      ORDER BY trend_score DESC, total_predictions DESC
+      LIMIT 10
+    `, [municipalityId]);
+    
+    res.json({
+      municipalityId: parseInt(municipalityId),
+      rankings: result.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo ranking:', error);
+    res.status(500).json({ error: 'Error obteniendo ranking de tendencias' });
+  }
+});
+
+/**
+ * GET /api/predictions/candidates/:municipalityId
+ * Alias para compatibilidad con el frontend
+ */
+router.get('/candidates/:municipalityId', async (req, res) => {
+  try {
+    const { municipalityId } = req.params;
+    const { electionType } = req.query;
+
+    let whereClause = 'c.municipality_id = $1';
+    let queryParams = [municipalityId];
+
+    if (electionType) {
+      whereClause += ' AND c.election_type = $2';
+      queryParams.push(electionType);
+    }
+    
+    const result = await db.query(`
+      SELECT
+        c.id,
+        c.name,
+        c.party,
+        c.photo_url,
+        c.bio
+      FROM candidates c
+      WHERE ${whereClause}
+      AND c.is_active = true
+      ORDER BY c.name
+    `, queryParams);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('❌ Error obteniendo candidatos:', error);
+    res.status(500).json({ error: 'Error obteniendo candidatos' });
   }
 });
 

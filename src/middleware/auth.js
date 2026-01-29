@@ -1,8 +1,8 @@
 // src/middleware/auth.js
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-dev-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-2027-guerrero';
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-2027-guerrero';
 
 // Función para generar token de usuario
 function generateUserToken(userId, phoneHash) {
@@ -16,9 +16,9 @@ function generateUserToken(userId, phoneHash) {
 // Función para generar token de admin
 function generateAdminToken(adminId, username) {
   return jwt.sign(
-    { adminId, username },
-    ADMIN_JWT_SECRET,
-    { expiresIn: '24h' }
+    { adminId, username, role: 'admin' },
+    process.env.ADMIN_JWT_SECRET || 'dev-secret',
+    { expiresIn: '24h' }  // ✅ SOLUCIÓN: 24 horas
   );
 }
 
@@ -26,7 +26,7 @@ function generateAdminToken(adminId, username) {
 function verifyToken(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Token requerido' });
     }
@@ -34,7 +34,7 @@ function verifyToken(req, res, next) {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
     req.phoneHash = decoded.phoneHash;
-    
+
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -50,8 +50,8 @@ function verifyToken(req, res, next) {
 // Middleware para verificar token de admin
 function verifyAdminToken(req, res, next) {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+
     if (!token) {
       return res.status(401).json({ error: 'Token de admin requerido' });
     }
@@ -59,7 +59,7 @@ function verifyAdminToken(req, res, next) {
     const decoded = jwt.verify(token, ADMIN_JWT_SECRET);
     req.adminId = decoded.adminId;
     req.adminUsername = decoded.username;
-    
+
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -76,13 +76,13 @@ function verifyAdminToken(req, res, next) {
 function optionalAuth(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
+
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.userId = decoded.userId;
       req.phoneHash = decoded.phoneHash;
     }
-    
+
     next();
   } catch (error) {
     // Si el token es inválido, continuar sin autenticación
