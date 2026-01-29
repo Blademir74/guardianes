@@ -65,69 +65,44 @@ router.post('/request-code', async (req, res) => {
 });
 
 // 2. VERIFICAR CÓDIGO
-// 2. VERIFICAR CÓDIGO
-router.post('/verify-code', async (req, res) => {
+router.post('/request-code', async (req, res) => {
   try {
-    const { phone, code } = req.body;
-
-    if (!phone || !code) {
-      return res.status(400).json({ error: 'Teléfono y código requeridos' });
+    const { phone } = req.body;
+    
+    if (!phone || !/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ error: 'Número inválido. Deben ser 10 dígitos.' });
     }
+
+    // Generar código OTP
+    const otp = process.env.NODE_ENV === 'production'
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '345678';
 
     const phoneHash = generatePhoneHash(phone);
 
-    // ✅ MODO DEMO: aceptar código maestro 345678 SI NO estás en producción
-    const isDemoCode = (process.env.NODE_ENV !== 'production' && code === '345678');
+    // Siempre insertar o actualizar - no importa si existe
+    await query(`
+      INSERT INTO users (phone_hash, phone_last4, otp_code, otp_expires, created_at, is_active)
+      VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes', NOW(), true)
+      ON CONFLICT (phone_hash) DO UPDATE SET
+        otp_code = $3,
+        otp_expires = NOW() + INTERVAL '10 minutes',
+        updated_at = NOW()
+    `, [phoneHash, phone.slice(-4), otp]);
 
-    let result;
-    if (isDemoCode) {
-      // Buscar usuario solo por phone_hash, ignorando otp
-      result = await query(`
-        SELECT id, phone_last4, name, points, level, role
-        FROM users
-        WHERE phone_hash = $1
-          AND is_active = true
-      `, [phoneHash]);
-    } else {
-      // Verificación normal con otp
-      result = await query(`
-        SELECT id, phone_last4, name, points, level, role
-        FROM users
-        WHERE phone_hash = $1
-          AND otp_code = $2
-          AND otp_expires > NOW()
-          AND is_active = true
-      `, [phoneHash, code]);
-    }
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Código inválido o expirado' });
-    }
-
-    const user = result.rows[0];
-    const { generateUserToken } = require('../middleware/auth');
-    const token = generateUserToken(user.id, phoneHash);
+    console.log(`📱 OTP para ${phone}: ${otp}`);
 
     res.json({
       success: true,
-      token,
-      user: {
-        id: user.id,
-        phoneLast4: user.phone_last4,
-        name: user.name || `Usuario ${user.phone_last4}`,
-        points: user.points || 0,
-        level: user.level || 'Observador',
-        role: user.role || 'user'
-      }
+      message: 'Código enviado',
+      debug_otp: process.env.NODE_ENV !== 'production' ? otp : undefined
     });
 
   } catch (error) {
-    console.error('❌ Error en /verify-code:', error);
-    res.status(500).json({ error: 'Error al verificar código' });
+    console.error('❌ Error en /request-code:', error);
+    res.status(500).json({ error: 'Error interno al generar código' });
   }
 });
-
-
 // 2.5 LOGIN ADMIN
 router.post('/login', async (req, res) => {
   try {
