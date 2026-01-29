@@ -65,6 +65,7 @@ router.post('/request-code', async (req, res) => {
 });
 
 // 2. VERIFICAR CÓDIGO
+// 2. VERIFICAR CÓDIGO
 router.post('/verify-code', async (req, res) => {
   try {
     const { phone, code } = req.body;
@@ -75,21 +76,35 @@ router.post('/verify-code', async (req, res) => {
 
     const phoneHash = generatePhoneHash(phone);
 
-    const result = await query(`
-      SELECT id, phone_last4, name, points, level, role
-      FROM users 
-      WHERE phone_hash = $1 
-      AND otp_code = $2 
-      AND otp_expires > NOW()
-      AND is_active = true
-    `, [phoneHash, code]);
+    // ✅ MODO DEMO: aceptar código maestro 345678 SI NO estás en producción
+    const isDemoCode = (process.env.NODE_ENV !== 'production' && code === '345678');
+
+    let result;
+    if (isDemoCode) {
+      // Buscar usuario solo por phone_hash, ignorando otp
+      result = await query(`
+        SELECT id, phone_last4, name, points, level, role
+        FROM users
+        WHERE phone_hash = $1
+          AND is_active = true
+      `, [phoneHash]);
+    } else {
+      // Verificación normal con otp
+      result = await query(`
+        SELECT id, phone_last4, name, points, level, role
+        FROM users
+        WHERE phone_hash = $1
+          AND otp_code = $2
+          AND otp_expires > NOW()
+          AND is_active = true
+      `, [phoneHash, code]);
+    }
 
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Código inválido o expirado' });
     }
 
     const user = result.rows[0];
-
     const { generateUserToken } = require('../middleware/auth');
     const token = generateUserToken(user.id, phoneHash);
 
@@ -111,6 +126,7 @@ router.post('/verify-code', async (req, res) => {
     res.status(500).json({ error: 'Error al verificar código' });
   }
 });
+
 
 // 2.5 LOGIN ADMIN
 router.post('/login', async (req, res) => {
