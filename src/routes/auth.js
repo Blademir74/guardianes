@@ -23,7 +23,7 @@ router.post('/request-code', async (req, res) => {
     // Generar código OTP (6 dígitos)
     const otp = process.env.NODE_ENV === 'production'
       ? Math.floor(100000 + Math.random() * 900000).toString()
-      : '123456';
+      : '345678';
 
     const phoneHash = generatePhoneHash(phone);
 
