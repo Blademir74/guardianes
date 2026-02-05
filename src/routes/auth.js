@@ -61,9 +61,23 @@ router.post('/request-code', async (req, res) => {
     `, [phoneHash, phone.slice(-4), otp]);
 
     // >>> ENVÍO REAL POR WHATSAPP <<<
+       // >>> ENVÍO REAL POR WHATSAPP <<<
     if (process.env.NODE_ENV === 'production') {
-      await sendVerificationWhatsApp(phone, otp);
-      console.log(`📱 OTP enviado a ${phone}: ${otp}`);
+      try {
+        // Verificar que tenemos las variables necesarias
+        if (!process.env.WHATSAPP_ACCESS_TOKEN || !process.env.WHATSAPP_PHONE_NUMBER_ID) {
+          console.warn('⚠️ WhatsApp no configurado, usando modo DEBUG');
+          // Fallback: mostrar en consola pero no romper
+          console.log(`🔐 OTP PARA ${phone}: ${otp}`);
+        } else {
+          await sendVerificationWhatsApp(phone, otp);
+          console.log(`📱 OTP enviado a ${phone}`);
+        }
+      } catch (whatsappError) {
+        console.error('❌ Error WhatsApp:', whatsappError.message || whatsappError);
+        // NO rompemos el flujo, devolvemos el OTP en debug para que pueda usarlo
+        console.log(`🔐 OTP (fallback por error WhatsApp): ${otp}`);
+      }
     } else {
       console.log(`🧪 MODO DEV - OTP para ${phone}: ${otp}`);
     }
@@ -85,10 +99,17 @@ router.post('/request-code', async (req, res) => {
 // Función para enviar OTP por WhatsApp Business API
 async function sendVerificationWhatsApp(phoneNumber, otpCode) {
   try {
+    // Validar configuración
+    if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
+      throw new Error('Faltan variables de entorno de WhatsApp');
+    }
+
     // Formato: código de país + número (México = 52)
     const formattedPhone = phoneNumber.startsWith('52') ? phoneNumber : `52${phoneNumber}`;
     
     const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    
+    console.log(`📤 Enviando WhatsApp a ${formattedPhone}...`);
     
     const response = await axios.post(url, {
       messaging_product: 'whatsapp',
@@ -96,20 +117,25 @@ async function sendVerificationWhatsApp(phoneNumber, otpCode) {
       to: formattedPhone,
       type: 'text',
       text: {
-        body: `🔐 *Guardianes Guerrero 2027*\n\nTu código de verificación es: *${otpCode}*\n\nVálido por 10 minutos. No compartas este código con nadie.\n\nSi no solicitaste este código, ignora este mensaje.`
+        body: `🔐 *Guardianes Guerrero 2027*\n\nTu código de verificación es: *${otpCode}*\n\nVálido por 10 minutos. No compartas este código con nadie.`
       }
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 10000 // 10 segundos timeout
     });
 
-    console.log('✅ Mensaje WhatsApp enviado:', response.data.messages?.[0]?.id);
+    console.log('✅ WhatsApp enviado:', response.data?.messages?.[0]?.id);
     return true;
   } catch (error) {
-    console.error('❌ Error enviando WhatsApp:', error.response?.data || error.message);
-    throw error;
+    console.error('❌ Error detalle WhatsApp:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw error; // Relanzamos para que el catch superior lo maneje
   }
 }
 
