@@ -1,76 +1,77 @@
-// src/db.js
+// src/db.js — VERSIÓN CORREGIDA (Auditoría 2026-02-02)
+// Cambios:
+//   • pool se setea a null si falla → siguiente invocación recrée fresh (serverless-safe)
+//   • query() retorna res limpio sin log en producción
+//   • connect() exportado para uso de transacciones manuales en surveys / admin
+
 const { Pool } = require('pg');
 
-let pool;
+let pool = null;
 
-// Inicialización del pool de forma síncrona para asegurar que esté listo
-const initializePool = () => {
-  if (pool) {
-    return pool;
-  }
+// ──────────────────────────────────────────────
+// Crear pool. Se invoca lazy: la primera query que llegue
+// lo instancia. Si el pool muere por error, se resetea a null
+// y la siguiente query lo recrea.  Esto es el patrón correcto
+// para serverless (Vercel / Neon).
+// ──────────────────────────────────────────────
+function getPool() {
+  if (pool) return pool;
 
   const connectionString = process.env.DATABASE_URL;
-
   if (!connectionString) {
-    // Este error aparecerá en los logs de Vercel si la variable falta
-    throw new Error('FATAL: DATABASE_URL is not defined in environment variables.');
+    throw new Error('FATAL: DATABASE_URL no está definida en las variables de entorno.');
   }
 
   pool = new Pool({
     connectionString,
-    // Aseguramos SSL para Neon y otros proveedores cloud
-    ssl: { rejectUnauthorized: false },
-    // Configuración optimizada para serverless
-    max: 5, // Muy importante para no exceder límites de conexión
+    ssl: { rejectUnauthorized: false },   // obligatorio para Neon
+    max: 5,                               // máximo conexiones simultáneas
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000, // Aumentamos un poco el timeout
+    connectionTimeoutMillis: 10000,
   });
 
-  pool.on('error', (err, client) => {
-    console.error('❌ Unexpected error on idle client', err);
-    // En serverless, no intentamos recuperar el pool aquí.
-    // La siguiente invocación creará uno nuevo si es necesario.
+  // Si el pool detecta un error en un cliente inactivo,
+  // lo invalidamos para que se recree en el siguiente intento.
+  pool.on('error', (err) => {
+    console.error('❌ Pool error (idle client):', err.message);
+    pool = null;   // ← KEY: permite re-creación en next call
   });
 
-  console.log('🔌 DB Pool created successfully.');
+  console.log('🔒 DB Pool creado.');
   return pool;
-};
-
-// Llamamos a la inicialización al cargar el módulo
-try {
-  initializePool();
-} catch (e) {
-  console.error('🚨 Failed to initialize DB Pool on startup:', e.message);
-  // No detenemos el proceso, pero el primer intento de query fallará.
 }
 
-const getDbPool = () => {
-  if (!pool) {
-    // Esto no debería pasar si initializePool funcionó, pero es un respaldo.
-    throw new Error('DB Pool was not initialized. Check startup logs.');
-  }
-  return pool;
-};
 
-const query = async (text, params) => {
-  const p = getDbPool();
+// ──────────────────────────────────────────────
+// query() — wrapper principal. Usado por la mayoría de rutas.
+// ──────────────────────────────────────────────
+async function query(text, params) {
+  const p = getPool();
   const start = Date.now();
+
   try {
     const res = await p.query(text, params);
     const duration = Date.now() - start;
+
     if (duration > 1000) {
-      console.warn(`⚠️ Slow query (${duration}ms): ${text}`);
+      console.warn(`⚠️  Query lenta (${duration}ms): ${text.slice(0, 120)}`);
     }
+
     return res;
   } catch (error) {
-    console.error(`❌ Query Failed: ${error.message}`);
+    console.error(`❌ Query falló: ${error.message}`);
+    console.error(`   SQL: ${text.slice(0, 200)}`);
     throw error;
   }
-};
+}
 
-// La transacción se mantiene igual
-const transaction = async (callback) => {
-  const p = getDbPool();
+
+// ──────────────────────────────────────────────
+// transaction() — envuelve un callback en BEGIN/COMMIT/ROLLBACK.
+// Uso: const result = await transaction(async (client) => { ... });
+// ──────────────────────────────────────────────
+async function transaction(callback) {
+  const p   = getPool();
   const client = await p.connect();
   try {
     await client.query('BEGIN');
@@ -83,17 +84,22 @@ const transaction = async (callback) => {
   } finally {
     client.release();
   }
-};
+}
 
-// Función connect para obtener un client del pool (usado por surveys.js)
-const connect = async () => {
-  const p = getDbPool();
-  return await p.connect();
-};
+
+// ──────────────────────────────────────────────
+// connect() — retorna un client del pool para transacciones
+// manuales (surveys.js, admin.js).  IMPORTANTE: el caller
+// debe hacer client.release() en finally.
+// ──────────────────────────────────────────────
+async function connect() {
+  return await getPool().connect();
+}
+
 
 module.exports = {
   query,
   transaction,
-  getDbPool,
-  connect
+  connect,
+  getPool      // exportamos para tests si hace falta
 };

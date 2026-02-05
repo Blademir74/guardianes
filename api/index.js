@@ -79,7 +79,7 @@ const requireRoute = (name) => {
 const authRoutes = requireRoute('auth');
 const dataRoutes = require('../src/routes/data');
 const surveyRoutes = requireRoute('surveys');
-const adminRoutes = requireRoute('admin');
+const adminRoutes = require('../src/routes/admin');
 const candidateRoutes = requireRoute('candidates');
 const predictionsRoutes = requireRoute('predictions');
 const leaderboardRoutes = requireRoute('leaderboard');

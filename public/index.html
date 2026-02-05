@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         :root {
             --color-primary: #FF8C00;
@@ -159,10 +161,741 @@
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+         /* Estilos para el modal de login */
+    .auth-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+    }
+    .auth-modal.show {
+        display: flex;
+    }
+    .auth-content {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .auth-step {
+        display: none;
+    }
+    .auth-step.active {
+        display: block;
+    }
+    .auth-input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    .auth-button {
+        width: 100%;
+        padding: 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .auth-button:hover {
+        background: #0056b3;
+    }
+    .auth-timer {
+        text-align: center;
+        color: #666;
+        margin: 10px 0;
+    }
     </style>
 </head>
 
 <body class="min-h-screen">
+    <!-- 2. AGREGAR DESPUÉS DE ABRIR <body> (aproximadamente línea 100-150) -->
+<!-- Modal de Autenticación -->
+<!-- REEMPLAZAR TODO EL CÓDIGO DE AUTENTICACIÓN ANTERIOR CON ESTE -->
+<script>
+// ============================================
+// SISTEMA DE AUTENTICACIÓN GUARDIANES v4.0
+// DOBLE CANDADO - SESIÓN PERSISTENTE
+// ============================================
+
+class GuardianesAuthSystem {
+    constructor() {
+        // Tokens y sesión
+        this.accessToken = localStorage.getItem('grd_access_token');
+        this.refreshToken = localStorage.getItem('grd_refresh_token');
+        this.sessionId = localStorage.getItem('grd_session_id');
+        this.user = JSON.parse(localStorage.getItem('grd_user') || 'null');
+        
+        // Control de estado
+        this.isInitialAuth = false;
+        this.lastVerification = localStorage.getItem('grd_last_verification');
+        this.pendingAction = null;
+        
+        // Configuración
+        this.SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 días
+        this.VERIFICATION_CACHE = 60 * 60 * 1000; // 1 hora sin re-verificar
+    }
+    
+    // ========================================
+    // VERIFICACIONES DE ESTADO
+    // ========================================
+    
+    hasValidSession() {
+        // Verifica si hay una sesión válida (no necesariamente activa)
+        return this.sessionId && this.user;
+    }
+    
+    isFullyAuthenticated() {
+        // Verifica autenticación completa con token válido
+        return this.accessToken && this.user && this.sessionId;
+    }
+    
+    needsVerification() {
+        // Determina si necesita verificación para acciones sensibles
+        if (!this.lastVerification) return true;
+        
+        const lastVerifyTime = new Date(this.lastVerification).getTime();
+        const now = Date.now();
+        
+        return (now - lastVerifyTime) > this.VERIFICATION_CACHE;
+    }
+    
+    // ========================================
+    // FLUJO DE AUTENTICACIÓN INICIAL
+    // ========================================
+    
+    async checkInitialAccess() {
+        // Verificar si el usuario necesita autenticación inicial
+        if (!this.hasValidSession()) {
+            console.log('🔒 Sin sesión válida, requiere autenticación inicial');
+            this.showInitialAuthModal();
+            return false;
+        }
+        
+        // Verificar si el token sigue válido
+        if (this.accessToken) {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${this.accessToken}` }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    this.updateUserInfo(userData);
+                    console.log('✅ Sesión válida para:', userData.name);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error verificando sesión:', error);
+            }
+        }
+        
+        // Intentar refresh si hay refresh token
+        if (this.refreshToken) {
+            const refreshed = await this.refreshAccessToken();
+            if (refreshed) {
+                console.log('✅ Token renovado exitosamente');
+                return true;
+            }
+        }
+        
+        // Si llegamos aquí, necesita re-autenticación
+        console.log('⚠️ Sesión expirada, requiere nueva verificación');
+        this.showInitialAuthModal();
+        return false;
+    }
+    
+    // ========================================
+    // MODAL DE AUTENTICACIÓN INICIAL
+    // ========================================
+    
+    showInitialAuthModal() {
+        this.isInitialAuth = true;
+        
+        Swal.fire({
+            title: '🛡️ Bienvenido a Guardianes Guerrero',
+            html: `
+                <div style="text-align: left;">
+                    <p style="margin-bottom: 20px;">Para acceder al sistema y participar en las predicciones electorales, verifica tu número de teléfono.</p>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        📱 Número de teléfono (10 dígitos):
+                    </label>
+                    <input type="tel" 
+                           id="swal-phone" 
+                           class="swal2-input" 
+                           placeholder="7471234567"
+                           maxlength="10"
+                           style="margin: 0;">
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px;">
+                        <small>
+                            ✅ Tu número será verificado vía WhatsApp<br>
+                            ✅ Sesión válida por 30 días<br>
+                            ✅ Ganarás puntos por cada predicción
+                        </small>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: '📲 Enviar Código',
+            confirmButtonColor: '#25D366',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            preConfirm: () => {
+                const phone = document.getElementById('swal-phone').value;
+                if (!/^\d{10}$/.test(phone)) {
+                    Swal.showValidationMessage('Ingresa 10 dígitos sin espacios');
+                    return false;
+                }
+                return phone;
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await this.requestInitialOTP(result.value);
+            }
+        });
+    }
+    
+    async requestInitialOTP(phone) {
+        try {
+            Swal.fire({
+                title: 'Enviando código...',
+                text: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const response = await fetch('/api/auth/request-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al enviar código');
+            }
+            
+            // Guardar número temporalmente
+            this.tempPhone = phone;
+            
+            // Mostrar modal de verificación
+            this.showVerificationModal(data.phoneLast4, data.debug_otp);
+            
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message,
+                confirmButtonText: 'Reintentar',
+                confirmButtonColor: '#dc3545'
+            }).then(() => {
+                this.showInitialAuthModal();
+            });
+        }
+    }
+    
+    showVerificationModal(phoneLast4, debugCode = null) {
+        let timerInterval;
+        let timeLeft = 600; // 10 minutos
+        
+        Swal.fire({
+            title: '🔐 Verificación de Código',
+            html: `
+                <div style="text-align: center;">
+                    <p>Código enviado a: ***${phoneLast4}</p>
+                    <input type="text" 
+                           id="swal-code" 
+                           class="swal2-input" 
+                           placeholder="123456"
+                           maxlength="6"
+                           style="font-size: 24px; letter-spacing: 5px; text-align: center;">
+                    <div id="timer" style="margin-top: 10px; color: #666;">
+                        Código válido por: <span id="time">10:00</span>
+                    </div>
+                    ${debugCode ? `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                        <small>🔑 Código de prueba: <strong>${debugCode}</strong></small>
+                    </div>` : ''}
+                </div>
+            `,
+            confirmButtonText: '✅ Verificar',
+            confirmButtonColor: '#28a745',
+            showCancelButton: true,
+            cancelButtonText: '← Cambiar Número',
+            allowOutsideClick: false,
+            didOpen: () => {
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    document.getElementById('time').textContent = 
+                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        Swal.close();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Código Expirado',
+                            text: 'El código ha expirado. Solicita uno nuevo.',
+                            confirmButtonText: 'Solicitar Nuevo Código'
+                        }).then(() => {
+                            this.showInitialAuthModal();
+                        });
+                    }
+                }, 1000);
+            },
+            willClose: () => {
+                clearInterval(timerInterval);
+            },
+            preConfirm: () => {
+                const code = document.getElementById('swal-code').value;
+                if (!/^\d{6}$/.test(code)) {
+                    Swal.showValidationMessage('Ingresa el código de 6 dígitos');
+                    return false;
+                }
+                return code;
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await this.verifyInitialCode(result.value);
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                this.showInitialAuthModal();
+            }
+        });
+    }
+    
+    async verifyInitialCode(code) {
+        try {
+            Swal.fire({
+                title: 'Verificando...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const response = await fetch('/api/auth/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    phone: this.tempPhone, 
+                    code 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Código incorrecto');
+            }
+            
+            // Guardar sesión
+            this.saveSession(data);
+            
+            // Mostrar bienvenida
+            Swal.fire({
+                icon: 'success',
+                title: '¡Bienvenido a Guardianes!',
+                html: `
+                    <div style="text-align: center;">
+                        <h4>${data.user.name}</h4>
+                        <p>Tu sesión está activa por 30 días</p>
+                        <hr>
+                        <p>Ahora puedes:</p>
+                        <ul style="text-align: left; display: inline-block;">
+                            <li>📊 Realizar predicciones electorales</li>
+                            <li>📈 Ver estadísticas en tiempo real</li>
+                            <li>🏆 Ganar puntos y subir en el ranking</li>
+                            <li>📱 Reportar incidentes electorales</li>
+                        </ul>
+                    </div>
+                `,
+                confirmButtonText: '¡Comenzar!',
+                confirmButtonColor: '#28a745'
+            }).then(() => {
+                // Recargar para actualizar UI
+                this.updateUIAfterLogin();
+                
+                // Si hay acción pendiente, ejecutarla
+                if (this.pendingAction) {
+                    this.executePendingAction();
+                }
+            });
+            
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Verificación',
+                text: error.message,
+                confirmButtonText: 'Reintentar',
+                showCancelButton: true,
+                cancelButtonText: 'Cambiar Número'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.showVerificationModal(this.tempPhone.slice(-4));
+                } else {
+                    this.showInitialAuthModal();
+                }
+            });
+        }
+    }
+    
+    // ========================================
+    // VERIFICACIÓN PARA PREDICCIONES
+    // ========================================
+    
+    async requireAuthForPrediction(prediction) {
+        // Guardar predicción pendiente
+        this.pendingAction = {
+            type: 'prediction',
+            data: prediction
+        };
+        
+        // Si no tiene sesión, mostrar auth inicial
+        if (!this.hasValidSession()) {
+            this.showInitialAuthModal();
+            return false;
+        }
+        
+        // Si tiene sesión pero el token expiró, renovar
+        if (!this.isFullyAuthenticated()) {
+            const renewed = await this.refreshAccessToken();
+            if (!renewed) {
+                // No se pudo renovar, re-autenticar
+                this.showQuickVerification();
+                return false;
+            }
+        }
+        
+        // Si necesita re-verificación (más de 1 hora)
+        if (this.needsVerification()) {
+            this.showQuickVerification();
+            return false;
+        }
+        
+        // Todo OK, puede proceder
+        return true;
+    }
+    
+    showQuickVerification() {
+        Swal.fire({
+            title: '🔐 Verificación Rápida',
+            html: `
+                <div style="text-align: center;">
+                    <p>Por seguridad, confirma tu identidad</p>
+                    <p style="font-size: 18px; margin: 20px 0;">
+                        Tu número termina en: <strong>***${this.user?.phoneLast4 || '????'}</strong>
+                    </p>
+                    <button onclick="authSystem.sendQuickCode()" class="swal2-confirm swal2-styled" style="background-color: #25D366;">
+                        📲 Enviar Código Rápido
+                    </button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            allowOutsideClick: false
+        });
+    }
+    
+    async sendQuickCode() {
+        // Usar el teléfono almacenado en sesión
+        if (!this.user || !this.user.phoneLast4) {
+            this.showInitialAuthModal();
+            return;
+        }
+        
+        // Aquí implementarías la lógica de código rápido
+        // Por ahora, continuar con la acción
+        Swal.close();
+        this.updateVerificationTime();
+        this.executePendingAction();
+    }
+    
+    // ========================================
+    // GESTIÓN DE SESIÓN
+    // ========================================
+    
+    saveSession(authData) {
+        this.accessToken = authData.accessToken;
+        this.refreshToken = authData.refreshToken;
+        this.user = authData.user;
+        this.sessionId = this.generateSessionId();
+        
+        localStorage.setItem('grd_access_token', this.accessToken);
+        localStorage.setItem('grd_refresh_token', this.refreshToken);
+        localStorage.setItem('grd_user', JSON.stringify(this.user));
+        localStorage.setItem('grd_session_id', this.sessionId);
+        localStorage.setItem('grd_last_verification', new Date().toISOString());
+        
+        this.updateVerificationTime();
+    }
+    
+    updateVerificationTime() {
+        this.lastVerification = new Date().toISOString();
+        localStorage.setItem('grd_last_verification', this.lastVerification);
+    }
+    
+    async refreshAccessToken() {
+        if (!this.refreshToken) return false;
+        
+        try {
+            const response = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken: this.refreshToken })
+            });
+            
+            if (!response.ok) return false;
+            
+            const data = await response.json();
+            this.accessToken = data.accessToken;
+            localStorage.setItem('grd_access_token', this.accessToken);
+            
+            return true;
+            
+        } catch (error) {
+            console.error('Error renovando token:', error);
+            return false;
+        }
+    }
+    
+    generateSessionId() {
+        return 'grd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // ========================================
+    // EJECUCIÓN DE ACCIONES
+    // ========================================
+    
+    executePendingAction() {
+        if (!this.pendingAction) return;
+        
+        const action = this.pendingAction;
+        this.pendingAction = null;
+        
+        switch (action.type) {
+            case 'prediction':
+                submitAuthenticatedPrediction(action.data);
+                break;
+            case 'survey':
+                submitSurvey(action.data);
+                break;
+            default:
+                console.log('Acción pendiente desconocida:', action);
+        }
+    }
+    
+    // ========================================
+    // UTILIDADES
+    // ========================================
+    
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.accessToken) {
+            headers['Authorization'] = `Bearer ${this.accessToken}`;
+        }
+        
+        return headers;
+    }
+    
+    async authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...options.headers,
+            ...this.getAuthHeaders()
+        };
+        
+        return fetch(url, options);
+    }
+    
+    updateUserInfo(userData) {
+        this.user = { ...this.user, ...userData };
+        localStorage.setItem('grd_user', JSON.stringify(this.user));
+    }
+    
+    updateUIAfterLogin() {
+        // Actualizar nombre de usuario en la UI
+        const userElements = document.querySelectorAll('.user-name');
+        userElements.forEach(el => {
+            el.textContent = this.user.name || `Usuario ${this.user.phoneLast4}`;
+        });
+        
+        // Actualizar puntos
+        const pointsElements = document.querySelectorAll('.user-points');
+        pointsElements.forEach(el => {
+            el.textContent = this.user.points || 0;
+        });
+        
+        // Mostrar elementos para usuarios autenticados
+        document.querySelectorAll('.auth-only').forEach(el => {
+            el.style.display = 'block';
+        });
+        
+        // Ocultar elementos de login
+        document.querySelectorAll('.guest-only').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+    
+    logout() {
+        // Limpiar toda la sesión
+        localStorage.removeItem('grd_access_token');
+        localStorage.removeItem('grd_refresh_token');
+        localStorage.removeItem('grd_user');
+        localStorage.removeItem('grd_session_id');
+        localStorage.removeItem('grd_last_verification');
+        
+        this.accessToken = null;
+        this.refreshToken = null;
+        this.user = null;
+        this.sessionId = null;
+        this.lastVerification = null;
+        
+        // Recargar página
+        window.location.reload();
+    }
+}
+
+
+const authSystem = new GuardianesAuthSystem();
+
+
+// ============================================
+// INICIALIZACIÓN AL CARGAR LA PÁGINA
+// ============================================
+
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Inicializando Sistema Guardianes v4.0');
+    
+    // Verificar acceso inicial
+    const hasAccess = await authSystem.checkInitialAccess();
+    
+    if (hasAccess) {
+        console.log('✅ Usuario con sesión activa');
+        authSystem.updateUIAfterLogin();
+        
+        // Mostrar mensaje de bienvenida
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+        Toast.fire({
+            icon: 'success',
+            title: `Bienvenido ${authSystem.user.name}`
+        });
+    } else {
+        console.log('🔒 Usuario sin sesión, mostrando autenticación');
+    }
+    
+    // Agregar botón de logout si está autenticado
+    if (authSystem.isFullyAuthenticated()) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.innerHTML = '🚪 Cerrar Sesión';
+        logoutBtn.className = 'btn-logout';
+        logoutBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;';
+        logoutBtn.onclick = () => {
+            Swal.fire({
+                title: '¿Cerrar Sesión?',
+                text: 'Tendrás que verificar tu número nuevamente para acceder',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cerrar sesión',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    authSystem.logout();
+                }
+            });
+        };
+        document.body.appendChild(logoutBtn);
+    }
+});
+
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
+function updateUserPoints() {
+    if (!authSystem.isFullyAuthenticated()) return;
+    
+    authSystem.authenticatedFetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+            authSystem.updateUserInfo(data);
+            
+            // Actualizar UI
+            document.querySelectorAll('.user-points').forEach(el => {
+                el.textContent = data.points || 0;
+            });
+            
+            // Actualizar nivel si existe
+            document.querySelectorAll('.user-level').forEach(el => {
+                el.textContent = data.level || 'Observador';
+            });
+        })
+        .catch(console.error);
+}
+
+function updatePredictionStats(municipalityId) {
+    fetch(`/api/predictions/stats/${municipalityId}`)
+        .then(res => res.json())
+        .then(data => {
+            console.log('📊 Estadísticas actualizadas:', data);
+            
+            // Actualizar gráficas si existen
+            if (typeof updateCharts === 'function') {
+                updateCharts(data);
+            }
+            
+            // Actualizar contadores
+            if (document.getElementById('total-predictions')) {
+                document.getElementById('total-predictions').textContent = 
+                    data.totalVoters || 0;
+            }
+        })
+        .catch(console.error);
+}
+
+// ============================================
+// TEST FUNCTIONS (Remover en producción)
+// ============================================
+
+window.testPrediction = function() {
+    savePrediction(18, 'candidato_21', 75);
+};
+
+window.testAuth = function() {
+    authSystem.showInitialAuthModal();
+};
+
+console.log('✅ Sistema de autenticación cargado. Funciones de test disponibles:');
+console.log('   - testPrediction(): Probar predicción');
+console.log('   - testAuth(): Probar autenticación');
+</script>
     <!-- NAVBAR -->
     <nav class="fixed top-0 w-full z-50 glass-card bg-slate-950/80 border-b border-white/5 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -770,7 +1503,7 @@
             { id: "gabriela_bernal", name: "Gabriela Bernal Resendiz", party: "MC", img: "/img/gabriela_bernal.jpg" },
             { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
             { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
-            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
+            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: "null" }
         ];
 
         // --- AUTH ---
@@ -811,10 +1544,23 @@
                 const data = await res.json();
                 if (data.success) {
                     localStorage.setItem('guardianToken', data.token);
+                    localStorage.setItem('accessToken', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     auth_token = data.token;
+                    
+                    // Actualizar instancia global de auth
+                    auth.accessToken = data.token;
+                    auth.user = data.user;
 
                     // Actualizar UI con datos del usuario
                     document.getElementById('user-points').textContent = `${data.user.points || 0} PTS de Influencia`;
+                    
+                    // Si hay predicción pendiente, ejecutarla
+                    if (auth.pendingPrediction) {
+                        const pred = auth.pendingPrediction;
+                        auth.pendingPrediction = null;
+                        await submitAuthenticatedPrediction(pred);
+                    }
 
                     showPortal();
                     showToast('✅ Acceso Autorizado', 'success');
@@ -924,12 +1670,18 @@
                         if (candidatesRes.ok) {
                             const candidatesData = await candidatesRes.json();
                             console.log('✅ Candidatos gubernatura:', candidatesData);
-                            candidates = candidatesData.map(c => ({
-                                id: c.id,
-                                name: c.name,
-                                party: c.party,
-                                img: c.photo_url || c.img || null
-                            }));
+                            candidates = candidatesData.map(c => {
+                                // Si la BD no tiene foto, buscar en ASPIRANTES por nombre
+                                let imgPath = c.photo_url || c.img || null;
+                                if (!imgPath) {
+                                    const match = ASPIRANTES.find(a =>
+                                        a.name.toLowerCase().includes(c.name.toLowerCase().split(' ')[0]) ||
+                                        c.name.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
+                                    );
+                                    if (match && match.img) imgPath = match.img;
+                                }
+                                return { id: c.id, name: c.name, party: c.party, img: imgPath };
+                            });
                         } else {
                             console.error('❌ Error fetch gubernatura:', candidatesRes.status);
                         }
@@ -1017,7 +1769,7 @@
                                                     <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
                                                         <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
                                                             ${photo ?
-                                        `<img src="${photo}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${label.charAt(0)}'">` :
+                                        `<img src="${photo}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800&quot;>${label.charAt(0)}</div>'">` :
                                         `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${label.charAt(0)}</div>`
                                     }
                                                         </div>
@@ -1117,7 +1869,7 @@
                                             <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
                                                 <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
                                                     ${c.img ?
-                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${c.name.charAt(0)}'">` :
+                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800&quot;>${c.name.charAt(0)}</div>'">` :
                                 `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${c.name.charAt(0)}</div>`
                             }
                                                 </div>
@@ -1239,62 +1991,71 @@
             }
         }
 
-        function updateLiveChart(data) {
-            if (!data || !data.candidates) return;
+      function updateLiveChart(data) {
+    if (!data || !data.candidates) return;
 
-            const ctx = document.getElementById('resultsChart')?.getContext('2d');
-            if (!ctx) return;
+    const ctx = document.getElementById('resultsChart')?.getContext('2d');
+    if (!ctx) return;
 
-            // Mapear nombres usando ASPIRANTES (si coincide)
-            const labels = data.candidates.map(c => {
-                const cand = ASPIRANTES.find(a => a.id === c.id);
-                return cand ? cand.name.split(' ')[0] : c.id.split('_')[0];
-            });
-            const votes = data.candidates.map(c => c.votes || 0);
-
-            // Destruir gráfico anterior
-            if (chartInstance) chartInstance.destroy();
-
-            // Crear nuevo gráfico
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Votos',
-                        data: votes,
-                        backgroundColor: labels.map((_, i) =>
-                            ['#FF8C00', '#E63946', '#A78BFA'][i % 3]
-                        ),
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { color: '#B0B0B0' },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                        },
-                        y: {
-                            ticks: { color: '#B0B0B0' }
-                        }
-                    }
-                }
-            });
-
-            // Actualizar contadores
-            document.getElementById('total-votes-live').textContent = data.totalVotes || 0;
-            document.getElementById('avg-confidence-live').textContent = (data.avgConfidence || 0).toFixed(1);
-            document.getElementById('last-update-live').textContent = new Date().toLocaleTimeString('es-MX');
+    // Usar directamente el nombre de los candidatos que viene del backend
+    const labels = data.candidates.map(c => {
+        // Primer nombre para hacerlo compacto en la gráfica
+        if (c.name && typeof c.name === 'string') {
+            const parts = c.name.trim().split(/\s+/);
+            return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
         }
+        return `CAND ${c.id}`; // Fallback por si faltara nombre
+    });
+
+    const votes = data.candidates.map(c => c.votes || 0);
+
+    // Destruir gráfico anterior si existe
+    if (chartInstance) chartInstance.destroy();
+
+    // Crear nuevo gráfico
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Votos',
+                data: votes,
+                backgroundColor: labels.map((_, i) =>
+                    ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
+                ),
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { color: '#B0B0B0' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                y: {
+                    ticks: { color: '#B0B0B0' }
+                }
+            }
+        }
+    });
+
+    // Actualizar contadores
+    const totalVotesEl       = document.getElementById('total-votes-live');
+    const avgConfidenceEl    = document.getElementById('avg-confidence-live');
+    const lastUpdateEl       = document.getElementById('last-update-live');
+
+    if (totalVotesEl)    totalVotesEl.textContent    = data.totalVotes || 0;
+    if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1);
+    if (lastUpdateEl)    lastUpdateEl.textContent    = new Date().toLocaleTimeString('es-MX');
+}  
 
         function startLivePolling(surveyId) {
             const panel = document.getElementById('live-results-panel');
@@ -1445,25 +2206,31 @@
                 }
             };
 
-            // Part Chart
+            // Part Chart — solo si hay datos de participación
             if (charts.part) charts.part.destroy();
-            charts.part = new Chart(document.getElementById('participation-chart'), {
-                type: 'line',
-                data: {
-                    labels: data.participation.map(p => p.year),
-                    datasets: [{
-                        data: data.participation.map(p => p.participacion),
-                        borderColor: '#ca8a04',
-                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: chartConfig
-            });
+            if (data.participation && data.participation.length > 0) {
+                charts.part = new Chart(document.getElementById('participation-chart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.participation.map(p => p.year),
+                        datasets: [{
+                            data: data.participation.map(p => parseFloat(p.participacion) || 0),
+                            borderColor: '#ca8a04',
+                            backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: chartConfig
+                });
+            }
 
             // Results Chart - Distribución de Fuerzas Políticas
             if (charts.res) charts.res.destroy();
+            if (!data.comparison || data.comparison.length === 0) {
+                showToast('Visualización histórica actualizada');
+                return;
+            }
 
             // Transformar datos del endpoint a formato esperado
             const comparisonGrouped = {};
@@ -1567,9 +2334,24 @@
                     fetch(`${API_URL}/data/participation/${muniId}`),
                     fetch(`${API_URL}/data/comparison/${muniId}`)
                 ]);
-                const participation = await partRes.json();
-                const comparison = await compRes.json();
-                renderCharts({ participation, comparison });
+
+                // Verificar que ambos respondieron OK antes de parsear
+                const participation = partRes.ok  ? await partRes.json()  : [];
+                const comparison   = compRes.ok  ? await compRes.json()  : [];
+
+                // Si ambos están vacíos no hay nada que graficar
+                if ((!participation || participation.length === 0) &&
+                    (!comparison   || comparison.length === 0)) {
+                    showToast('Sin datos históricos para este municipio', 'error');
+                    if (charts.part) { charts.part.destroy(); charts.part = null; }
+                    if (charts.res)  { charts.res.destroy();  charts.res  = null; }
+                    return;
+                }
+
+                renderCharts({
+                    participation: Array.isArray(participation) ? participation : [],
+                    comparison:    Array.isArray(comparison)    ? comparison    : []
+                });
             } catch (e) {
                 console.error('Error loading historical data:', e);
                 showToast('Error al cargar datos históricos', 'error');
@@ -1673,13 +2455,23 @@
                 const rawData = await res.json();
                 console.log('📥 Datos crudos predicciones:', rawData);
 
-                // MAPEO EXPLÍCITO PARA PREDICCIONES
-                const candidates = rawData.map(c => ({
-                    id: String(c.id || ''),
-                    name: String(c.name || 'Sin nombre'),
-                    party: String(c.party || 'Sin partido'),
-                    img: c.photo_url || c.img || null
-                }));
+                // MAPEO EXPLÍCITO PARA PREDICCIONES + fallback foto local
+                const candidates = rawData.map(c => {
+                    let imgPath = c.photo_url || c.img || null;
+                    if (!imgPath) {
+                        const match = ASPIRANTES.find(a =>
+                            a.name.toLowerCase().includes(c.name.toLowerCase().split(' ')[0]) ||
+                            c.name.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
+                        );
+                        if (match && match.img) imgPath = match.img;
+                    }
+                    return {
+                        id: String(c.id || ''),
+                        name: String(c.name || 'Sin nombre'),
+                        party: String(c.party || 'Sin partido'),
+                        img: imgPath
+                    };
+                });
 
                 console.log('✅ Candidatos predicciones procesados:', candidates);
 
@@ -1723,21 +2515,7 @@
         }
 
         // Función auxiliar para manejar la selección de un candidato
-        function selectCandidateForPrediction(candidateId, element) {
-            // Remover selección previa
-            document.querySelectorAll('.candidate-card').forEach(card => {
-                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10');
-            });
-
-            // Añadir selección actual
-            element.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
-
-            // Aquí podrías guardar el candidato seleccionado si necesitas hacer algo más
-            console.log('Candidato seleccionado para predicción:', candidateId);
-
-            // Opcional: mostrar resultados o una simulación
-            // showPredictionResults(candidateId);
-        }
+        // (definición real abajo en selectPredictionCard + alias)
 
         let selectedPredictionCandidate = null;
 
@@ -1802,7 +2580,7 @@
                     <span>Seguro</span>
                 </div>
                 
-                <button onclick="savePrediction('${candidateId}', '${municipalityId}', document.getElementById('confidence-slider').value)"
+                <button onclick="savePrediction('${municipalityId}', '${candidateId}', document.getElementById('confidence-slider').value)"
                         class="w-full bg-amber-600 hover:bg-amber-700 p-6 rounded-2xl font-black text-lg shadow-2xl shadow-amber-900/20 uppercase tracking-tight transition">
                     Guardar Predicción
                 </button>
@@ -1830,55 +2608,166 @@
             label.textContent = labels[Math.round(value / 10) * 10] || 'Probable';
         }
 
-        function updateConfidenceDisplay(value) {
-            const display = document.getElementById('confidence-display');
-            const labels = { 10: 'Muy Dudoso', 25: 'Dudoso', 50: 'Neutral', 75: 'Probable', 100: 'Muy Seguro' };
-            display.textContent = value + '%';
-            display.nextElementSibling.textContent = labels[Math.round(value / 25) * 25] || 'Probable';
+        // (updateConfidenceDisplay definida arriba — versión única)
+
+// ============================================
+// PREDICCIONES — FLUJO UNIFICADO (SIN BLOQUEO POR AUTH)
+// ============================================
+
+// Función interna que realmente envía la predicción
+async function doSendPrediction(prediction) {
+    const { municipalityId, candidateId, confidence } = prediction;
+
+    console.log('📤 Enviando predicción (doSendPrediction):', {
+        municipalityId,
+        candidateId,
+        confidence
+    });
+
+    if (!municipalityId || !candidateId) {
+        showToast('Selecciona un municipio y un candidato', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/predictions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                // NO mandamos Authorization; el backend maneja usuario anónimo si no hay token.
+            },
+            body: JSON.stringify({
+                municipalityId: parseInt(municipalityId, 10),
+                candidateId: candidateId, // puede ser "21" o "candidato_21"; el backend lo normaliza
+                confidence: parseInt(confidence || 50, 10)
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Error al guardar predicción');
         }
-        async function savePrediction(candidateId, municipalityId, confidence) {
-            console.log('💾 Guardando predicción:');
-            console.log('   Candidato:', candidateId);
-            console.log('   Municipio:', municipalityId);
-            console.log('   Confianza:', confidence);
 
-            try {
-                const res = await fetch(`${API_URL}/predictions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${auth_token}`
-                    },
-                    body: JSON.stringify({
-                        municipalityId: parseInt(municipalityId),
-                        candidateId: parseInt(candidateId),
-                        confidence: parseInt(confidence)
-                    })
-                });
+        // Mostrar mensaje de éxito
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Predicción Registrada!',
+                html: result.prediction ? `
+                    <div style="text-align: center;">
+                        <h4>${result.prediction.candidateName}</h4>
+                        <p>Partido: ${result.prediction.candidateParty}</p>
+                        <p>Confianza: ${result.prediction.confidence}%</p>
+                        ${result.pointsEarned ? `<hr><p style="color:#28a745;">+${result.pointsEarned} puntos</p>` : ''}
+                    </div>
+                ` : 'Tu predicción ha sido guardada correctamente.',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#28a745'
+            });
+        } else {
+            showToast(result.message || 'Predicción registrada', 'success');
+        }
 
-                const data = await res.json();
+        // Refrescar estadísticas (si existe)
+        if (typeof updatePredictionStats === 'function') {
+            updatePredictionStats(municipalityId);
+        }
 
-                if (res.ok) {
-                    showToast('✅ Predicción guardada: +' + (data.pointsEarned || 30) + ' PTS', 'success');
+        // Refrescar puntos del usuario (si hay login real)
+        if (typeof updateUserPoints === 'function') {
+            updateUserPoints();
+        }
 
-                    // Actualizar puntos en UI
-                    const ptsEl = document.getElementById('user-points');
-                    const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
-                    ptsEl.textContent = `${current + (data.pointsEarned || 30)} PTS de Influencia`;
+        return result;
 
-                    // Cerrar modal
-                    document.querySelectorAll('.fixed.inset-0.z-\\[200\\]').forEach(m => m.remove());
+    } catch (error) {
+        console.error('❌ Error al enviar predicción:', error);
 
-                    // Recargar resultados
-                    loadPredictionResults(municipalityId);
-                } else {
-                    showToast('Error: ' + (data.error || 'No se pudo guardar'), 'error');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'No se pudo guardar tu predicción',
+                confirmButtonText: 'Entendido'
+            });
+        } else {
+            showToast('Error al guardar predicción: ' + error.message, 'error');
+        }
+
+        throw error;
+    }
+}
+
+
+// ============================================
+// INICIALIZACIÓN AL CARGAR LA PÁGINA
+// ============================================
+
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Inicializando sistema de autenticación Guardianes');
+    
+    // Verificar si hay sesión activa
+    if (auth.isAuthenticated()) {
+        try {
+            const response = await auth.authenticatedFetch('/api/auth/me');
+            if (response.ok) {
+                const userData = await response.json();
+                console.log('✅ Usuario autenticado:', userData.name);
+                
+                // Actualizar UI con info del usuario
+                if (document.getElementById('userInfo')) {
+                    document.getElementById('userInfo').innerHTML = `
+                        <span>👤 ${userData.name}</span>
+                        <span>🏆 ${userData.points} puntos</span>
+                    `;
                 }
-            } catch (e) {
-                console.error('Error guardando predicción:', e);
-                showToast('Error de conexión', 'error');
             }
+        } catch (error) {
+            console.log('⚠️ Sesión no válida, limpiando...');
+            auth.logout();
         }
+    }
+});
+
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
+function updateUserPoints() {
+    // Actualizar puntos en la UI
+    if (auth.isAuthenticated() && auth.user) {
+        fetch('/api/auth/me', {
+            headers: auth.getAuthHeaders()
+        })
+        .then(res => res.json())
+        .then(data => {
+            auth.user.points = data.points;
+            localStorage.setItem('user', JSON.stringify(auth.user));
+            
+            // Actualizar UI
+            const pointsElements = document.querySelectorAll('.user-points');
+            pointsElements.forEach(el => {
+                el.textContent = data.points;
+            });
+        })
+        .catch(console.error);
+    }
+}
+
+function updatePredictionStats(municipalityId) {
+    // Recargar estadísticas de predicción
+    fetch(`/api/predictions/stats/${municipalityId}`)
+        .then(res => res.json())
+        .then(data => {
+            console.log('📊 Estadísticas actualizadas:', data);
+            // Actualizar gráficas si existen
+            if (typeof updateCharts === 'function') {
+                updateCharts(data);
+            }
+        })
+        .catch(console.error);
+}
 
         async function loadPredictionResults(municipalityId) {
             try {
@@ -1923,9 +2812,397 @@
             }
         }
         if (auth_token) showPortal();
+class GuardianesAuth {
+    constructor() {
+        this.accessToken = localStorage.getItem('accessToken');
+        this.refreshToken = localStorage.getItem('refreshToken');
+        this.user = JSON.parse(localStorage.getItem('user') || 'null');
+        this.pendingPrediction = null;
+        this.otpTimer = null;
+        this.phoneNumber = null;
+    }
+    
+    // Verificar si el usuario está autenticado
+    isAuthenticated() {
+        return this.accessToken && this.user;
+    }
+    
+    // Obtener headers con autenticación
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.accessToken) {
+            headers['Authorization'] = `Bearer ${this.accessToken}`;
+        }
+        
+        return headers;
+    }
+    
+    // Hacer request autenticado
+    async authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...options.headers,
+            ...this.getAuthHeaders()
+        };
+        
+        let response = await fetch(url, options);
+        
+        // Si el token expiró, intentar refresh
+        if (response.status === 401) {
+            const refreshed = await this.refreshAccessToken();
+            if (refreshed) {
+                options.headers['Authorization'] = `Bearer ${this.accessToken}`;
+                response = await fetch(url, options);
+            } else {
+                // No se pudo renovar, mostrar login
+                this.showLoginModal();
+                throw new Error('Sesión expirada');
+            }
+        }
+        
+        return response;
+    }
+    
+    // Renovar access token
+    async refreshAccessToken() {
+        if (!this.refreshToken) return false;
+        
+        try {
+            const response = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken: this.refreshToken })
+            });
+            
+            if (!response.ok) throw new Error('Failed to refresh');
+            
+            const data = await response.json();
+            this.accessToken = data.accessToken;
+            localStorage.setItem('accessToken', this.accessToken);
+            return true;
+            
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            this.logout();
+            return false;
+        }
+    }
+    
+    // Mostrar modal de login
+    showLoginModal(prediction = null) {
+        if (prediction) {
+            this.pendingPrediction = prediction;
+        }
+        
+        // Mostrar sección de auth, ocultar portal
+        const authSection = document.getElementById('auth-section');
+        const portalSection = document.getElementById('portal-section');
+        
+        if (authSection) {
+            authSection.classList.remove('hidden');
+        }
+        if (portalSection) {
+            portalSection.classList.add('hidden');
+        }
+        
+        // Mostrar paso de teléfono, ocultar paso de código
+        const phoneStep = document.getElementById('phone-step');
+        const codeStep = document.getElementById('code-step');
+        
+        if (phoneStep) {
+            phoneStep.classList.remove('hidden');
+        }
+        if (codeStep) {
+            codeStep.classList.add('hidden');
+        }
+        
+        // Scroll al top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Cerrar sesión
+    logout() {
+        this.accessToken = null;
+        this.refreshToken = null;
+        this.user = null;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+    }
+}
+
+// Instancia global
+const auth = new GuardianesAuth();
+
+// ============================================
+// FUNCIONES DE UI PARA AUTENTICACIÓN
+// ============================================
+
+function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('show');
+    if (auth.otpTimer) {
+        clearInterval(auth.otpTimer);
+    }
+}
+
+async function requestOTP() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    
+    if (!/^\d{10}$/.test(phone)) {
+        Swal.fire('Error', 'Ingresa 10 dígitos sin espacios ni guiones', 'error');
+        return;
+    }
+    
+    try {
+        // Mostrar loading
+        Swal.fire({
+            title: 'Enviando código...',
+            text: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const response = await fetch('/api/auth/request-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Error al enviar código');
+        }
+        
+        // Guardar número y mostrar siguiente paso
+        auth.phoneNumber = phone;
+        document.getElementById('phoneStep').classList.remove('active');
+        document.getElementById('codeStep').classList.add('active');
+        document.getElementById('phoneLast4').textContent = data.phoneLast4;
+        
+        // Iniciar timer
+        startOTPTimer();
+        
+        // En desarrollo, mostrar código
+        if (data.debug_otp) {
+            console.log('🔑 Código de prueba:', data.debug_otp);
+            Swal.fire('Código de Prueba', `Tu código es: ${data.debug_otp}`, 'info');
+        }
+        
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
+async function verifyCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    
+    if (!/^\d{6}$/.test(code)) {
+        Swal.fire('Error', 'Ingresa el código de 6 dígitos', 'error');
+        return;
+    }
+    
+    try {
+        Swal.fire({
+            title: 'Verificando...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const response = await fetch('/api/auth/verify-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                phone: auth.phoneNumber, 
+                code 
+            })
+        });
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Código incorrecto');
+        }
+        
+        // Guardar tokens y usuario
+        auth.accessToken = data.accessToken;
+        auth.refreshToken = data.refreshToken;
+        auth.user = data.user;
+        
+        localStorage.setItem('accessToken', auth.accessToken);
+        localStorage.setItem('refreshToken', auth.refreshToken);
+        localStorage.setItem('user', JSON.stringify(auth.user));
+        
+        // Mostrar éxito
+        document.getElementById('codeStep').classList.remove('active');
+        document.getElementById('successStep').classList.add('active');
+        document.getElementById('welcomeMessage').textContent = 
+            `Bienvenido ${auth.user.name}. Ya puedes hacer predicciones y ganar puntos.`;
+        
+        // Si hay predicción pendiente, enviarla
+        if (auth.pendingPrediction) {
+            setTimeout(() => {
+                closeAuthModal();
+                submitAuthenticatedPrediction(auth.pendingPrediction);
+            }, 2000);
+        }
+        
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
+function backToPhone() {
+    document.getElementById('phoneStep').classList.add('active');
+    document.getElementById('codeStep').classList.remove('active');
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('codeInput').value = '';
+    if (auth.otpTimer) {
+        clearInterval(auth.otpTimer);
+    }
+}
+
+function startOTPTimer() {
+    let seconds = 600; // 10 minutos
+    
+    auth.otpTimer = setInterval(() => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('timerDisplay').textContent = 
+            `Código válido por: ${minutes}:${secs.toString().padStart(2, '0')}`;
+        
+        seconds--;
+        
+        if (seconds < 0) {
+            clearInterval(auth.otpTimer);
+            document.getElementById('timerDisplay').textContent = 'Código expirado';
+        }
+    }, 1000);
+}
+
     </script>
+<script>
+// ============================================
+// PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
+// ============================================
+
+(function() {
+    // Función interna que realmente envía la predicción
+    async function doSendPrediction(prediction) {
+        const { municipalityId, candidateId, confidence } = prediction;
+
+        console.log('📤 Enviando predicción (doSendPrediction):', {
+            municipalityId,
+            candidateId,
+            confidence
+        });
+
+        if (!municipalityId || !candidateId) {
+            if (typeof showToast === 'function') {
+                showToast('Selecciona un municipio y un candidato', 'error');
+            } else {
+                alert('Selecciona un municipio y un candidato');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/predictions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // Importante: sin Authorization; backend ya maneja usuario anónimo.
+                },
+                body: JSON.stringify({
+                    municipalityId: parseInt(municipalityId, 10),
+                    candidateId: candidateId, // "21" o "candidato_21" → backend lo normaliza
+                    confidence: parseInt(confidence || 50, 10)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error al guardar predicción');
+            }
+
+            // Mensaje de éxito
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Predicción Registrada!',
+                    html: result.prediction ? `
+                        <div style="text-align: center;">
+                            <h4>${result.prediction.candidateName}</h4>
+                            <p>Partido: ${result.prediction.candidateParty}</p>
+                            <p>Confianza: ${result.prediction.confidence}%</p>
+                            ${result.pointsEarned ? `<hr><p style="color:#28a745;">+${result.pointsEarned} puntos</p>` : ''}
+                        </div>
+                    ` : 'Tu predicción ha sido guardada correctamente.',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#28a745'
+                });
+            } else if (typeof showToast === 'function') {
+                showToast(result.message || 'Predicción registrada', 'success');
+            } else {
+                alert('Predicción registrada correctamente');
+            }
+
+            // Refrescar estadísticas si existe
+            if (typeof updatePredictionStats === 'function') {
+                updatePredictionStats(municipalityId);
+            }
+
+            // Refrescar puntos del usuario si hay auth real
+            if (typeof updateUserPoints === 'function') {
+                updateUserPoints();
+            }
+
+            return result;
+
+        } catch (error) {
+            console.error('❌ Error al enviar predicción:', error);
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'No se pudo guardar tu predicción',
+                    confirmButtonText: 'Entendido'
+                });
+            } else if (typeof showToast === 'function') {
+                showToast('Error al guardar predicción: ' + error.message, 'error');
+            } else {
+                alert('Error al guardar predicción: ' + error.message);
+            }
+
+            throw error;
+        }
+    }
+
+    // API global usada por los botones (onclick="savePrediction(...)")
+    window.savePrediction = function(municipalityId, candidateId, confidence) {
+        return doSendPrediction({ municipalityId, candidateId, confidence });
+    };
+
+    // Compatibilidad: si en algún lugar todavía llaman a submitAuthenticatedPrediction,
+    // lo redirigimos al mismo flujo.
+    window.submitAuthenticatedPrediction = function(prediction) {
+        return doSendPrediction(prediction);
+    };
+
+    console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
+})();
+</script>
 </body>
-
-</html>
-
 </html>

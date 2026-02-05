@@ -43,80 +43,169 @@ router.get('/municipalities/:municipalityId', async (req, res) => {
 /**
  * POST /api/predictions
  * Crear nueva predicción
+/**
+ * POST /api/predictions
+ * Crear nueva predicción
+ * - Si hay token válido → usa ese userId y da puntos
+ * - Si NO hay token o es inválido → usa usuario anónimo (id=1), sin puntos
+ */
+/**
+ * POST /api/predictions
+ * Crear nueva predicción (robusto, sin 401 por token)
  */
 router.post('/', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Token de autenticación requerido' });
-    }
-    
+    const authHeader = req.headers.authorization;
     let userId = null;
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
-      userId = decoded.userId;
-    } catch (err) {
-      return res.status(401).json({ error: 'Token inválido o expirado' });
-    }
-    
-    const { municipalityId, candidateId, confidence } = req.body;
+    let isAuthenticated = false;
 
+    // 1) Intentar leer token SI existe
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      try {
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET || 'dev-secret-2027-guerrero'
+        );
+        userId = decoded.userId;
+        isAuthenticated = true;
+      } catch (err) {
+        console.warn('⚠️ Token inválido en /api/predictions, se usará usuario anónimo:', err.message);
+      }
+    }
+
+    // 2) Si no hay userId válido → usuario anónimo (id=1)
+    if (!userId) {
+  // Crear (una sola vez) un usuario anónimo técnico con un phone_hash fijo.
+  // IMPORTANTE: phone_hash es NOT NULL en tu BD, por eso fallaba antes.
+
+  await db.query(`
+    INSERT INTO users (
+      id,
+      phone_hash,
+      phone_last4,
+      name,
+      email,
+      password,
+      is_active,
+      is_anonymous,
+      points
+    )
+    VALUES (
+      1,
+      'ANON_USER_1',   -- valor fijo que no colisiona con hashes reales
+      '0000',
+      'Invitado',
+      'anon@guardianes.mx',
+      'no-password',
+      true,
+      true,
+      0
+    )
+    ON CONFLICT (id) DO NOTHING
+  `);
+
+  userId = 1;
+  isAuthenticated = false;
+}
+
+    const { municipalityId, candidateId, confidence } = req.body;
     console.log('📥 Predicción recibida:', { userId, municipalityId, candidateId, confidence });
 
     if (!municipalityId || !candidateId) {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    const confidenceNormalized = (confidence > 10) ? confidence : (confidence * 10 || 50);
+    // 3) Normalizar ID de candidato ("candidato_21" → 21)
+    let numericCandidateId = candidateId;
+    if (typeof candidateId === 'string') {
+      if (candidateId.includes('_')) {
+        numericCandidateId = parseInt(candidateId.split('_')[1], 10);
+      } else {
+        numericCandidateId = parseInt(candidateId, 10);
+      }
+    }
 
-    // Verificar si ya existe
-    const existing = await db.query(`
+    if (!numericCandidateId || Number.isNaN(numericCandidateId)) {
+      return res.status(400).json({ error: 'ID de candidato inválido' });
+    }
+
+    // 4) Verificar candidato
+    const candidateCheck = await db.query(
+      'SELECT id, name, party FROM candidates WHERE id = $1',
+      [numericCandidateId]
+    );
+    if (candidateCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Candidato no encontrado' });
+    }
+    const candidate = candidateCheck.rows[0];
+
+    const confidenceNormalized =
+      confidence > 10 ? confidence : (confidence * 10 || 50);
+
+    // 5) Verificar si ya existe predicción para user+municipio
+    const existing = await db.query(
+      `
       SELECT id FROM predictions 
       WHERE user_id = $1 AND municipality_id = $2
-    `, [userId, municipalityId]);
+      `,
+      [userId, municipalityId]
+    );
 
     if (existing.rows.length > 0) {
-      // Actualizar
-      await db.query(`
+      await db.query(
+        `
         UPDATE predictions 
         SET candidate_id = $1, confidence = $2
         WHERE user_id = $3 AND municipality_id = $4
-      `, [candidateId, confidenceNormalized, userId, municipalityId]);
-      
+        `,
+        [numericCandidateId, confidenceNormalized, userId, municipalityId]
+      );
       console.log('✅ Predicción actualizada');
     } else {
-      // Insertar
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO predictions (user_id, municipality_id, candidate_id, confidence)
         VALUES ($1, $2, $3, $4)
-      `, [userId, municipalityId, candidateId, confidenceNormalized]);
-      
+        `,
+        [userId, municipalityId, numericCandidateId, confidenceNormalized]
+      );
       console.log('✅ Predicción insertada');
     }
 
-    // Otorgar puntos
-    let pointsEarned = 30;
-    try {
-      await db.query(`
-        UPDATE users 
-        SET points = points + $1 
-        WHERE id = $2
-      `, [pointsEarned, userId]);
-    } catch (err) {
-      console.error('⚠️ Error añadiendo puntos:', err);
+    // 6) Puntos SOLO para usuarios autenticados reales
+    let pointsEarned = 0;
+    if (isAuthenticated && userId !== 1) {
+      pointsEarned = 30;
+      try {
+        await db.query(
+          `
+          UPDATE users 
+          SET points = points + $1 
+          WHERE id = $2
+          `,
+          [pointsEarned, userId]
+        );
+      } catch (err) {
+        console.error('⚠️ Error añadiendo puntos:', err);
+      }
     }
 
     res.json({
       success: true,
       message: 'Predicción guardada exitosamente',
-      pointsEarned
+      pointsEarned,
+      prediction: {
+        candidateName: candidate.name,
+        candidateParty: candidate.party,
+        confidence: confidenceNormalized
+      }
     });
-
   } catch (error) {
     console.error('❌ Error creando predicción:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Error guardando predicción',
-      details: error.message 
+      details: error.message
     });
   }
 });
