@@ -4,6 +4,7 @@ const router = express.Router();
 const { query } = require('../db');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const axios = require('axios');
 
 // ============================================
 // CONFIGURACIÓN
@@ -39,60 +40,79 @@ function generateOTP() {
 router.post('/request-code', async (req, res) => {
   try {
     const { phone } = req.body;
-
-    // Validar formato de teléfono (10 dígitos)
+    
     if (!phone || !/^\d{10}$/.test(phone)) {
-      return res.status(400).json({ 
-        error: 'Número telefónico inválido. Deben ser 10 dígitos.' 
-      });
+      return res.status(400).json({ error: 'Número inválido. Deben ser 10 dígitos.' });
     }
 
-    const phoneHash = generatePhoneHash(phone);
-    const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000);
+    // Generar OTP
+    const otp = process.env.NODE_ENV === 'production' 
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '345678'; // Para pruebas locales
 
-    console.log(`📱 OTP solicitado para ${phone}: ${otp}`);
-
-    // UPSERT: insertar usuario nuevo o actualizar OTP si ya existe
+    // Guardar en BD (tu código actual ya hace esto)
+    const phoneHash = crypto.createHash('sha256').update(phone + process.env.HASH_SALT).digest('hex');
     await query(`
-      INSERT INTO users (
-        phone_hash, 
-        phone_last4, 
-        otp_code, 
-        otp_expires, 
-        created_at, 
-        is_active
-      )
-      VALUES ($1, $2, $3, $4, NOW(), true)
+      INSERT INTO users (phone_hash, phone_last4, otp_code, otp_expires, created_at, is_active)
+      VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes', NOW(), true)
       ON CONFLICT (phone_hash) DO UPDATE SET
         otp_code = EXCLUDED.otp_code,
-        otp_expires = EXCLUDED.otp_expires,
-        updated_at = NOW()
-    `, [phoneHash, phone.slice(-4), otp, otpExpires]);
+        otp_expires = NOW() + INTERVAL '10 minutes'
+    `, [phoneHash, phone.slice(-4), otp]);
 
-    console.log(`✅ OTP guardado en BD para ${phone.slice(-4)}`);
-
-    // En desarrollo retornar el OTP para facilitar pruebas
-    const response = {
-      success: true,
-      message: 'Código enviado exitosamente'
-    };
-
-    if (process.env.NODE_ENV !== 'production') {
-      response.debug_otp = otp;
-      console.log(`🔑 DEBUG OTP: ${otp}`);
+    // >>> ENVÍO REAL POR WHATSAPP <<<
+    if (process.env.NODE_ENV === 'production') {
+      await sendVerificationWhatsApp(phone, otp);
+      console.log(`📱 OTP enviado a ${phone}: ${otp}`);
+    } else {
+      console.log(`🧪 MODO DEV - OTP para ${phone}: ${otp}`);
     }
 
-    res.json(response);
+    res.json({
+      success: true,
+      message: 'Código enviado por WhatsApp',
+      phoneLast4: phone.slice(-4),
+      // Solo en desarrollo mostramos el código
+      debug_otp: process.env.NODE_ENV !== 'production' ? otp : undefined
+    });
 
   } catch (error) {
-    console.error('❌ Error en /request-code:', error);
-    res.status(500).json({ 
-      error: 'Error al generar código',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('❌ Error enviando OTP:', error);
+    res.status(500).json({ error: 'Error al generar código' });
   }
 });
+
+// Función para enviar OTP por WhatsApp Business API
+async function sendVerificationWhatsApp(phoneNumber, otpCode) {
+  try {
+    // Formato: código de país + número (México = 52)
+    const formattedPhone = phoneNumber.startsWith('52') ? phoneNumber : `52${phoneNumber}`;
+    
+    const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    
+    const response = await axios.post(url, {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: formattedPhone,
+      type: 'text',
+      text: {
+        body: `🔐 *Guardianes Guerrero 2027*\n\nTu código de verificación es: *${otpCode}*\n\nVálido por 10 minutos. No compartas este código con nadie.\n\nSi no solicitaste este código, ignora este mensaje.`
+      }
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('✅ Mensaje WhatsApp enviado:', response.data.messages?.[0]?.id);
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando WhatsApp:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 
 /**
  * POST /api/auth/verify-code
