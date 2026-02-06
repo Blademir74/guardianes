@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 // ==========================================
 // 2. INTEGRACIÓN DIRECTA DE WHATSAPP WEBHOOK (MOVIDO AQUÍ ARRIBA)
 // ==========================================
-const WHATSAPP_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'verificacion_guardianes_2027_seguro';
+const WHATSAPP_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'guardianes_guerrero_webhook_2027_secure_token';
 
 // 1. Verificación (GET) - Lo que pide Meta
 app.get('/api/webhook', (req, res) => {
