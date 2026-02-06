@@ -2948,55 +2948,82 @@ function closeAuthModal() {
 }
 
 async function requestOTP() {
-    const phone = document.getElementById('phoneInput').value.trim();
+    const phone = document.getElementById('phoneInput').value;
     
     if (!/^\d{10}$/.test(phone)) {
-        Swal.fire('Error', 'Ingresa 10 dígitos sin espacios ni guiones', 'error');
+        showToast('Ingresa 10 dígitos válidos', 'error');
         return;
     }
-    
+
+    const btn = document.getElementById('login-btn');
+    btn.innerHTML = '<span class="animate-spin">↻</span> Conectando...';
+    btn.disabled = true;
+
     try {
-        // Mostrar loading
-        Swal.fire({
-            title: 'Enviando código...',
-            text: 'Por favor espera',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-        
-        const response = await fetch('/api/auth/request-code', {
+        const res = await fetch(`${API_URL}/auth/request-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
         });
-        
-        const data = await response.json();
-        
-        Swal.close();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Error al enviar código');
+
+        const data = await res.json();
+
+        if (res.ok && data.autoFillCode) {
+            // === MAGIA DEL MODO PILOTO ===
+            // No le pedimos el código al usuario, lo enviamos nosotros mismos automáticamente
+            console.log("Modo Piloto: Autoverificando...");
+            await verifyOTP(phone, data.autoFillCode);
+        } else {
+            showToast(data.error || 'Error de conexión', 'error');
+            btn.innerHTML = 'INGRESAR';
+            btn.disabled = false;
         }
-        
-        // Guardar número y mostrar siguiente paso
-        auth.phoneNumber = phone;
-        document.getElementById('phoneStep').classList.remove('active');
-        document.getElementById('codeStep').classList.add('active');
-        document.getElementById('phoneLast4').textContent = data.phoneLast4;
-        
-        // Iniciar timer
-        startOTPTimer();
-        
-        // En desarrollo, mostrar código
-        if (data.debug_otp) {
-            console.log('🔑 Código de prueba:', data.debug_otp);
-            Swal.fire('Código de Prueba', `Tu código es: ${data.debug_otp}`, 'info');
+    } catch (e) {
+        console.error(e);
+        showToast('Error de red', 'error');
+        btn.innerHTML = 'INGRESAR';
+        btn.disabled = false;
+    }
+}
+
+// Asegúrate que tu función verifyOTP acepte argumentos opcionales
+async function verifyOTP(phoneInput = null, codeInput = null) {
+    const phone = phoneInput || document.getElementById('phoneInput').value;
+    const code = codeInput || document.getElementById('otpInput').value; // Si existiera input de código
+
+    try {
+        const res = await fetch(`${API_URL}/auth/verify-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, code })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('guardianToken', data.token);
+            // Guardar datos básicos
+            localStorage.setItem('guardianUser', JSON.stringify(data.user));
+            
+            showToast(`¡Bienvenido!`, 'success');
+            
+            // Cerrar modal y recargar UI
+            document.getElementById('login-modal').classList.add('hidden');
+            checkAuth(); // Tu función que actualiza la UI cuando hay usuario
+            
+            // Si estaba intentando predecir, reintentar la acción
+            // ... lógica de reintento si la tienes ...
+        } else {
+            showToast('Error de acceso', 'error');
         }
-        
-    } catch (error) {
-        Swal.fire('Error', error.message, 'error');
+    } catch (e) {
+        showToast('Error de verificación', 'error');
+    } finally {
+        const btn = document.getElementById('login-btn');
+        if(btn) {
+            btn.innerHTML = 'INGRESAR';
+            btn.disabled = false;
+        }
     }
 }
 
