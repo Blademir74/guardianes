@@ -1,4 +1,4 @@
-// api/index.js - GUARDIANES GUERRERO 2027
+// api/index.js - GUARDIANES GUERRERO
 require('dotenv').config();
 
 const express = require('express');
@@ -19,7 +19,7 @@ app.use(helmet({
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://guardianesguerrero.com', 'https://www.guardianesguerrero.com']
+    ? ['https://pulsoguerrero.vercel.app/']
     : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -86,7 +86,9 @@ const leaderboardRoutes = requireRoute('leaderboard');
 const incidentsRoutes = requireRoute('incidents');
 const whatsappRoutes = requireRoute('whatsapp');
 const historicalRoutes = requireRoute('historical');
+const webhookRouter = require('./routes/webhook');
 
+if (webhookRoutesRoutes) app.use('/api/webhook', webhookRouter);
 if (authRoutes) app.use('/api/auth', authRoutes);
 if (dataRoutes) app.use('/api/data', dataRoutes);
 if (surveyRoutes) app.use('/api/surveys', surveyRoutes);
