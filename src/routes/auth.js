@@ -1,4 +1,4 @@
-// src/routes/auth.js - VERSIÓN PILOTO (ACCESO DIRECTO)
+// src/routes/auth.js — GUARDIANES PILOTO — LOGIN SIMPLIFICADO SIN OTP
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db');
@@ -7,104 +7,227 @@ const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-2027-guerrero';
 
-// Utility: Hash del teléfono (para privacidad en BD)
+// Generar hash del teléfono para privacidad
 function generatePhoneHash(phone) {
   return crypto.createHash('sha256')
     .update(phone + (process.env.HASH_SALT || 'guardianes-2027'))
     .digest('hex');
 }
 
-// 1. SOLICITUD DE ACCESO (SIMULADA)
-router.post('/request-code', async (req, res) => {
+// Generar fingerprint del navegador
+function generateFingerprint(req) {
+  const userAgent = req.headers['user-agent'] || '';
+  const ip = req.ip || req.connection.remoteAddress || '';
+  return crypto.createHash('sha256')
+    .update(userAgent + ip)
+    .digest('hex');
+}
+
+/**
+ * POST /api/auth/quick-login
+ * Login simplificado: solo teléfono → token directo
+ */
+router.post('/quick-login', async (req, res) => {
   try {
     const { phone } = req.body;
-    
-    // Validación básica: México 10 dígitos
+
+    // Validar formato (10 dígitos)
     if (!phone || !/^\d{10}$/.test(phone)) {
-      return res.status(400).json({ error: 'Ingresa un número válido de 10 dígitos.' });
+      return res.status(400).json({ 
+        error: 'Número inválido. Deben ser 10 dígitos (ejemplo: 7441234567)' 
+      });
     }
 
-    // Código MAESTRO para el piloto (El frontend lo usará automáticamente)
-    const MASTER_CODE = '202727'; 
+    // Validar que sea de Guerrero (códigos de área)
+    const guerreroAreaCodes = ['744', '747', '733', '758', '767', '741', '742'];
+    const areaCode = phone.substring(0, 3);
+    
+    if (!guerreroAreaCodes.includes(areaCode)) {
+      return res.status(400).json({
+        error: 'Solo números de Guerrero. Tu número debe empezar con: 744, 747, 733, 758, 767, 741, o 742'
+      });
+    }
 
     const phoneHash = generatePhoneHash(phone);
+    const fingerprint = generateFingerprint(req);
 
-    // Creamos o actualizamos el usuario (Sin enviar mensaje real)
-    await query(`
-      INSERT INTO users (phone_hash, phone_last4, otp_code, otp_expires, created_at, is_active, level)
-      VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour', NOW(), true, 'PILOTO')
-      ON CONFLICT (phone_hash) DO UPDATE SET
-        otp_code = EXCLUDED.otp_code,
-        otp_expires = NOW() + INTERVAL '1 hour',
-        last_active = NOW()
-    `, [phoneHash, phone.slice(-4), MASTER_CODE]);
+    console.log(`📱 Quick login para: ${phone.substring(0, 3)}****${phone.substring(7)}`);
 
-    console.log(`🚀 ACCESO PILOTO: Usuario ${phone.slice(-4)} registrado.`);
+    // Buscar o crear usuario
+    let result = await query(`
+      SELECT id, phone_last4, name, points, level
+      FROM users
+      WHERE phone_hash = $1
+    `, [phoneHash]);
 
-    // Respondemos que "se envió" pero mandamos el código en la respuesta
-    // para que el Frontend lo use automáticamente.
-    res.json({
-      success: true,
-      message: 'Acceso autorizado',
-      phoneLast4: phone.slice(-4),
-      autoFillCode: MASTER_CODE // <--- LA CLAVE MÁGICA
-    });
-
-  } catch (error) {
-    console.error('❌ Error en login piloto:', error);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
-
-// 2. VERIFICACIÓN (Mantenemos la lógica pero aceptamos el código maestro)
-router.post('/verify-code', async (req, res) => {
-  try {
-    const { phone, code } = req.body;
-    const phoneHash = generatePhoneHash(phone);
-
-    // Buscamos al usuario
-    const result = await query(
-      'SELECT id, otp_code, name, points FROM users WHERE phone_hash = $1', 
-      [phoneHash]
-    );
+    let userId;
+    let isNewUser = false;
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      // Usuario nuevo - crear
+      const insertResult = await query(`
+        INSERT INTO users (
+          phone_hash,
+          phone_last4,
+          level,
+          device_fingerprint,
+          is_active,
+          created_at
+        )
+        VALUES ($1, $2, 'Piloto', $3, true, NOW())
+        RETURNING id, phone_last4, name, points, level
+      `, [phoneHash, phone.slice(-4), fingerprint]);
+
+      result = insertResult;
+      isNewUser = true;
+      console.log(`✅ Nuevo usuario Piloto creado: ${phone.slice(-4)}`);
+    } else {
+      // Usuario existente - actualizar fingerprint y last_active
+      await query(`
+        UPDATE users 
+        SET 
+          device_fingerprint = $1,
+          last_active = NOW()
+        WHERE id = $2
+      `, [fingerprint, result.rows[0].id]);
+      
+      console.log(`✅ Usuario existente: ${phone.slice(-4)}`);
     }
 
     const user = result.rows[0];
+    userId = user.id;
 
-    // Verificamos el código (que será siempre 202727 en esta fase)
-    if (user.otp_code !== code) {
-      return res.status(401).json({ error: 'Código incorrecto' });
-    }
-
-    // Generamos Token real para que el sistema funcione normalmente
+    // Generar JWT
     const token = jwt.sign(
-      { userId: user.id, phone: phone.slice(-4), role: 'citizen' },
+      { 
+        userId: userId,
+        phone: phone.slice(-4),
+        level: 'Piloto',
+        fingerprint: fingerprint
+      },
       JWT_SECRET,
-      { expiresIn: '30d' } // Sesión larga para que no tengan que volver a entrar
+      { expiresIn: '30d' } // Token válido por 30 días
     );
+
+    console.log(`🔑 Token generado para usuario ${userId}`);
 
     res.json({
       success: true,
       token,
       user: {
-        id: user.id,
-        name: user.name || `Ciudadano ${phone.slice(-4)}`,
-        points: user.points || 0
-      }
+        id: userId,
+        phone: user.phone_last4,
+        name: user.name || `Guardián ${user.phone_last4}`,
+        points: user.points || 0,
+        level: 'Piloto',
+        isNew: isNewUser
+      },
+      message: isNewUser 
+        ? '¡Bienvenido a Guardianes Guerrero! 🗳️' 
+        : '¡De vuelta, Guardián! 🎯'
     });
 
   } catch (error) {
-    console.error('❌ Error verify:', error);
-    res.status(500).json({ error: 'Error de verificación' });
+    console.error('❌ Error en quick-login:', error);
+    res.status(500).json({ 
+      error: 'Error al procesar login',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
-// ... (Deja las rutas /me y /profile igual que antes) ...
-// Copia aquí abajo las rutas /me y /profile que ya tenías funcionando
-router.get('/me', async (req, res) => { /* ... tu código existente ... */ });
-router.put('/profile', async (req, res) => { /* ... tu código existente ... */ });
+/**
+ * GET /api/auth/me
+ * Obtener datos del usuario autenticado
+ */
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token no proporcionado' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let decoded;
+
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+
+    const result = await query(`
+      SELECT 
+        id, 
+        phone_last4, 
+        name, 
+        points, 
+        level, 
+        predictions_count,
+        surveys_completed
+      FROM users
+      WHERE id = $1 AND is_active = true
+    `, [decoded.userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
+
+    const user = result.rows[0];
+
+    res.json({
+      id: user.id,
+      phone: user.phone_last4,
+      name: user.name || `Guardián ${user.phone_last4}`,
+      points: user.points || 0,
+      level: user.level || 'Piloto',
+      predictions: user.predictions_count || 0,
+      surveys: user.surveys_completed || 0
+    });
+
+  } catch (error) {
+    console.error('❌ Error en /me:', error);
+    res.status(401).json({ error: 'Error de autenticación' });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Actualizar nombre del usuario
+ */
+router.put('/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token no proporcionado' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const { name } = req.body;
+
+    if (name && name.length > 2) {
+      await query(`
+        UPDATE users 
+        SET name = $1, updated_at = NOW()
+        WHERE id = $2
+      `, [name, decoded.userId]);
+
+      console.log(`✅ Perfil actualizado: Usuario ${decoded.userId}`);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Perfil actualizado' 
+    });
+
+  } catch (error) {
+    console.error('❌ Error en /profile:', error);
+    res.status(500).json({ error: 'Error al actualizar perfil' });
+  }
+});
 
 module.exports = router;

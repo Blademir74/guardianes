@@ -922,40 +922,54 @@ console.log('   - testAuth(): Probar autenticación');
     <main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
 
         <!-- AUTH -->
-        <section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
-            <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
-                <h2 class="text-3xl font-black mb-2 italic tracking-tighter uppercase whitespace-nowrap">Portal <span
-                        class="text-amber-500">Ciudadano</span></h2>
-                <p class="text-xs font-bold text-slate-500 mb-10 uppercase tracking-[0.2em]">Anonimato Total Garantizado
-                </p>
+ -- ======================================== -->
+<!-- SECCIÓN AUTH SIMPLIFICADA (SIN OTP) -->
+<!-- REEMPLAZAR desde <section id="auth-section"> hasta </section> -->
+<!-- ======================================== -->
 
-                <div id="phone-step" class="space-y-4">
-                    <input type="tel" id="user-phone" placeholder="744 123 4567"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-2xl font-black focus:border-amber-500 outline-none transition shadow-inner">
-                    <button onclick="sendCode()"
-                        class="w-full bg-amber-600 hover:bg-amber-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-amber-900/20 uppercase tracking-tighter">Accesar
-                        con SMS</button>
-                </div>
+<section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
+    <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
+        <h2 class="text-3xl font-black mb-2 italic tracking-tighter uppercase whitespace-nowrap">
+            Portal <span class="text-amber-500">Ciudadano</span>
+        </h2>
+        <p class="text-xs font-bold text-slate-500 mb-10 uppercase tracking-[0.2em]">
+            Acceso Directo • Sin Códigos
+        </p>
 
-                <div id="code-step" class="hidden space-y-4">
-                    <input type="text" id="verify-code" placeholder="• • • • • •"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-3xl font-black tracking-[0.3em] focus:border-emerald-500 outline-none transition shadow-inner">
-                    <button onclick="verifyCode()"
-                        class="w-full bg-emerald-600 hover:bg-emerald-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-emerald-900/20 uppercase tracking-tighter">Validar
-                        Ingreso</button>
-                </div>
+        <div id="phone-step" class="space-y-4">
+            <input 
+                type="tel" 
+                id="user-phone" 
+                placeholder="744 123 4567"
+                maxlength="10"
+                class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-2xl font-black focus:border-amber-500 outline-none transition shadow-inner"
+                onkeypress="if(event.key === 'Enter') quickLogin()"
+            >
+            
+            <button 
+                onclick="quickLogin()"
+                class="w-full bg-amber-600 hover:bg-amber-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-amber-900/20 uppercase tracking-tighter"
+            >
+                🚀 Entrar Ahora
+            </button>
+            
+            <p class="text-[10px] text-slate-600 mt-4">
+                Solo números de Guerrero (744, 747, 733, 758, 767, 741, 742)
+            </p>
+        </div>
 
-                <div class="mt-8 flex items-center justify-center gap-2 opacity-30">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                    <span class="text-[10px] font-bold uppercase tracking-widest leading-none">Encriptación
-                        AES-256</span>
-                </div>
-            </div>
-        </section>
+        <div class="mt-8 flex items-center justify-center gap-2 opacity-30">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            <span class="text-[10px] font-bold uppercase tracking-widest leading-none">
+                100% Anónimo
+            </span>
+        </div>
+    </div>
+</section>       
 
         <!-- PORTAL MAIN -->
         <section id="portal-section" class="hidden space-y-10 animate-in fade-in zoom-in-95 duration-500">
@@ -1508,67 +1522,6 @@ console.log('   - testAuth(): Probar autenticación');
 
         // --- AUTH ---
         let userPhone = '';
-
-        async function sendCode() {
-            const phone = document.getElementById('user-phone').value.trim();
-            if (phone.length < 10) return showToast('Número telefónico inválido', 'error');
-
-            userPhone = phone;
-            try {
-                const res = await fetch(`${API_URL}/auth/request-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone })
-                });
-                if (res.ok) {
-                    document.getElementById('phone-step').classList.add('hidden');
-                    document.getElementById('code-step').classList.remove('hidden');
-                    showToast('📩 Código de verificación enviado');
-                } else {
-                    const err = await res.json();
-                    showToast(err.error || 'Error al enviar código', 'error');
-                }
-            } catch (e) { showToast('Falla de Red', 'error'); }
-        }
-
-        async function verifyCode() {
-            const code = document.getElementById('verify-code').value.trim();
-            if (code.length < 6) return showToast('Código incompleto', 'error');
-
-            try {
-                const res = await fetch(`${API_URL}/auth/verify-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: userPhone, code })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    localStorage.setItem('guardianToken', data.token);
-                    localStorage.setItem('accessToken', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    auth_token = data.token;
-                    
-                    // Actualizar instancia global de auth
-                    auth.accessToken = data.token;
-                    auth.user = data.user;
-
-                    // Actualizar UI con datos del usuario
-                    document.getElementById('user-points').textContent = `${data.user.points || 0} PTS de Influencia`;
-                    
-                    // Si hay predicción pendiente, ejecutarla
-                    if (auth.pendingPrediction) {
-                        const pred = auth.pendingPrediction;
-                        auth.pendingPrediction = null;
-                        await submitAuthenticatedPrediction(pred);
-                    }
-
-                    showPortal();
-                    showToast('✅ Acceso Autorizado', 'success');
-                } else {
-                    showToast(data.error || 'Código Inválido', 'error');
-                }
-            } catch (e) { showToast('Falla de Sincronización', 'error'); }
-        }
 
         async function showPortal() {
             document.getElementById('auth-section').classList.add('hidden');
@@ -2812,134 +2765,51 @@ function updatePredictionStats(municipalityId) {
             }
         }
         if (auth_token) showPortal();
+
+// ============================================
+// FUNCIONES DE UI PARA AUTENTICACIÓN
+// ============================================
 class GuardianesAuth {
     constructor() {
-        this.accessToken = localStorage.getItem('accessToken');
-        this.refreshToken = localStorage.getItem('refreshToken');
+        this.accessToken = localStorage.getItem('guardianToken');
         this.user = JSON.parse(localStorage.getItem('user') || 'null');
         this.pendingPrediction = null;
-        this.otpTimer = null;
-        this.phoneNumber = null;
     }
     
-    // Verificar si el usuario está autenticado
     isAuthenticated() {
-        return this.accessToken && this.user;
+        return !!this.accessToken;
     }
     
-    // Obtener headers con autenticación
     getAuthHeaders() {
-        const headers = {
-            'Content-Type': 'application/json'
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.accessToken}`
         };
-        
-        if (this.accessToken) {
-            headers['Authorization'] = `Bearer ${this.accessToken}`;
-        }
-        
-        return headers;
     }
     
-    // Hacer request autenticado
     async authenticatedFetch(url, options = {}) {
         options.headers = {
             ...options.headers,
             ...this.getAuthHeaders()
         };
         
-        let response = await fetch(url, options);
+        const response = await fetch(url, options);
         
-        // Si el token expiró, intentar refresh
         if (response.status === 401) {
-            const refreshed = await this.refreshAccessToken();
-            if (refreshed) {
-                options.headers['Authorization'] = `Bearer ${this.accessToken}`;
-                response = await fetch(url, options);
-            } else {
-                // No se pudo renovar, mostrar login
-                this.showLoginModal();
-                throw new Error('Sesión expirada');
-            }
+            this.logout();
+            location.reload();
         }
         
         return response;
     }
     
-    // Renovar access token
-    async refreshAccessToken() {
-        if (!this.refreshToken) return false;
-        
-        try {
-            const response = await fetch('/api/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken: this.refreshToken })
-            });
-            
-            if (!response.ok) throw new Error('Failed to refresh');
-            
-            const data = await response.json();
-            this.accessToken = data.accessToken;
-            localStorage.setItem('accessToken', this.accessToken);
-            return true;
-            
-        } catch (error) {
-            console.error('Error refreshing token:', error);
-            this.logout();
-            return false;
-        }
-    }
-    
-    // Mostrar modal de login
-    showLoginModal(prediction = null) {
-        if (prediction) {
-            this.pendingPrediction = prediction;
-        }
-        
-        // Mostrar sección de auth, ocultar portal
-        const authSection = document.getElementById('auth-section');
-        const portalSection = document.getElementById('portal-section');
-        
-        if (authSection) {
-            authSection.classList.remove('hidden');
-        }
-        if (portalSection) {
-            portalSection.classList.add('hidden');
-        }
-        
-        // Mostrar paso de teléfono, ocultar paso de código
-        const phoneStep = document.getElementById('phone-step');
-        const codeStep = document.getElementById('code-step');
-        
-        if (phoneStep) {
-            phoneStep.classList.remove('hidden');
-        }
-        if (codeStep) {
-            codeStep.classList.add('hidden');
-        }
-        
-        // Scroll al top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // Cerrar sesión
     logout() {
-        this.accessToken = null;
-        this.refreshToken = null;
-        this.user = null;
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        localStorage.clear();
+        location.reload();
     }
 }
 
-// Instancia global
 const auth = new GuardianesAuth();
-
-// ============================================
-// FUNCIONES DE UI PARA AUTENTICACIÓN
-// ============================================
-
 function closeAuthModal() {
     document.getElementById('authModal').classList.remove('show');
     if (auth.otpTimer) {
@@ -2947,115 +2817,151 @@ function closeAuthModal() {
     }
 }
 
-// ==========================================
-// NUEVA FUNCIÓN requestOTP (MODO PILOTO)
-// ==========================================
 async function requestOTP() {
-    const phoneInput = document.getElementById('phoneInput'); // Asegúrate que este ID sea correcto
-    const phone = phoneInput.value.trim();
+    const phone = document.getElementById('phoneInput').value.trim();
     
-    // 1. Validación estricta
     if (!/^\d{10}$/.test(phone)) {
-        if(typeof showToast === 'function') showToast('Ingresa 10 dígitos exactos', 'error');
-        else alert('Ingresa 10 dígitos exactos');
+        Swal.fire('Error', 'Ingresa 10 dígitos sin espacios ni guiones', 'error');
         return;
     }
-
-    // UI Feedback (Buscamos el botón de enviar)
-    // Ajusta el ID 'btn-request-otp' al ID real de tu botón "Enviar Código"
-    const btn = document.querySelector('button[onclick="requestOTP()"]');
-    const originalText = btn ? btn.innerText : 'Enviar';
-    if(btn) {
-        btn.disabled = true;
-        btn.innerText = 'Conectando...';
-    }
-
+    
     try {
-        console.log("🚀 Enviando petición piloto para:", phone);
-
-        const res = await fetch(`${API_URL}/auth/request-code`, {
+        // Mostrar loading
+        Swal.fire({
+            title: 'Enviando código...',
+            text: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const response = await fetch('/api/auth/request-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
         });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            console.log("✅ Respuesta servidor:", data);
-
-            // === LÓGICA DE AUTO-VERIFICACIÓN ===
-            if (data.autoFillCode) {
-                console.log("⏩ Modo Piloto detectado. Auto-verificando...");
-                
-                // Llamamos directamente a verificar sin mostrar pantalla de código
-                await performVerification(phone, data.autoFillCode);
-            } else {
-                // Fallback: Si el servidor no manda autoFillCode, mostramos input normal
-                // Aquí iría tu lógica antigua de mostrar el input de OTP
-                if(typeof showToast === 'function') showToast('Código enviado (Manual)', 'success');
-                document.getElementById('step-phone').classList.add('hidden'); // Ocultar paso 1
-                document.getElementById('step-otp').classList.remove('hidden'); // Mostrar paso 2
-            }
-        } else {
-            throw new Error(data.error || 'Error en el servidor');
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Error al enviar código');
         }
-
-    } catch (e) {
-        console.error(e);
-        if(typeof showToast === 'function') showToast(e.message, 'error');
-        else alert(e.message);
-        if(btn) {
-            btn.disabled = false;
-            btn.innerText = originalText;
+        
+        // Guardar número y mostrar siguiente paso
+        auth.phoneNumber = phone;
+        document.getElementById('phoneStep').classList.remove('active');
+        document.getElementById('codeStep').classList.add('active');
+        document.getElementById('phoneLast4').textContent = data.phoneLast4;
+        
+        // Iniciar timer
+        startOTPTimer();
+        
+        // En desarrollo, mostrar código
+        if (data.debug_otp) {
+            console.log('🔑 Código de prueba:', data.debug_otp);
+            Swal.fire('Código de Prueba', `Tu código es: ${data.debug_otp}`, 'info');
         }
+        
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
-// Nueva función auxiliar para verificar (separada para limpieza)
-async function performVerification(phone, code) {
+async function verifyCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    
+    if (!/^\d{6}$/.test(code)) {
+        Swal.fire('Error', 'Ingresa el código de 6 dígitos', 'error');
+        return;
+    }
+    
     try {
-        const res = await fetch(`${API_URL}/auth/verify-code`, {
+        Swal.fire({
+            title: 'Verificando...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const response = await fetch('/api/auth/verify-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, code })
+            body: JSON.stringify({ 
+                phone: auth.phoneNumber, 
+                code 
+            })
         });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            console.log("🎉 Login Exitoso");
-            
-            // Guardar sesión
-            localStorage.setItem('guardianToken', data.token);
-            localStorage.setItem('guardianUser', JSON.stringify(data.user));
-
-            if(typeof showToast === 'function') showToast(`¡Bienvenido ${data.user.name || ''}!`, 'success');
-
-            // CERRAR MODAL (Ajusta el ID 'auth-modal' al ID real de tu modal)
-            const modal = document.getElementById('authModal') || document.getElementById('login-modal');
-            if(modal) {
-                modal.style.display = 'none'; // O .classList.add('hidden') si usas Tailwind
-                // Si usas tu función personalizada closeAuthModal(), úsala:
-                if(typeof closeAuthModal === 'function') closeAuthModal();
-            }
-
-            // Actualizar UI
-            location.reload(); // La forma más segura de refrescar el estado de usuario
-        } else {
-            throw new Error(data.error || 'Fallo verificación');
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Código incorrecto');
         }
-    } catch (e) {
-        console.error(e);
-        if(typeof showToast === 'function') showToast('Error al verificar automáticamente', 'error');
-        // Si falla, reactivamos el botón para que intente de nuevo
-        const btn = document.querySelector('button[onclick="requestOTP()"]');
-        if(btn) {
-            btn.disabled = false;
-            btn.innerText = 'Reintentar';
+        
+        // Guardar tokens y usuario
+        auth.accessToken = data.accessToken;
+        auth.refreshToken = data.refreshToken;
+        auth.user = data.user;
+        
+        localStorage.setItem('accessToken', auth.accessToken);
+        localStorage.setItem('refreshToken', auth.refreshToken);
+        localStorage.setItem('user', JSON.stringify(auth.user));
+        
+        // Mostrar éxito
+        document.getElementById('codeStep').classList.remove('active');
+        document.getElementById('successStep').classList.add('active');
+        document.getElementById('welcomeMessage').textContent = 
+            `Bienvenido ${auth.user.name}. Ya puedes hacer predicciones y ganar puntos.`;
+        
+        // Si hay predicción pendiente, enviarla
+        if (auth.pendingPrediction) {
+            setTimeout(() => {
+                closeAuthModal();
+                submitAuthenticatedPrediction(auth.pendingPrediction);
+            }, 2000);
         }
+        
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
     }
 }
+
+function backToPhone() {
+    document.getElementById('phoneStep').classList.add('active');
+    document.getElementById('codeStep').classList.remove('active');
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('codeInput').value = '';
+    if (auth.otpTimer) {
+        clearInterval(auth.otpTimer);
+    }
+}
+
+function startOTPTimer() {
+    let seconds = 600; // 10 minutos
+    
+    auth.otpTimer = setInterval(() => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('timerDisplay').textContent = 
+            `Código válido por: ${minutes}:${secs.toString().padStart(2, '0')}`;
+        
+        seconds--;
+        
+        if (seconds < 0) {
+            clearInterval(auth.otpTimer);
+            document.getElementById('timerDisplay').textContent = 'Código expirado';
+        }
+    }, 1000);
+}
+
+    </script>
+<script>
 // ============================================
 // PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
 // ============================================
@@ -3166,7 +3072,167 @@ async function performVerification(phone, code) {
     };
 
     console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
+    
 })();
+<script>
+// ============================================
+// CONFIGURACIÓN GLOBAL (PRODUCCIÓN)
+// ============================================
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : 'https://pulsoguerrero.vercel.app/api';
+
+let auth_token = localStorage.getItem('guardianToken');
+let userPhone = null;
+
+// ============================================
+// FUNCIÓN PRINCIPAL: LOGIN SIMPLIFICADO
+// ============================================
+async function quickLogin() {
+    // Busca el input correcto (ajusta el ID si es diferente en tu HTML)
+    const phoneInput = document.getElementById('phoneInput') || document.getElementById('user-phone');
+    
+    if (!phoneInput) {
+        console.error("❌ No se encontró el input de teléfono (id='phoneInput' o 'user-phone')");
+        return;
+    }
+
+    const phone = phoneInput.value.trim().replace(/\s+/g, '');
+    const btn = document.querySelector('button[onclick*="login"], button[onclick*="requestOTP"]');
+    const originalText = btn ? btn.innerText : 'Ingresar';
+
+    // 1. VALIDACIONES
+    if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
+        showToast('Ingresa 10 dígitos exactos', 'error');
+        phoneInput.focus();
+        return;
+    }
+
+    // Opcional: Validar ladas de Guerrero (puedes comentarlo si quieres permitir otros estados)
+    const validAreaCodes = ['744', '747', '733', '758', '767', '741', '742', '781', '755'];
+    const areaCode = phone.substring(0, 3);
+    if (!validAreaCodes.includes(areaCode)) {
+        // showToast('⚠️ Nota: Lada no común en Guerrero', 'warning');
+        // No bloqueamos, solo avisamos (o comentamos para no molestar)
+    }
+
+    // 2. PROCESO DE LOGIN
+    try {
+        if(btn) { btn.disabled = true; btn.innerText = 'Conectando...'; }
+        
+        console.log('📱 Solicitando acceso para:', phone);
+        
+        // Paso 1: Pedir "código" (que ahora es automático)
+        const resRequest = await fetch(`${API_URL}/auth/request-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+
+        const dataRequest = await resRequest.json();
+
+        if (!resRequest.ok) throw new Error(dataRequest.error || 'Error de conexión');
+
+        // Paso 2: Usar el código automático para verificar inmediatamente
+        const code = dataRequest.autoFillCode || '202727'; // Fallback por seguridad
+        console.log('🔓 Código automático recibido:', code);
+
+        const resVerify = await fetch(`${API_URL}/auth/verify-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, code })
+        });
+
+        const dataVerify = await resVerify.json();
+
+        if (resVerify.ok) {
+            // ✅ ÉXITO
+            localStorage.setItem('guardianToken', dataVerify.token);
+            localStorage.setItem('accessToken', dataVerify.token); // Compatibilidad
+            localStorage.setItem('user', JSON.stringify(dataVerify.user));
+            auth_token = dataVerify.token;
+            
+            showToast(`¡Bienvenido ${dataVerify.user.name || ''}!`, 'success');
+            
+            // Cerrar modal y mostrar portal
+            const modal = document.getElementById('authModal') || document.getElementById('login-modal');
+            if (modal) modal.style.display = 'none';
+            
+            showPortal(); // Tu función existente para mostrar el dashboard
+            
+        } else {
+            throw new Error(dataVerify.error || 'Error de verificación');
+        }
+
+    } catch (error) {
+        console.error('❌ Error en login:', error);
+        showToast(error.message, 'error');
+    } finally {
+        if(btn) { btn.disabled = false; btn.innerText = originalText; }
+    }
+}
+
+// ============================================
+// FUNCIÓN: MOSTRAR PORTAL (Compatibilidad)
+// ============================================
+async function showPortal() {
+    // Ocultar login / Mostrar contenido
+    const authSection = document.getElementById('auth-section') || document.getElementById('login-container');
+    const portalSection = document.getElementById('portal-section') || document.getElementById('main-content');
+    
+    if (authSection) authSection.classList.add('hidden');
+    if (portalSection) portalSection.classList.remove('hidden');
+    
+    // Cargar datos si las funciones existen
+    if (typeof loadSurveys === 'function') loadSurveys();
+    if (typeof populateMunicipios === 'function') populateMunicipios();
+    if (typeof updateUserPoints === 'function') updateUserPoints();
+}
+
+// ============================================
+// TOAST (NOTIFICACIONES)
+// ============================================
+function showToast(message, type = 'info') {
+    const existing = document.querySelector('.guardian-toast');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `guardian-toast fixed bottom-4 right-4 px-6 py-4 rounded-xl shadow-2xl z-[9999] text-white font-bold transition-all duration-300 transform translate-y-10 opacity-0 ${
+        type === 'success' ? 'bg-emerald-600' : 
+        type === 'error' ? 'bg-red-600' : 
+        'bg-amber-600'
+    }`;
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    
+    // Animación entrada
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    });
+    
+    setTimeout(() => {
+        toast.style.transform = 'translateY(10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ============================================
+// AUTO-INICIO
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    if (auth_token) {
+        console.log('🔑 Sesión detectada, entrando...');
+        showPortal();
+    } else {
+        console.log('🔒 Esperando login...');
+        // Asegurarse que el modal de login esté visible si no hay token
+        const modal = document.getElementById('authModal');
+        if(modal) modal.style.display = 'flex';
+    }
+});
+</script>
 </script>
 </body>
 </html>

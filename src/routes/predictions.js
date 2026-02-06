@@ -40,15 +40,7 @@ router.get('/municipalities/:municipalityId', async (req, res) => {
   }
 });
 
-/**
- * POST /api/predictions
- * Crear nueva predicción
-/**
- * POST /api/predictions
- * Crear nueva predicción
- * - Si hay token válido → usa ese userId y da puntos
- * - Si NO hay token o es inválido → usa usuario anónimo (id=1), sin puntos
- */
+
 /**
  * POST /api/predictions
  * Crear nueva predicción (robusto, sin 401 por token)
@@ -73,7 +65,41 @@ router.post('/', async (req, res) => {
         console.warn('⚠️ Token inválido en /api/predictions, se usará usuario anónimo:', err.message);
       }
     }
+// AGREGAR ESTA SECCIÓN AL INICIO DE LA FUNCIÓN POST /api/predictions
+// (Después de verificar el token, antes de insertar la predicción)
 
+// ============================================
+// PROTECCIÓN ANTI-SPAM
+// ============================================
+
+// Verificar si ya predijo en este municipio
+const existingPrediction = await query(`
+  SELECT id, created_at
+  FROM predictions
+  WHERE user_id = $1 AND municipality_id = $2
+  ORDER BY created_at DESC
+  LIMIT 1
+`, [userId, municipalityId]);
+
+if (existingPrediction.rows.length > 0) {
+  const lastPrediction = existingPrediction.rows[0];
+  const hoursSinceLastPrediction = 
+    (Date.now() - new Date(lastPrediction.created_at)) / (1000 * 60 * 60);
+  
+  // Permitir cambiar predicción solo después de 24 horas
+  if (hoursSinceLastPrediction < 24) {
+    return res.status(429).json({
+      error: 'Ya hiciste una predicción para este municipio',
+      message: `Podrás cambiarla en ${Math.ceil(24 - hoursSinceLastPrediction)} horas`,
+      lastPrediction: {
+        createdAt: lastPrediction.created_at,
+        hoursAgo: Math.floor(hoursSinceLastPrediction)
+      }
+    });
+  }
+}
+
+// Si pasó la validación, continuar con el INSERT normal...
     // 2) Si no hay userId válido → usuario anónimo (id=1)
     if (!userId) {
   // Crear (una sola vez) un usuario anónimo técnico con un phone_hash fijo.
