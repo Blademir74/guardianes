@@ -222,15 +222,16 @@
 </head>
 
 <body class="min-h-screen">
-    <!-- 2. AGREGAR DESPUÉS DE ABRIR <body> (aproximadamente línea 100-150) -->
-<!-- Modal de Autenticación -->
-<!-- REEMPLAZAR TODO EL CÓDIGO DE AUTENTICACIÓN ANTERIOR CON ESTE -->
 <script>
 // ============================================
 // SISTEMA DE AUTENTICACIÓN GUARDIANES v4.0
 // DOBLE CANDADO - SESIÓN PERSISTENTE
 // ============================================
-
+    /* 
+    // TODO el código viejo, incluidas las funciones:
+      // requestInitialOTP, showInitialAuthModal, verifyInitialCode,
+      // refreshAccessToken, authenticatedFetch, etc.
+      
 class GuardianesAuthSystem {
     constructor() {
         // Tokens y sesión
@@ -785,7 +786,8 @@ const authSystem = new GuardianesAuthSystem();
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Inicializando Sistema Guardianes v4.0');
-    
+    */
+
     // Verificar acceso inicial
     const hasAccess = await authSystem.checkInitialAccess();
     
@@ -833,7 +835,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
         document.body.appendChild(logoutBtn);
     }
-});
 
 // ============================================
 // FUNCIONES AUXILIARES
@@ -921,11 +922,6 @@ console.log('   - testAuth(): Probar autenticación');
     <!-- CONTENT -->
     <main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
 
-        <!-- AUTH -->
- -- ======================================== -->
-<!-- SECCIÓN AUTH SIMPLIFICADA (SIN OTP) -->
-<!-- REEMPLAZAR desde <section id="auth-section"> hasta </section> -->
-<!-- ======================================== -->
 
 <section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
     <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
@@ -1467,10 +1463,12 @@ console.log('   - testAuth(): Probar autenticación');
 
     <!-- LOGIC -->
     <script>
-        const API_URL = '/api';
-        let currentSurveyId = null;
-        let selectedCandidateId = null;
-        let auth_token = localStorage.getItem('guardianToken');
+        const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : 'https://pulsoguerrero.vercel.app/api';
+
+    let auth_token = localStorage.getItem('guardianToken');
+    let userPhone = null;
 
         const MUNICIPIOS_GUERRERO = [
             { id: 1, name: "Acapulco de Juárez" }, { id: 2, name: "Acatepec" }, { id: 3, name: "Ahuacuotzingo" },
@@ -1520,8 +1518,7 @@ console.log('   - testAuth(): Probar autenticación');
             { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: "null" }
         ];
 
-        // --- AUTH ---
-        let userPhone = '';
+      
 
         async function showPortal() {
             document.getElementById('auth-section').classList.add('hidden');
@@ -2960,7 +2957,7 @@ function startOTPTimer() {
     }, 1000);
 }
 
-    </script>
+</script>
 <script>
 // ============================================
 // PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
@@ -3071,168 +3068,133 @@ function startOTPTimer() {
         return doSendPrediction(prediction);
     };
 
-    console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
+console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
     
 })();
-<script>
-// ============================================
-// CONFIGURACIÓN GLOBAL (PRODUCCIÓN)
-// ============================================
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api' 
-    : 'https://pulsoguerrero.vercel.app/api';
 
-let auth_token = localStorage.getItem('guardianToken');
-let userPhone = null;
 
 // ============================================
 // FUNCIÓN PRINCIPAL: LOGIN SIMPLIFICADO
 // ============================================
 async function quickLogin() {
-    // Busca el input correcto (ajusta el ID si es diferente en tu HTML)
-    const phoneInput = document.getElementById('phoneInput') || document.getElementById('user-phone');
-    
-    if (!phoneInput) {
-        console.error("❌ No se encontró el input de teléfono (id='phoneInput' o 'user-phone')");
-        return;
-    }
-
+    const phoneInput = document.getElementById('user-phone');
     const phone = phoneInput.value.trim().replace(/\s+/g, '');
-    const btn = document.querySelector('button[onclick*="login"], button[onclick*="requestOTP"]');
-    const originalText = btn ? btn.innerText : 'Ingresar';
-
-    // 1. VALIDACIONES
-    if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-        showToast('Ingresa 10 dígitos exactos', 'error');
+    
+    // Validar formato
+    if (phone.length !== 10) {
+        showToast('Ingresa 10 dígitos', 'error');
         phoneInput.focus();
         return;
     }
-
-    // Opcional: Validar ladas de Guerrero (puedes comentarlo si quieres permitir otros estados)
-    const validAreaCodes = ['744', '747', '733', '758', '767', '741', '742', '781', '755'];
-    const areaCode = phone.substring(0, 3);
-    if (!validAreaCodes.includes(areaCode)) {
-        // showToast('⚠️ Nota: Lada no común en Guerrero', 'warning');
-        // No bloqueamos, solo avisamos (o comentamos para no molestar)
+    
+    if (!/^\d{10}$/.test(phone)) {
+        showToast('Solo números', 'error');
+        phoneInput.focus();
+        return;
     }
-
-    // 2. PROCESO DE LOGIN
+    
+    // Validar código de área de Guerrero
+    const validAreaCodes = ['744', '747', '733', '758', '767', '741', '742'];
+    const areaCode = phone.substring(0, 3);
+    
+    if (!validAreaCodes.includes(areaCode)) {
+        showToast('Solo números de Guerrero (744, 747, 733, etc.)', 'error');
+        phoneInput.focus();
+        return;
+    }
+    
     try {
-        if(btn) { btn.disabled = true; btn.innerText = 'Conectando...'; }
+        console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
         
-        console.log('📱 Solicitando acceso para:', phone);
-        
-        // Paso 1: Pedir "código" (que ahora es automático)
-        const resRequest = await fetch(`${API_URL}/auth/request-code`, {
+        const res = await fetch(`${API_URL}/auth/quick-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
         });
-
-        const dataRequest = await resRequest.json();
-
-        if (!resRequest.ok) throw new Error(dataRequest.error || 'Error de conexión');
-
-        // Paso 2: Usar el código automático para verificar inmediatamente
-        const code = dataRequest.autoFillCode || '202727'; // Fallback por seguridad
-        console.log('🔓 Código automático recibido:', code);
-
-        const resVerify = await fetch(`${API_URL}/auth/verify-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, code })
-        });
-
-        const dataVerify = await resVerify.json();
-
-        if (resVerify.ok) {
-            // ✅ ÉXITO
-            localStorage.setItem('guardianToken', dataVerify.token);
-            localStorage.setItem('accessToken', dataVerify.token); // Compatibilidad
-            localStorage.setItem('user', JSON.stringify(dataVerify.user));
-            auth_token = dataVerify.token;
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            // Guardar token y datos
+            localStorage.setItem('guardianToken', data.token);
+            localStorage.setItem('accessToken', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            auth_token = data.token;
+            userPhone = phone;
             
-            showToast(`¡Bienvenido ${dataVerify.user.name || ''}!`, 'success');
+            // Actualizar UI
+            document.getElementById('user-points').textContent = 
+                `${data.user.points || 0} PTS de Influencia`;
             
-            // Cerrar modal y mostrar portal
-            const modal = document.getElementById('authModal') || document.getElementById('login-modal');
-            if (modal) modal.style.display = 'none';
+            // Mostrar portal
+            showPortal();
             
-            showPortal(); // Tu función existente para mostrar el dashboard
+            // Mensaje de bienvenida
+            showToast(data.message || '✅ Acceso Autorizado', 'success');
             
+            console.log('✅ Login exitoso:', data.user);
         } else {
-            throw new Error(dataVerify.error || 'Error de verificación');
+            showToast(data.error || 'Error de acceso', 'error');
         }
-
+        
     } catch (error) {
         console.error('❌ Error en login:', error);
-        showToast(error.message, 'error');
-    } finally {
-        if(btn) { btn.disabled = false; btn.innerText = originalText; }
+        showToast('Error de conexión. Intenta de nuevo.', 'error');
     }
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR PORTAL (Compatibilidad)
+// FUNCIÓN: MOSTRAR PORTAL
 // ============================================
 async function showPortal() {
-    // Ocultar login / Mostrar contenido
-    const authSection = document.getElementById('auth-section') || document.getElementById('login-container');
-    const portalSection = document.getElementById('portal-section') || document.getElementById('main-content');
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('portal-section').classList.remove('hidden');
+    document.getElementById('user-info').classList.remove('hidden');
     
-    if (authSection) authSection.classList.add('hidden');
-    if (portalSection) portalSection.classList.remove('hidden');
-    
-    // Cargar datos si las funciones existen
-    if (typeof loadSurveys === 'function') loadSurveys();
-    if (typeof populateMunicipios === 'function') populateMunicipios();
-    if (typeof updateUserPoints === 'function') updateUserPoints();
+    // Cargar datos
+    loadSurveys();
+    populateMunicipios();
+}
+
+// ============================================
+// FUNCIÓN: LOGOUT
+// ============================================
+function logout() {
+    localStorage.removeItem('guardianToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    auth_token = null;
+    location.reload();
 }
 
 // ============================================
 // TOAST (NOTIFICACIONES)
 // ============================================
 function showToast(message, type = 'info') {
-    const existing = document.querySelector('.guardian-toast');
-    if(existing) existing.remove();
-
     const toast = document.createElement('div');
-    toast.className = `guardian-toast fixed bottom-4 right-4 px-6 py-4 rounded-xl shadow-2xl z-[9999] text-white font-bold transition-all duration-300 transform translate-y-10 opacity-0 ${
+    toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${
         type === 'success' ? 'bg-emerald-600' : 
         type === 'error' ? 'bg-red-600' : 
         'bg-amber-600'
     }`;
-    toast.innerHTML = message;
+    toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
     document.body.appendChild(toast);
     
-    // Animación entrada
-    requestAnimationFrame(() => {
-        toast.style.transform = 'translateY(0)';
-        toast.style.opacity = '1';
-    });
-    
     setTimeout(() => {
-        toast.style.transform = 'translateY(10px)';
-        toast.style.opacity = '0';
+        toast.classList.add('animate-out', 'fade-out');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
 // ============================================
-// AUTO-INICIO
+// AUTO-LOGIN SI YA HAY TOKEN
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    if (auth_token) {
-        console.log('🔑 Sesión detectada, entrando...');
-        showPortal();
-    } else {
-        console.log('🔒 Esperando login...');
-        // Asegurarse que el modal de login esté visible si no hay token
-        const modal = document.getElementById('authModal');
-        if(modal) modal.style.display = 'flex';
-    }
-});
+if (auth_token) {
+    console.log('🔑 Token encontrado, auto-login...');
+    showPortal();
+}
 </script>
-</script>
+
 </body>
+
 </html>

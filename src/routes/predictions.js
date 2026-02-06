@@ -1,4 +1,4 @@
-// src/routes/predictions.js
+// src/routes/predictions.js — VERSIÓN CORREGIDA
 
 const express = require('express');
 const router = express.Router();
@@ -43,7 +43,7 @@ router.get('/municipalities/:municipalityId', async (req, res) => {
 
 /**
  * POST /api/predictions
- * Crear nueva predicción (robusto, sin 401 por token)
+ * Crear nueva predicción con protección anti-spam
  */
 router.post('/', async (req, res) => {
   try {
@@ -65,76 +65,37 @@ router.post('/', async (req, res) => {
         console.warn('⚠️ Token inválido en /api/predictions, se usará usuario anónimo:', err.message);
       }
     }
-// AGREGAR ESTA SECCIÓN AL INICIO DE LA FUNCIÓN POST /api/predictions
-// (Después de verificar el token, antes de insertar la predicción)
 
-// ============================================
-// PROTECCIÓN ANTI-SPAM
-// ============================================
-
-// Verificar si ya predijo en este municipio
-const existingPrediction = await query(`
-  SELECT id, created_at
-  FROM predictions
-  WHERE user_id = $1 AND municipality_id = $2
-  ORDER BY created_at DESC
-  LIMIT 1
-`, [userId, municipalityId]);
-
-if (existingPrediction.rows.length > 0) {
-  const lastPrediction = existingPrediction.rows[0];
-  const hoursSinceLastPrediction = 
-    (Date.now() - new Date(lastPrediction.created_at)) / (1000 * 60 * 60);
-  
-  // Permitir cambiar predicción solo después de 24 horas
-  if (hoursSinceLastPrediction < 24) {
-    return res.status(429).json({
-      error: 'Ya hiciste una predicción para este municipio',
-      message: `Podrás cambiarla en ${Math.ceil(24 - hoursSinceLastPrediction)} horas`,
-      lastPrediction: {
-        createdAt: lastPrediction.created_at,
-        hoursAgo: Math.floor(hoursSinceLastPrediction)
-      }
-    });
-  }
-}
-
-// Si pasó la validación, continuar con el INSERT normal...
     // 2) Si no hay userId válido → usuario anónimo (id=1)
     if (!userId) {
-  // Crear (una sola vez) un usuario anónimo técnico con un phone_hash fijo.
-  // IMPORTANTE: phone_hash es NOT NULL en tu BD, por eso fallaba antes.
+      // Crear (una sola vez) un usuario anónimo técnico
+      await db.query(`
+        INSERT INTO users (
+          id,
+          phone_hash,
+          phone_last4,
+          name,
+          is_active,
+          is_anonymous,
+          points
+        )
+        VALUES (
+          1,
+          'ANON_USER_1',
+          '0000',
+          'Invitado',
+          true,
+          true,
+          0
+        )
+        ON CONFLICT (id) DO NOTHING
+      `);
 
-  await db.query(`
-    INSERT INTO users (
-      id,
-      phone_hash,
-      phone_last4,
-      name,
-      email,
-      password,
-      is_active,
-      is_anonymous,
-      points
-    )
-    VALUES (
-      1,
-      'ANON_USER_1',   -- valor fijo que no colisiona con hashes reales
-      '0000',
-      'Invitado',
-      'anon@guardianes.mx',
-      'no-password',
-      true,
-      true,
-      0
-    )
-    ON CONFLICT (id) DO NOTHING
-  `);
+      userId = 1;
+      isAuthenticated = false;
+    }
 
-  userId = 1;
-  isAuthenticated = false;
-}
-
+    // 3) Extraer datos del body
     const { municipalityId, candidateId, confidence } = req.body;
     console.log('📥 Predicción recibida:', { userId, municipalityId, candidateId, confidence });
 
@@ -142,7 +103,36 @@ if (existingPrediction.rows.length > 0) {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // 3) Normalizar ID de candidato ("candidato_21" → 21)
+    // 4) PROTECCIÓN ANTI-SPAM (ahora que ya tenemos municipalityId)
+    if (userId && userId !== 1) {
+      const existingPrediction = await db.query(`
+        SELECT id, created_at
+        FROM predictions
+        WHERE user_id = $1 AND municipality_id = $2
+        ORDER BY created_at DESC
+        LIMIT 1
+      `, [userId, municipalityId]);
+
+      if (existingPrediction.rows.length > 0) {
+        const lastPrediction = existingPrediction.rows[0];
+        const hoursSinceLastPrediction = 
+          (Date.now() - new Date(lastPrediction.created_at)) / (1000 * 60 * 60);
+        
+        // Permitir cambiar predicción solo después de 24 horas
+        if (hoursSinceLastPrediction < 24) {
+          return res.status(429).json({
+            error: 'Ya hiciste una predicción para este municipio',
+            message: `Podrás cambiarla en ${Math.ceil(24 - hoursSinceLastPrediction)} horas`,
+            lastPrediction: {
+              createdAt: lastPrediction.created_at,
+              hoursAgo: Math.floor(hoursSinceLastPrediction)
+            }
+          });
+        }
+      }
+    }
+
+    // 5) Normalizar ID de candidato ("candidato_21" → 21)
     let numericCandidateId = candidateId;
     if (typeof candidateId === 'string') {
       if (candidateId.includes('_')) {
@@ -156,7 +146,7 @@ if (existingPrediction.rows.length > 0) {
       return res.status(400).json({ error: 'ID de candidato inválido' });
     }
 
-    // 4) Verificar candidato
+    // 6) Verificar candidato
     const candidateCheck = await db.query(
       'SELECT id, name, party FROM candidates WHERE id = $1',
       [numericCandidateId]
@@ -169,7 +159,7 @@ if (existingPrediction.rows.length > 0) {
     const confidenceNormalized =
       confidence > 10 ? confidence : (confidence * 10 || 50);
 
-    // 5) Verificar si ya existe predicción para user+municipio
+    // 7) Verificar si ya existe predicción para user+municipio
     const existing = await db.query(
       `
       SELECT id FROM predictions 
@@ -179,27 +169,29 @@ if (existingPrediction.rows.length > 0) {
     );
 
     if (existing.rows.length > 0) {
+      // Actualizar predicción existente
       await db.query(
         `
         UPDATE predictions 
-        SET candidate_id = $1, confidence = $2
+        SET candidate_id = $1, confidence = $2, updated_at = NOW()
         WHERE user_id = $3 AND municipality_id = $4
         `,
         [numericCandidateId, confidenceNormalized, userId, municipalityId]
       );
       console.log('✅ Predicción actualizada');
     } else {
+      // Insertar nueva predicción
       await db.query(
         `
-        INSERT INTO predictions (user_id, municipality_id, candidate_id, confidence)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO predictions (user_id, municipality_id, candidate_id, confidence, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
         `,
         [userId, municipalityId, numericCandidateId, confidenceNormalized]
       );
       console.log('✅ Predicción insertada');
     }
 
-    // 6) Puntos SOLO para usuarios autenticados reales
+    // 8) Puntos SOLO para usuarios autenticados reales
     let pointsEarned = 0;
     if (isAuthenticated && userId !== 1) {
       pointsEarned = 30;
@@ -207,11 +199,12 @@ if (existingPrediction.rows.length > 0) {
         await db.query(
           `
           UPDATE users 
-          SET points = points + $1 
+          SET points = points + $1, predictions_count = predictions_count + 1
           WHERE id = $2
           `,
           [pointsEarned, userId]
         );
+        console.log(`🎁 +${pointsEarned} puntos para usuario ${userId}`);
       } catch (err) {
         console.error('⚠️ Error añadiendo puntos:', err);
       }
@@ -229,9 +222,10 @@ if (existingPrediction.rows.length > 0) {
     });
   } catch (error) {
     console.error('❌ Error creando predicción:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       error: 'Error guardando predicción',
-      details: error.message
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -271,8 +265,9 @@ router.get('/stats/:municipalityId', async (req, res) => {
 router.get('/leaderboard', async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT name, points
+      SELECT name, points, predictions_count
       FROM users
+      WHERE is_anonymous = false
       ORDER BY points DESC
       LIMIT 10
     `);
