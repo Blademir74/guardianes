@@ -1,160 +1,91 @@
-// api/index.js - GUARDIANES GUERRERO
-require('dotenv').config();
-
+// api/index.js — Entry point para Vercel
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const helmet = require('helmet');
-const fs = require('fs');
+
+// Importar rutas
+const authRouter = require('../src/routes/auth');
+const surveysRouter = require('../src/routes/surveys');
+const predictionsRouter = require('../src/routes/predictions');
+const dataRouter = require('../src/routes/data');
+const adminRouter = require('../src/routes/admin');
+const incidentsRouter = require('../src/routes/incidents');
+const webhookRouter = require('../src/routes/webhook');
 
 const app = express();
 
-// ==========================================
-// 1. SECURITY & PARSING MIDDLEWARE
-// ==========================================
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
-
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://pulsoguerrero.vercel.app/']
-    : '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
+// Middleware
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Logging middleware
 app.use((req, res, next) => {
-  if (!req.path.includes('.well-known') && !req.path.includes('favicon')) {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  }
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// ==========================================
-// 2. HEALTH CHECK
-// ==========================================
-app.get('/api/health', async (req, res) => {
-  try {
-    const { query } = require('../src/db');
-    const dbCheck = await query('SELECT NOW()');
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      database: 'connected',
-      dbTime: dbCheck.rows[0].now
-    });
-  } catch (err) {
-    res.status(500).json({ status: 'error', error: err.message });
-  }
+// ============================================
+// RUTAS API
+// ============================================
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'Guardianes API',
+    env: process.env.NODE_ENV
+  });
 });
 
-// ==========================================
-// 3. API ROUTES REGISTRATION
-// ==========================================
-const routesPath = path.join(__dirname, '../src/routes');
+// Webhook de WhatsApp (DEBE ir PRIMERO para evitar conflictos)
+app.use('/api/webhook', webhookRouter);
 
-// Helper to safely require routes
-const requireRoute = (name) => {
-  try {
-    const routePath = path.join(routesPath, `${name}.js`);
-    if (fs.existsSync(routePath)) {
-      console.log(`✅ Loading route: /api/${name}`);
-      return require(routePath);
-    } else {
-      console.warn(`⚠️ Route file not found: ${name}.js`);
-      return null;
+// Rutas principales
+app.use('/api/auth', authRouter);
+app.use('/api/surveys', surveysRouter);
+app.use('/api/predictions', predictionsRouter);
+app.use('/api/data', dataRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/incidents', incidentsRouter);
+
+// Ruta raíz del API
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Guardianes API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      webhook: '/api/webhook',
+      auth: '/api/auth',
+      surveys: '/api/surveys',
+      predictions: '/api/predictions',
+      data: '/api/data',
+      admin: '/api/admin',
+      incidents: '/api/incidents'
     }
-  } catch (err) {
-    console.error(`❌ Error loading route ${name}:`, err);
-    return null;
-  }
-};
-
-const authRoutes = requireRoute('auth');
-const dataRoutes = require('../src/routes/data');
-const surveyRoutes = requireRoute('surveys');
-const adminRoutes = require('../src/routes/admin');
-const candidateRoutes = requireRoute('candidates');
-const predictionsRoutes = requireRoute('predictions');
-const leaderboardRoutes = requireRoute('leaderboard');
-const incidentsRoutes = requireRoute('incidents');
-const whatsappRoutes = requireRoute('whatsapp');
-const historicalRoutes = requireRoute('historical');
-const webhookRouter = require('./routes/webhook');
-
-if (webhookRoutesRoutes) app.use('/api/webhook', webhookRouter);
-if (authRoutes) app.use('/api/auth', authRoutes);
-if (dataRoutes) app.use('/api/data', dataRoutes);
-if (surveyRoutes) app.use('/api/surveys', surveyRoutes);
-if (adminRoutes) app.use('/api/admin', adminRoutes);
-if (candidateRoutes) app.use('/api/candidates', candidateRoutes);
-if (predictionsRoutes) app.use('/api/predictions', predictionsRoutes);
-if (leaderboardRoutes) app.use('/api/leaderboard', leaderboardRoutes);
-if (incidentsRoutes) app.use('/api/incidents', incidentsRoutes);
-if (whatsappRoutes) app.use('/api/whatsapp', whatsappRoutes);
-// Synchronize historical route naming
-if (historicalRoutes) app.use('/api/historical', historicalRoutes);
-
-// ==========================================
-// 4. STATIC FILES & HTML ROUTES
-// ==========================================
-const publicPath = path.join(__dirname, '../public');
-app.use(express.static(publicPath, { maxAge: '1d' }));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(publicPath, 'index.html'));
+  });
 });
 
-app.get('/landing', (req, res) => {
-  res.sendFile(path.join(publicPath, 'landing.html'));
-});
-
-// Explicit Admin Route
-app.get('/admin', (req, res) => {
-  const adminPath = path.join(publicPath, 'admin.html');
-  if (fs.existsSync(adminPath)) {
-    console.log('✅ Serving Admin Portal');
-    res.sendFile(adminPath);
-  } else {
-    console.error('❌ Admin file missing at:', adminPath);
-    res.status(404).send('Admin portal file not found');
-  }
-});
-
-// ==========================================
-// 5. ERROR HANDLING
-// ==========================================
-app.use((req, res) => {
-  if (req.path.startsWith('/api')) {
-    res.status(404).json({ error: 'Endpoint not found' });
-  } else {
-    res.status(404).redirect('/');
-  }
-});
-
+// Manejo de errores
 app.use((err, req, res, next) => {
-  console.error('❌ Global Error:', err);
+  console.error('Error:', err);
   res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error'
+    error: err.message || 'Error interno del servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
-// ==========================================
-// 6. SERVER START
-// ==========================================
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`\n🚀 Server running at http://localhost:${PORT}`);
-    console.log(`⚙️  Admin Portal at http://localhost:${PORT}/admin`);
-    console.log(`📂 Public dir: ${publicPath}`);
+// 404 handler
+app.use((req, res) => {
+  console.log('404 Not Found:', req.method, req.path);
+  res.status(404).json({
+    error: 'Ruta no encontrada',
+    path: req.path,
+    method: req.method
   });
-}
+});
 
+// Exportar para Vercel
 module.exports = app;
