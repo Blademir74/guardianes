@@ -2947,19 +2947,32 @@ function closeAuthModal() {
     }
 }
 
+// ==========================================
+// NUEVA FUNCIÓN requestOTP (MODO PILOTO)
+// ==========================================
 async function requestOTP() {
-    const phone = document.getElementById('phoneInput').value;
+    const phoneInput = document.getElementById('phoneInput'); // Asegúrate que este ID sea correcto
+    const phone = phoneInput.value.trim();
     
+    // 1. Validación estricta
     if (!/^\d{10}$/.test(phone)) {
-        showToast('Ingresa 10 dígitos válidos', 'error');
+        if(typeof showToast === 'function') showToast('Ingresa 10 dígitos exactos', 'error');
+        else alert('Ingresa 10 dígitos exactos');
         return;
     }
 
-    const btn = document.getElementById('login-btn');
-    btn.innerHTML = '<span class="animate-spin">↻</span> Conectando...';
-    btn.disabled = true;
+    // UI Feedback (Buscamos el botón de enviar)
+    // Ajusta el ID 'btn-request-otp' al ID real de tu botón "Enviar Código"
+    const btn = document.querySelector('button[onclick="requestOTP()"]');
+    const originalText = btn ? btn.innerText : 'Enviar';
+    if(btn) {
+        btn.disabled = true;
+        btn.innerText = 'Conectando...';
+    }
 
     try {
+        console.log("🚀 Enviando petición piloto para:", phone);
+
         const res = await fetch(`${API_URL}/auth/request-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2968,29 +2981,39 @@ async function requestOTP() {
 
         const data = await res.json();
 
-        if (res.ok && data.autoFillCode) {
-            // === MAGIA DEL MODO PILOTO ===
-            // No le pedimos el código al usuario, lo enviamos nosotros mismos automáticamente
-            console.log("Modo Piloto: Autoverificando...");
-            await verifyOTP(phone, data.autoFillCode);
+        if (res.ok) {
+            console.log("✅ Respuesta servidor:", data);
+
+            // === LÓGICA DE AUTO-VERIFICACIÓN ===
+            if (data.autoFillCode) {
+                console.log("⏩ Modo Piloto detectado. Auto-verificando...");
+                
+                // Llamamos directamente a verificar sin mostrar pantalla de código
+                await performVerification(phone, data.autoFillCode);
+            } else {
+                // Fallback: Si el servidor no manda autoFillCode, mostramos input normal
+                // Aquí iría tu lógica antigua de mostrar el input de OTP
+                if(typeof showToast === 'function') showToast('Código enviado (Manual)', 'success');
+                document.getElementById('step-phone').classList.add('hidden'); // Ocultar paso 1
+                document.getElementById('step-otp').classList.remove('hidden'); // Mostrar paso 2
+            }
         } else {
-            showToast(data.error || 'Error de conexión', 'error');
-            btn.innerHTML = 'INGRESAR';
-            btn.disabled = false;
+            throw new Error(data.error || 'Error en el servidor');
         }
+
     } catch (e) {
         console.error(e);
-        showToast('Error de red', 'error');
-        btn.innerHTML = 'INGRESAR';
-        btn.disabled = false;
+        if(typeof showToast === 'function') showToast(e.message, 'error');
+        else alert(e.message);
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
     }
 }
 
-// Asegúrate que tu función verifyOTP acepte argumentos opcionales
-async function verifyOTP(phoneInput = null, codeInput = null) {
-    const phone = phoneInput || document.getElementById('phoneInput').value;
-    const code = codeInput || document.getElementById('otpInput').value; // Si existiera input de código
-
+// Nueva función auxiliar para verificar (separada para limpieza)
+async function performVerification(phone, code) {
     try {
         const res = await fetch(`${API_URL}/auth/verify-code`, {
             method: 'POST',
@@ -3001,124 +3024,38 @@ async function verifyOTP(phoneInput = null, codeInput = null) {
         const data = await res.json();
 
         if (res.ok) {
+            console.log("🎉 Login Exitoso");
+            
+            // Guardar sesión
             localStorage.setItem('guardianToken', data.token);
-            // Guardar datos básicos
             localStorage.setItem('guardianUser', JSON.stringify(data.user));
-            
-            showToast(`¡Bienvenido!`, 'success');
-            
-            // Cerrar modal y recargar UI
-            document.getElementById('login-modal').classList.add('hidden');
-            checkAuth(); // Tu función que actualiza la UI cuando hay usuario
-            
-            // Si estaba intentando predecir, reintentar la acción
-            // ... lógica de reintento si la tienes ...
+
+            if(typeof showToast === 'function') showToast(`¡Bienvenido ${data.user.name || ''}!`, 'success');
+
+            // CERRAR MODAL (Ajusta el ID 'auth-modal' al ID real de tu modal)
+            const modal = document.getElementById('authModal') || document.getElementById('login-modal');
+            if(modal) {
+                modal.style.display = 'none'; // O .classList.add('hidden') si usas Tailwind
+                // Si usas tu función personalizada closeAuthModal(), úsala:
+                if(typeof closeAuthModal === 'function') closeAuthModal();
+            }
+
+            // Actualizar UI
+            location.reload(); // La forma más segura de refrescar el estado de usuario
         } else {
-            showToast('Error de acceso', 'error');
+            throw new Error(data.error || 'Fallo verificación');
         }
     } catch (e) {
-        showToast('Error de verificación', 'error');
-    } finally {
-        const btn = document.getElementById('login-btn');
+        console.error(e);
+        if(typeof showToast === 'function') showToast('Error al verificar automáticamente', 'error');
+        // Si falla, reactivamos el botón para que intente de nuevo
+        const btn = document.querySelector('button[onclick="requestOTP()"]');
         if(btn) {
-            btn.innerHTML = 'INGRESAR';
             btn.disabled = false;
+            btn.innerText = 'Reintentar';
         }
     }
 }
-
-async function verifyCode() {
-    const code = document.getElementById('codeInput').value.trim();
-    
-    if (!/^\d{6}$/.test(code)) {
-        Swal.fire('Error', 'Ingresa el código de 6 dígitos', 'error');
-        return;
-    }
-    
-    try {
-        Swal.fire({
-            title: 'Verificando...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-        
-        const response = await fetch('/api/auth/verify-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                phone: auth.phoneNumber, 
-                code 
-            })
-        });
-        
-        const data = await response.json();
-        
-        Swal.close();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Código incorrecto');
-        }
-        
-        // Guardar tokens y usuario
-        auth.accessToken = data.accessToken;
-        auth.refreshToken = data.refreshToken;
-        auth.user = data.user;
-        
-        localStorage.setItem('accessToken', auth.accessToken);
-        localStorage.setItem('refreshToken', auth.refreshToken);
-        localStorage.setItem('user', JSON.stringify(auth.user));
-        
-        // Mostrar éxito
-        document.getElementById('codeStep').classList.remove('active');
-        document.getElementById('successStep').classList.add('active');
-        document.getElementById('welcomeMessage').textContent = 
-            `Bienvenido ${auth.user.name}. Ya puedes hacer predicciones y ganar puntos.`;
-        
-        // Si hay predicción pendiente, enviarla
-        if (auth.pendingPrediction) {
-            setTimeout(() => {
-                closeAuthModal();
-                submitAuthenticatedPrediction(auth.pendingPrediction);
-            }, 2000);
-        }
-        
-    } catch (error) {
-        Swal.fire('Error', error.message, 'error');
-    }
-}
-
-function backToPhone() {
-    document.getElementById('phoneStep').classList.add('active');
-    document.getElementById('codeStep').classList.remove('active');
-    document.getElementById('phoneInput').value = '';
-    document.getElementById('codeInput').value = '';
-    if (auth.otpTimer) {
-        clearInterval(auth.otpTimer);
-    }
-}
-
-function startOTPTimer() {
-    let seconds = 600; // 10 minutos
-    
-    auth.otpTimer = setInterval(() => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        document.getElementById('timerDisplay').textContent = 
-            `Código válido por: ${minutes}:${secs.toString().padStart(2, '0')}`;
-        
-        seconds--;
-        
-        if (seconds < 0) {
-            clearInterval(auth.otpTimer);
-            document.getElementById('timerDisplay').textContent = 'Código expirado';
-        }
-    }, 1000);
-}
-
-    </script>
-<script>
 // ============================================
 // PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
 // ============================================
