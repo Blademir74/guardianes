@@ -114,4 +114,15 @@ router.get('/health', (req, res) => {
   res.status(200).json(status);
 });
 
+// Alias para /whatsapp (Meta puede agregar esto automáticamente)
+router.get('/whatsapp', (req, res) => {
+  console.log('📥 [WEBHOOK] Redirigiendo desde /whatsapp');
+  // Llamar a la función GET principal
+  return router.handle({ ...req, url: req.url.replace('/whatsapp', '') }, res);
+});
+
+router.post('/whatsapp', (req, res) => {
+  console.log('📩 [WEBHOOK] Redirigiendo desde /whatsapp');
+  return router.handle({ ...req, url: req.url.replace('/whatsapp', '') }, res);
+});
 module.exports = router;
