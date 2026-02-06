@@ -19,7 +19,7 @@ app.use(helmet({
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://pulsoguerrero.vercel.app/']
+    ? ['https://pulsoguerrero.vercel.app']
     : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -37,7 +37,44 @@ app.use((req, res, next) => {
 });
 
 // ==========================================
-// 2. HEALTH CHECK
+// 2. INTEGRACIÓN DIRECTA DE WHATSAPP WEBHOOK (MOVIDO AQUÍ ARRIBA)
+// ==========================================
+const WHATSAPP_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'verificacion_guardianes_2027_seguro';
+
+// 1. Verificación (GET) - Lo que pide Meta
+app.get('/api/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  console.log('🔍 Webhook check:', { mode, token, challenge });
+
+  if (mode === 'subscribe' && token === WHATSAPP_TOKEN) {
+    console.log('✅ Webhook verificado correctamente');
+    res.status(200).send(challenge);
+  } else {
+    console.error('❌ Fallo verificación webhook');
+    res.sendStatus(403);
+  }
+});
+
+// 2. Recepción de mensajes (POST)
+app.post('/api/webhook', async (req, res) => {
+  console.log('📩 Webhook evento recibido');
+  res.sendStatus(200);
+  
+  try {
+    const body = req.body;
+    if (body.object === 'whatsapp_business_account') {
+       console.log('Payload:', JSON.stringify(body, null, 2));
+    }
+  } catch (e) {
+    console.error('Error procesando mensaje:', e);
+  }
+});
+
+// ==========================================
+// 3. HEALTH CHECK
 // ==========================================
 app.get('/api/health', async (req, res) => {
   try {
@@ -55,7 +92,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ==========================================
-// 3. API ROUTES REGISTRATION
+// 4. API ROUTES REGISTRATION
 // ==========================================
 const routesPath = path.join(__dirname, '../src/routes');
 
@@ -84,10 +121,7 @@ const candidateRoutes = requireRoute('candidates');
 const predictionsRoutes = requireRoute('predictions');
 const leaderboardRoutes = requireRoute('leaderboard');
 const incidentsRoutes = requireRoute('incidents');
-const whatsappRoutes = requireRoute('whatsapp');
 const historicalRoutes = requireRoute('historical');
-
-
 
 if (authRoutes) app.use('/api/auth', authRoutes);
 if (dataRoutes) app.use('/api/data', dataRoutes);
@@ -97,12 +131,10 @@ if (candidateRoutes) app.use('/api/candidates', candidateRoutes);
 if (predictionsRoutes) app.use('/api/predictions', predictionsRoutes);
 if (leaderboardRoutes) app.use('/api/leaderboard', leaderboardRoutes);
 if (incidentsRoutes) app.use('/api/incidents', incidentsRoutes);
-if (whatsappRoutes) app.use('/api/whatsapp', whatsappRoutes);
-// Synchronize historical route naming
 if (historicalRoutes) app.use('/api/historical', historicalRoutes);
 
 // ==========================================
-// 4. STATIC FILES & HTML ROUTES
+// 5. STATIC FILES & HTML ROUTES
 // ==========================================
 const publicPath = path.join(__dirname, '../public');
 app.use(express.static(publicPath, { maxAge: '1d' }));
@@ -115,20 +147,17 @@ app.get('/landing', (req, res) => {
   res.sendFile(path.join(publicPath, 'landing.html'));
 });
 
-// Explicit Admin Route
 app.get('/admin', (req, res) => {
   const adminPath = path.join(publicPath, 'admin.html');
   if (fs.existsSync(adminPath)) {
-    console.log('✅ Serving Admin Portal');
     res.sendFile(adminPath);
   } else {
-    console.error('❌ Admin file missing at:', adminPath);
     res.status(404).send('Admin portal file not found');
   }
 });
 
 // ==========================================
-// 5. ERROR HANDLING
+// 6. ERROR HANDLING (Siempre al final)
 // ==========================================
 app.use((req, res) => {
   if (req.path.startsWith('/api')) {
@@ -146,54 +175,13 @@ app.use((err, req, res, next) => {
 });
 
 // ==========================================
-// 6. SERVER START
+// 7. SERVER START
 // ==========================================
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running at http://localhost:${PORT}`);
-    console.log(`⚙️  Admin Portal at http://localhost:${PORT}/admin`);
-    console.log(`📂 Public dir: ${publicPath}`);
   });
 }
-// ==========================================
-// INTEGRACIÓN DIRECTA DE WHATSAPP WEBHOOK
-// ==========================================
-const WHATSAPP_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'verificacion_guardianes_2027_seguro';
 
-// 1. Verificación (GET) - Lo que pide Meta
-app.get('/api/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  console.log('🔍 Webhook check:', { mode, token, challenge });
-
-  if (mode === 'subscribe' && token === WHATSAPP_TOKEN) {
-    console.log('✅ Webhook verificado correctamente');
-    // IMPORTANTE: Enviar solo el challenge como texto
-    res.status(200).send(challenge);
-  } else {
-    console.error('❌ Fallo verificación webhook');
-    res.sendStatus(403);
-  }
-});
-
-// 2. Recepción de mensajes (POST)
-app.post('/api/webhook', async (req, res) => {
-  console.log('📩 Webhook evento recibido');
-  // Responder inmediatamente a Meta para evitar timeout/reintentos
-  res.sendStatus(200);
-  
-  // Aquí puedes procesar el mensaje (imprimirlo por ahora)
-  try {
-    const body = req.body;
-    if (body.object === 'whatsapp_business_account') {
-       // Lógica de mensajes entrantes aquí...
-       console.log('Payload:', JSON.stringify(body, null, 2));
-    }
-  } catch (e) {
-    console.error('Error procesando mensaje:', e);
-  }
-});
 module.exports = app;
