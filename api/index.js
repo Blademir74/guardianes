@@ -86,9 +86,9 @@ const leaderboardRoutes = requireRoute('leaderboard');
 const incidentsRoutes = requireRoute('incidents');
 const whatsappRoutes = requireRoute('whatsapp');
 const historicalRoutes = requireRoute('historical');
-const webhookRouter = require('./routes/webhook');
 
-if (webhookRoutesRoutes) app.use('/api/webhook', webhookRouter);
+
+
 if (authRoutes) app.use('/api/auth', authRoutes);
 if (dataRoutes) app.use('/api/data', dataRoutes);
 if (surveyRoutes) app.use('/api/surveys', surveyRoutes);
@@ -156,5 +156,44 @@ if (require.main === module) {
     console.log(`📂 Public dir: ${publicPath}`);
   });
 }
+// ==========================================
+// INTEGRACIÓN DIRECTA DE WHATSAPP WEBHOOK
+// ==========================================
+const WHATSAPP_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'verificacion_guardianes_2027_seguro';
 
+// 1. Verificación (GET) - Lo que pide Meta
+app.get('/api/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  console.log('🔍 Webhook check:', { mode, token, challenge });
+
+  if (mode === 'subscribe' && token === WHATSAPP_TOKEN) {
+    console.log('✅ Webhook verificado correctamente');
+    // IMPORTANTE: Enviar solo el challenge como texto
+    res.status(200).send(challenge);
+  } else {
+    console.error('❌ Fallo verificación webhook');
+    res.sendStatus(403);
+  }
+});
+
+// 2. Recepción de mensajes (POST)
+app.post('/api/webhook', async (req, res) => {
+  console.log('📩 Webhook evento recibido');
+  // Responder inmediatamente a Meta para evitar timeout/reintentos
+  res.sendStatus(200);
+  
+  // Aquí puedes procesar el mensaje (imprimirlo por ahora)
+  try {
+    const body = req.body;
+    if (body.object === 'whatsapp_business_account') {
+       // Lógica de mensajes entrantes aquí...
+       console.log('Payload:', JSON.stringify(body, null, 2));
+    }
+  } catch (e) {
+    console.error('Error procesando mensaje:', e);
+  }
+});
 module.exports = app;
