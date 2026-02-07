@@ -1,4 +1,4 @@
-// src/routes/auth.js — GUARDIANES PILOTO — LOGIN SIMPLIFICADO SIN OTP
+// src/routes/auth.js — CORREGIDO CON TODAS LAS LADAS DE GUERRERO
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db');
@@ -38,20 +38,44 @@ router.post('/quick-login', async (req, res) => {
       });
     }
 
-    // Validar que sea de Guerrero (códigos de área)
-    const guerreroAreaCodes = ['744', '747', '733', '758', '767', '741', '742'];
+    // ============================================
+    // 🔧 FIX: TODAS LAS 19 LADAS DE GUERRERO
+    // ============================================
+    const guerreroAreaCodes = [
+      '721', // Pilcaya, Tetipac
+      '727', // Atenango del Río, Huitzuco, Buenavista de Cuéllar
+      '732', // Arcelia, Cutzamala de Pinzón, Tlapehuala, San Miguel Totolapan
+      '733', // Iguala, Tepecoacuilco, Tuxpan, Mezcala
+      '736', // Teloloapan, Cocula, Apaxtla, Ixcateopan
+      '741', // Ometepec, Cuajinicuilapa, Ayutla, San Luis Acatlán, Azoyú
+      '742', // Atoyac de Álvarez, Tecpán de Galeana
+      '744', // Acapulco
+      '745', // Ayutla de los Libres, San Marcos, Tecoanapa, Cruz Grande
+      '747', // Chilpancingo, Zumpango del Río
+      '753', // Petacalco
+      '754', // Tixtla, Mochitlán
+      '755', // Zihuatanejo, Ixtapa, La Unión
+      '756', // Chilapa, Olinalá, Quechultenango
+      '757', // Tlapa de Comonfort, Huamuxtitlán, Alpoyeca
+      '758', // Petatlán
+      '762', // Taxco, Taxco el Viejo
+      '767', // Ciudad Altamirano, Coyuca de Catalán, Pungarabato
+      '781'  // Coyuca de Benítez, San Jerónimo de Juárez
+    ];
+    
     const areaCode = phone.substring(0, 3);
     
     if (!guerreroAreaCodes.includes(areaCode)) {
       return res.status(400).json({
-        error: 'Solo números de Guerrero. Tu número debe empezar con: 744, 747, 733, 758, 767, 741, o 742'
+        error: `Este número no es de Guerrero. Tu número debe empezar con una de estas ladas: ${guerreroAreaCodes.join(', ')}`,
+        detail: `Tu número empieza con ${areaCode}`
       });
     }
 
     const phoneHash = generatePhoneHash(phone);
     const fingerprint = generateFingerprint(req);
 
-    console.log(`📱 Quick login para: ${phone.substring(0, 3)}****${phone.substring(7)}`);
+    console.log(`📱 Quick login para: ${phone.substring(0, 3)}****${phone.substring(7)} (LADA: ${areaCode})`);
 
     // Buscar o crear usuario
     let result = await query(`
@@ -80,7 +104,7 @@ router.post('/quick-login', async (req, res) => {
 
       result = insertResult;
       isNewUser = true;
-      console.log(`✅ Nuevo usuario Piloto creado: ${phone.slice(-4)}`);
+      console.log(`✅ Nuevo usuario Piloto creado: ${phone.slice(-4)} (LADA: ${areaCode})`);
     } else {
       // Usuario existente - actualizar fingerprint y last_active
       await query(`
@@ -91,7 +115,7 @@ router.post('/quick-login', async (req, res) => {
         WHERE id = $2
       `, [fingerprint, result.rows[0].id]);
       
-      console.log(`✅ Usuario existente: ${phone.slice(-4)}`);
+      console.log(`✅ Usuario existente: ${phone.slice(-4)} (LADA: ${areaCode})`);
     }
 
     const user = result.rows[0];
