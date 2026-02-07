@@ -2019,76 +2019,98 @@ console.log('   - testAuth(): Probar autenticación');
             showToast('Candidato Seleccionado');
         }
 
-        // ====== RESULTADOS EN VIVO ======
-        let chartInstance = null;
-        let pollInterval = null;
+  // Variable global para la gráfica
+let chartInstance = null;
+let pollInterval = null; // Mantén esto si lo usas fuera
 
-        async function fetchLiveResults(surveyId) {
-            try {
-                const response = await fetch(`${API_URL}/surveys/${surveyId}/results`);
-                if (!response.ok) return null;
-                return await response.json();
-            } catch (error) {
-                console.log('Sin resultados aún:', error);
-                return null;
-            }
-        }
-
-      function updateLiveChart(data) {
+function updateLiveChart(data) {
     if (!data || !data.candidates) return;
 
-    const ctx = document.getElementById('resultsChart')?.getContext('2d');
-    if (!ctx) return;
+    const canvas = document.getElementById('resultsChart');
+    if (!canvas) return;
 
-    // Usar directamente el nombre de los candidatos que viene del backend
+    // 1. EXTRAER NOMBRES Y VOTOS
+    // MEJORA: Usamos el nombre completo, no solo el primero.
     const labels = data.candidates.map(c => {
-        // Primer nombre para hacerlo compacto en la gráfica
-        if (c.name && typeof c.name === 'string') {
-            const parts = c.name.trim().split(/\s+/);
-            return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
-        }
-        return `CAND ${c.id}`; // Fallback por si faltara nombre
+        // Limpiamos espacios extra pero mantenemos nombre completo
+        return c.name ? c.name.trim() : `Candidato ${c.id}`;
     });
 
     const votes = data.candidates.map(c => c.votes || 0);
 
-    // Destruir gráfico anterior si existe
-    if (chartInstance) chartInstance.destroy();
+    // 2. AJUSTE DE ALTURA DINÁMICA (Clave para que no se vea aplastado)
+    // Calcula 50px por candidato, con un mínimo de 300px
+    const parentContainer = canvas.parentElement;
+    const dynamicHeight = Math.max(300, labels.length * 50);
+    parentContainer.style.height = `${dynamicHeight}px`;
 
-    // Crear nuevo gráfico
-    chartInstance = new Chart(ctx, {
+    // 3. DESTRUIR GRÁFICA ANTERIOR
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    // 4. CREAR GRÁFICA OPTIMIZADA
+    chartInstance = new Chart(canvas, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Votos',
                 data: votes,
-                backgroundColor: labels.map((_, i) =>
-                    ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
-                ),
-                borderRadius: 8,
+                // MEJORA: Un solo color institucional se ve más serio que el arcoíris
+                backgroundColor: '#FF8C00', // Naranja Guardianes
+                borderRadius: 4,
+                barThickness: 20, // Grosor constante
                 borderSkipped: false
             }]
         },
         options: {
-            indexAxis: 'y',
+            indexAxis: 'y', // Barras Horizontales
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false, // ¡Vital! Permite usar la altura dinámica
+            layout: {
+                padding: { right: 25 } // Espacio para etiquetas de valor
+            },
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    titleColor: '#FFD60A',
+                    callbacks: {
+                        label: (ctx) => `${ctx.formattedValue} votos`
+                    }
+                }
             },
             scales: {
                 x: {
                     beginAtZero: true,
-                    ticks: { color: '#B0B0B0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: { 
+                        color: '#64748b',
+                        stepSize: 1, // Números enteros
+                        font: { size: 10 }
+                    }
                 },
                 y: {
-                    ticks: { color: '#B0B0B0' }
+                    grid: { display: false }, // Limpio visualmente
+                    ticks: { 
+                        color: '#e2e8f0', // Texto claro
+                        autoSkip: false,  // ¡OBLIGATORIO! Muestra todos los nombres
+                        font: {
+                            // Fuente un poco más pequeña en móvil para que quepan nombres largos
+                            size: window.innerWidth < 640 ? 11 : 12,
+                            weight: '600'
+                        }
+                    }
                 }
             }
         }
     });
+}
+
 
     // Actualizar contadores
     const totalVotesEl       = document.getElementById('total-votes-live');
@@ -2098,7 +2120,7 @@ console.log('   - testAuth(): Probar autenticación');
     if (totalVotesEl)    totalVotesEl.textContent    = data.totalVotes || 0;
     if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1);
     if (lastUpdateEl)    lastUpdateEl.textContent    = new Date().toLocaleTimeString('es-MX');
-}  
+
 
         function startLivePolling(surveyId) {
             const panel = document.getElementById('live-results-panel');
