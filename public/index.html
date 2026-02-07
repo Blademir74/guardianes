@@ -225,57 +225,75 @@
    ============================================ */
 
 @media (max-width: 640px) {
-  /* 1. TÍTULOS CORTADOS EN MODAL */
-  #survey-modal h2#modal-title {
-    font-size: 1.5rem !important;
-    line-height: 1.2 !important;
+  /* 1. TÍTULOS CORTADOS - Modal title */
+  .modal h2,
+  .modal-title,
+  h2.text-center {
     white-space: normal !important;
     word-wrap: break-word !important;
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
     text-align: center !important;
-    padding: 0 0.5rem;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
 
-  /* 2. TARJETAS DE CANDIDATOS MÁS GRANDES Y MEJOR ESPACIADAS */
-  #survey-modal .candidate-card {
-    padding: 1rem !important;
-    height: auto !important;
-    min-height: auto !important;
+  /* 2. TARJETAS DE CANDIDATOS */
+  /* Grid de candidatos - reducir gap para ganar espacio */
+  .candidates-grid,
+  .grid.grid-cols-2 {
+    gap: 0.5rem !important;
   }
 
-  #survey-modal .candidate-card .w-28 {
+  /* Tarjetas individuales - más padding */
+  .candidate-card,
+  .candidate-item,
+  [class*="candidate-"] {
+    padding: 1rem 0.75rem !important;
+  }
+
+  /* Fotos más grandes */
+  .candidate-card img,
+  .candidate-photo,
+  img.w-28 {
     width: 5.5rem !important;
     height: 5.5rem !important;
     min-width: 5.5rem !important;
     min-height: 5.5rem !important;
   }
 
-  #survey-modal .candidate-card h5 {
+  /* Nombre del candidato - altura automática */
+  .candidate-card h5,
+  .candidate-name,
+  h5.text-lg {
     height: auto !important;
     min-height: auto !important;
-    line-height: 1.3 !important;
-    font-size: 0.875rem !important;
     white-space: normal !important;
-    word-wrap: break-word !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    line-height: 1.3 !important;
+    font-size: 0.95rem !important;
+    margin-top: 0.5rem !important;
   }
 
-  /* Ajuste del grid para 2 columnas con mejor espacio */
-  #survey-modal .grid.grid-cols-2 {
-    gap: 0.5rem !important;
-  }
-
-  /* 3. CANVAS DE GRÁFICAS MÁS ALTO */
-  #survey-modal #resultsChart {
+  /* 3. VISUALIZACIÓN DE RESULTADOS - Gráfica Chart.js */
+  .chart-container,
+  .results-chart,
+  canvas {
     min-height: 300px !important;
     height: 300px !important;
   }
 
-  /* 4. SLIDER DE CONFIANZA MÁS LEGIBLE */
-  #survey-modal #confidence-display {
+  /* Contenedor del gráfico */
+  .chart-wrapper,
+  .results-container,
+  div:has(> canvas) {
+    min-height: 300px !important;
+  }
+
+  /* 4. SLIDER DE CONFIANZA */
+  /* Porcentaje grande */
+  #confidence-display,
+  .confidence-value,
+  [id*="confidence"] {
     font-size: 4rem !important;
     line-height: 1 !important;
     text-align: center !important;
@@ -283,24 +301,34 @@
     width: 100% !important;
   }
 
-  #survey-modal .confidence-slider-section .text-center {
+  /* Textos auxiliares centrados */
+  .confidence-label,
+  .slider-labels,
+  .text-sm.text-gray-600 {
     text-align: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
   }
 
-  #survey-modal .confidence-slider-section .text-center div {
-    text-align: center !important;
+  /* Slider más ancho */
+  input[type="range"].confidence-slider,
+  input[type="range"] {
     width: 100% !important;
+    margin: 1rem 0 !important;
   }
 
-  /* Ajustes adicionales para textos auxiliares del slider */
-  #survey-modal .confidence-slider-section .text-xs {
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-    text-align: center !important;
-    margin-top: 0.25rem !important;
+  /* Ajustes adicionales para contenedores principales */
+  .modal-content,
+  .container.p-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Mejorar espaciado general en móvil */
+  .space-y-4 > * + * {
+    margin-top: 1.5rem !important;
   }
 }
     </style>
