@@ -2019,98 +2019,76 @@ console.log('   - testAuth(): Probar autenticación');
             showToast('Candidato Seleccionado');
         }
 
-   // Variable global para la gráfica
-let chartInstance = null;
-let pollInterval = null; // Mantén esto si lo usas fuera
+        // ====== RESULTADOS EN VIVO ======
+        let chartInstance = null;
+        let pollInterval = null;
 
-function updateLiveChart(data) {
+        async function fetchLiveResults(surveyId) {
+            try {
+                const response = await fetch(`${API_URL}/surveys/${surveyId}/results`);
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.log('Sin resultados aún:', error);
+                return null;
+            }
+        }
+
+      function updateLiveChart(data) {
     if (!data || !data.candidates) return;
 
-    const canvas = document.getElementById('resultsChart');
-    if (!canvas) return;
+    const ctx = document.getElementById('resultsChart')?.getContext('2d');
+    if (!ctx) return;
 
-    // 1. EXTRAER NOMBRES Y VOTOS
-    // MEJORA: Usamos el nombre completo, no solo el primero.
+    // Usar directamente el nombre de los candidatos que viene del backend
     const labels = data.candidates.map(c => {
-        // Limpiamos espacios extra pero mantenemos nombre completo
-        return c.name ? c.name.trim() : `Candidato ${c.id}`;
+        // Primer nombre para hacerlo compacto en la gráfica
+        if (c.name && typeof c.name === 'string') {
+            const parts = c.name.trim().split(/\s+/);
+            return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
+        }
+        return `CAND ${c.id}`; // Fallback por si faltara nombre
     });
 
     const votes = data.candidates.map(c => c.votes || 0);
 
-    // 2. AJUSTE DE ALTURA DINÁMICA (Clave para que no se vea aplastado)
-    // Calcula 50px por candidato, con un mínimo de 300px
-    const parentContainer = canvas.parentElement;
-    const dynamicHeight = Math.max(300, labels.length * 50);
-    parentContainer.style.height = `${dynamicHeight}px`;
+    // Destruir gráfico anterior si existe
+    if (chartInstance) chartInstance.destroy();
 
-    // 3. DESTRUIR GRÁFICA ANTERIOR
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
-
-    // 4. CREAR GRÁFICA OPTIMIZADA
-    chartInstance = new Chart(canvas, {
+    // Crear nuevo gráfico
+    chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Votos',
                 data: votes,
-                // MEJORA: Un solo color institucional se ve más serio que el arcoíris
-                backgroundColor: '#FF8C00', // Naranja Guardianes
-                borderRadius: 4,
-                barThickness: 20, // Grosor constante
+                backgroundColor: labels.map((_, i) =>
+                    ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
+                ),
+                borderRadius: 8,
                 borderSkipped: false
             }]
         },
         options: {
-            indexAxis: 'y', // Barras Horizontales
+            indexAxis: 'y',
             responsive: true,
-            maintainAspectRatio: false, // ¡Vital! Permite usar la altura dinámica
-            layout: {
-                padding: { right: 25 } // Espacio para etiquetas de valor
-            },
+            maintainAspectRatio: true,
             plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
-                    titleColor: '#FFD60A',
-                    callbacks: {
-                        label: (ctx) => `${ctx.formattedValue} votos`
-                    }
-                }
+                legend: { display: false }
             },
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { 
-                        color: 'rgba(255, 255, 255, 0.05)',
-                        drawBorder: false
-                    },
-                    ticks: { 
-                        color: '#64748b',
-                        stepSize: 1, // Números enteros
-                        font: { size: 10 }
-                    }
+                    ticks: { color: '#B0B0B0' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
                 },
                 y: {
-                    grid: { display: false }, // Limpio visualmente
-                    ticks: { 
-                        color: '#e2e8f0', // Texto claro
-                        autoSkip: false,  // ¡OBLIGATORIO! Muestra todos los nombres
-                        font: {
-                            // Fuente un poco más pequeña en móvil para que quepan nombres largos
-                            size: window.innerWidth < 640 ? 11 : 12,
-                            weight: '600'
-                        }
-                    }
+                    ticks: { color: '#B0B0B0' }
                 }
             }
         }
     });
-}
-
 
     // Actualizar contadores
     const totalVotesEl       = document.getElementById('total-votes-live');
