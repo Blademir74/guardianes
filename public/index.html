@@ -3187,14 +3187,12 @@ async function quickLogin() {
     }
     
     // Validar código de área de Guerrero
-    const validAreaCodes = ['744', '747', '733', '758', '767', '741', '742'];
-    const areaCode = phone.substring(0, 3);
-    
-    if (!validAreaCodes.includes(areaCode)) {
-        showToast('Solo números de Guerrero (744, 747, 733, etc.)', 'error');
-        phoneInput.focus();
-        return;
-    }
+    const validAreaCodes = [
+    '721', '727', '732', '733', '736', '741', '742', '744', 
+    '745', '747', '753', '754', '755', '756', '757', '758', 
+    '762', '767', '781'
+    ];
+   
     
     try {
         console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
