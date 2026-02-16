@@ -416,37 +416,44 @@
             } catch (e) { }
         }
 
-        async function loadSurveys() {
-            try {
-                const res = await fetch(`${API_URL}/admin/surveys`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const surveys = await res.json();
-                const tbody = document.getElementById('surveys-table-body');
-                tbody.innerHTML = surveys.map(s => `
-                    <tr class="hover:bg-amber-600/[0.03] transition-all group">
-                        <td class="px-10 py-10">
-                            <div class="font-black text-base uppercase tracking-tighter">${s.title}</div>
-                            <div class="text-[9px] font-bold text-slate-600 mt-2 line-clamp-1 uppercase tracking-widest overflow-hidden opacity-60">${s.description || '- SIN DESCRIPCIÓN -'}</div>
-                        </td>
-                        <td class="px-10 py-10 font-black text-[10px] text-amber-500 uppercase tracking-[0.2em] italic">${s.election_type || 'GENERAL'}</td>
-                        <td class="px-10 py-10">
-                            <span class="status-badge ${s.is_active ? 'status-active' : 'status-paused'}">
-                                ${s.is_active ? 'Operativo' : 'Inactivo'}
-                            </span>
-                        </td>
-                        <td class="px-10 py-10 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_responses || 0}</td>
-                        <td class="px-10 py-10 text-right">
-                            <div class="flex flex-col gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
-                                <button onclick="exportCSV(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">📥 Exportar</button>
-                                <button onclick="toggleStatus(${s.id}, ${s.is_active})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">🔄 ${s.is_active ? 'Pausar' : 'Activar'}</button>
-                                <button onclick="deleteSurvey(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-red-600 hover:text-red-500 transition shadow-inner shadow-black/20">🗑️ Eliminar</button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (e) { }
-        }
+   async function loadSurveys() {
+  try {
+    const res = await fetch(`${API_URL}/admin/surveys`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    
+    const surveys = await res.json();
+    const tbody = document.getElementById('surveys-table-body');
+    
+    tbody.innerHTML = surveys.map(s => `
+      <tr class="hover:bg-amber-600/[0.03] transition-all group">
+        <td class="px-10 py-10">
+          <div class="font-black text-base uppercase tracking-tighter">${s.title}</div>
+          <div class="text-[9px] font-bold text-slate-600 mt-2 line-clamp-1 uppercase tracking-widest overflow-hidden opacity-60">${s.description || '- SIN DESCRIPCIÓN -'}</div>
+        </td>
+        <td class="px-10 py-10 font-black text-[10px] text-amber-500 uppercase tracking-[0.2em] italic">${s.election_type || 'GENERAL'}</td>
+        <td class="px-10 py-10">
+          <span class="status-badge ${s.is_active ? 'status-active' : 'status-paused'}">
+            ${s.is_active ? 'Operativo' : 'Inactivo'}
+          </span>
+        </td>
+        <td class="px-10 py-10 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_responses || 0}</td>
+        <td class="px-10 py-10 text-right">
+          <div class="flex flex-col gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+            <button onclick="exportCSV(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">📥 Exportar</button>
+            <button onclick="toggleStatus(${s.id}, ${s.is_active})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">🔄 ${s.is_active ? 'Pausar' : 'Activar'}</button>
+            <button onclick="deleteSurvey(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-red-600 hover:text-red-500 transition shadow-inner shadow-black/20">🗑️ Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    
+  } catch (e) { 
+    console.error('Error cargando encuestas:', e);
+    showToast('Error cargando encuestas', 'error');
+  }
+}
+
 
         async function toggleStatus(id, currentStatus) {
             try {
@@ -691,6 +698,36 @@ async function loadMunicipalities() {
         function adminLogout() { localStorage.removeItem('guardianAdminToken'); location.reload(); }
 
         if (adminToken) showPortal();
+// ============================================
+// OPTIMIZACIÓN: Caché y Lazy Loading
+// ============================================
+
+// Caché en memoria para stats (evita múltiples llamadas)
+let statsCache = null;
+let statsCacheTime = 0;
+const CACHE_DURATION = 5000; // 5 segundos
+
+async function loadStats() {
+  const now = Date.now();
+  
+  // Usar caché si es reciente
+  if (statsCache && (now - statsCacheTime) < CACHE_DURATION) {
+    console.log('📦 Usando stats desde caché');
+    renderStats(statsCache);
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/admin/stats`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    
+    const data = await res.json();
+    
+    // Guardar en caché
+    statsCache = data;
+    statsCacheTime = now;
+
     </script>
 </body>
 

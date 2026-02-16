@@ -1595,90 +1595,16 @@ console.log('   - testAuth(): Probar autenticación');
             { id: 85, name: "Zitlala" }
         ];
 
-    const ASPIRANTES = [
-  // ============================================
-  // CANDIDATOS REALES GUBERNATURA GUERRERO 2027
-  // Datos actualizados según encuestas y careos
-  // ============================================
-  
-  // MORENA (Proceso interno activo)
-  { 
-    id: "felix_salgado", 
-    name: "Félix Salgado Macedonio", 
-    party: "Morena", 
-    img: "/img/esthela_damian.jpg",
-    polls: "37% (encuesta interna)"
-  },
-  { 
-    id: "beatriz_mojica", 
-    name: "Beatriz Mojica Morga", 
-    party: "Morena", 
-    img: "/img/beatriz_mojica.jpg",
-    polls: "21% (encuesta interna)"
-  },
-  { 
-    id: "esthela_damian", 
-    name: "Esthela Damián Peralta", 
-    party: "Morena", 
-    img: "/img/esthela_damian.jpg",
-    polls: "Candidata fuerte"
-  },
-  { 
-    id: "abelina_lopez", 
-    name: "Abelina López Rodríguez", 
-    party: "Morena - PT", 
-    img: "/img/abelina_lopez.jpg",
-    polls: "Posible coalición"
-  },
-  
-  // PVEM (Verde Ecologista)
-  { 
-    id: "karen_castrejon", 
-    name: "Karen Castrejón Trujillo", 
-    party: "PVEM", 
-    img: "/img/karen_castrejon.jpg",
-    polls: "42.7% (careos internos)"
-  },
-  
-  // PRI (Proceso interno)
-  { 
-    id: "manuel_anorve", 
-    name: "Manuel Añorve Baños", 
-    party: "PRI", 
-    img: "/img/manuel_anorve.jpg",
-    polls: "34.3% (encuesta interna PRI)"
-  },
-  
-  // MOVIMIENTO CIUDADANO
-  { 
-    id: "gabriela_bernal", 
-    name: "Gabriela Bernal Reséndiz", 
-    party: "Movimiento Ciudadano", 
-    img: "/img/gabriela_bernal.jpg",
-    polls: "Oposición fuerte"
-  },
-  
-  // INDEPENDIENTE
-  { 
-    id: "pedro_segura", 
-    name: "Pedro Segura Valladares", 
-    party: "Candidato Independiente", 
-    img: "/img/pedro_segura.jpg",
-    polls: "Opción ciudadana"
-  },
-  
-  // OPCIÓN INDECISA (Crítica para análisis)
-  { 
-    id: "aun_no_decido", 
-    name: "Aún no decido", 
-    party: "Indeciso", 
-    img: null,
-    polls: "20.9% (encuestas generales)"
-  }
+const ASPIRANTES = [
+  { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
+  { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
+  { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
+  { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
+  { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
+  { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
+  { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
 ];
 
-
-      
 
         async function showPortal() {
             document.getElementById('auth-section').classList.add('hidden');
@@ -2200,7 +2126,7 @@ console.log('   - testAuth(): Probar autenticación');
   const inputs = document.querySelectorAll('.survey-input');
   const responses = [];
 
-  // Recoger respuestas de inputs (texto, sliders de confianza, etc.)
+  // Recoger respuestas de inputs
   inputs.forEach(input => {
     const qId = parseInt(input.dataset.questionId);
     const type = input.dataset.type;
@@ -2214,7 +2140,7 @@ console.log('   - testAuth(): Probar autenticación');
     responses.push(response);
   });
 
-  // Recoger respuestas de clics (las guardadas en surveyResponses)
+  // Recoger respuestas de clics
   Object.entries(surveyResponses).forEach(([qId, val]) => {
     const qIdInt = parseInt(qId);
     if (!responses.find(r => r.questionId === qIdInt)) {
@@ -2227,34 +2153,10 @@ console.log('   - testAuth(): Probar autenticación');
 
   if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
 
-  // ============================================
-  // 🔒 CANDADO DE INTEGRIDAD - VALIDACIÓN PREVIA
-  // ============================================
   try {
-    // PASO 1: Verificar si el usuario ya votó en esta encuesta
-    const checkRes = await fetch(`${API_URL}/surveys/${currentSurveyId}/check-vote`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${auth_token}` 
-      },
-      body: JSON.stringify({ phone: userPhone })
-    });
-
-    const checkData = await checkRes.json();
-
-    if (!checkRes.ok) {
-      if (checkData.alreadyVoted) {
-        // Ya votó - Mostrar error específico
-        showToast('⚠️ Ya registraste tu predicción en esta encuesta', 'error');
-        closeSurvey();
-        return;
-      } else {
-        throw new Error(checkData.error || 'Error al verificar voto');
-      }
-    }
-
-    // PASO 2: Si no ha votado, proceder con el envío
+    // ============================================
+    // ENVÍO DIRECTO - El backend ya valida duplicados
+    // ============================================
     const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
       method: 'POST',
       headers: { 
@@ -2286,6 +2188,7 @@ console.log('   - testAuth(): Probar autenticación');
     showToast('Fallo de Sincronización: ' + e.message, 'error'); 
   }
 }
+
 
 
         // --- INCIDENTS ---
