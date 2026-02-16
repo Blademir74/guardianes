@@ -137,7 +137,8 @@
                     <input type="password" id="admin-pass" placeholder="••••••••"
                         class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-[0.3em]">
                 </div>
-                <button onclick="handleLogin()"
+              <button onclick="if(typeof handleLogin === 'function') handleLogin(); else alert('Sistema cargando, intente de nuevo');"
+
                     class="w-full btn-accent p-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-8 shadow-xl">Autenticar
                     Sistema</button>
                 <p class="text-[8px] mt-8 opacity-20 uppercase font-bold tracking-widest">Acceso monitoreado y grabado
@@ -386,34 +387,52 @@
         }
 
         // --- DATA ---
+        // ============================================
+        // STATS con caché de 5 segundos
+        // ============================================
+        let statsCache = null;
+        let statsCacheTime = 0;
+        const CACHE_DURATION = 5000;
+
+        function renderStats(data) {
+            const grids = document.querySelectorAll('#stats-dashboard-grid');
+            grids.forEach(grid => {
+                grid.innerHTML = `
+                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Unidad Poblacional</span>
+                        <div class="text-4xl font-black italic tracking-tighter">${data.totalUsers || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Cels</span></div>
+                    </div>
+                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Predicciones Almacenadas</span>
+                        <div class="text-4xl font-black italic tracking-tighter">${data.totalPredictions || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Vot.</span></div>
+                    </div>
+                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-l-[6px] border-amber-600">
+                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Operaciones Activas</span>
+                        <div class="text-4xl font-black italic tracking-tighter text-amber-500">${data.activeSurveys || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Enc.</span></div>
+                    </div>
+                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+                        <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Focos de Alerta</span>
+                        <div class="text-4xl font-black italic tracking-tighter text-red-500">${data.pendingIncidents || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Inc.</span></div>
+                    </div>
+                `;
+            });
+        }
+
         async function loadStats() {
+            const now = Date.now();
+            if (statsCache && (now - statsCacheTime) < CACHE_DURATION) {
+                renderStats(statsCache);
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
-                const grids = document.querySelectorAll('#stats-dashboard-grid');
-                grids.forEach(grid => {
-                    grid.innerHTML = `
-                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Unidad Poblacional</span>
-                            <div class="text-4xl font-black italic tracking-tighter">${data.totalUsers || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Cels</span></div>
-                        </div>
-                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Predicciones Almacenadas</span>
-                            <div class="text-4xl font-black italic tracking-tighter">${data.governorVotes || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Vot.</span></div>
-                        </div>
-                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-l-[6px] border-amber-600">
-                            <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Operaciones Activas</span>
-                            <div class="text-4xl font-black italic tracking-tighter text-amber-500">${data.activeSurveys || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Enc.</span></div>
-                        </div>
-                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                            <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Focos de Alerta</span>
-                            <div class="text-4xl font-black italic tracking-tighter text-red-500">${data.pendingIncidents || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Inc.</span></div>
-                        </div>
-                    `;
-                });
-            } catch (e) { }
+                statsCache = data;
+                statsCacheTime = now;
+                renderStats(data);
+            } catch (e) { console.error('Error cargando stats:', e); }
         }
 
    async function loadSurveys() {
@@ -698,36 +717,18 @@ async function loadMunicipalities() {
         function adminLogout() { localStorage.removeItem('guardianAdminToken'); location.reload(); }
 
         if (adminToken) showPortal();
-// ============================================
-// OPTIMIZACIÓN: Caché y Lazy Loading
-// ============================================
 
-// Caché en memoria para stats (evita múltiples llamadas)
-let statsCache = null;
-let statsCacheTime = 0;
-const CACHE_DURATION = 5000; // 5 segundos
-
-async function loadStats() {
-  const now = Date.now();
-  
-  // Usar caché si es reciente
-  if (statsCache && (now - statsCacheTime) < CACHE_DURATION) {
-    console.log('📦 Usando stats desde caché');
-    renderStats(statsCache);
-    return;
-  }
-  
-  try {
-    const res = await fetch(`${API_URL}/admin/stats`, {
-      headers: { 'Authorization': `Bearer ${adminToken}` }
-    });
-    
-    const data = await res.json();
-    
-    // Guardar en caché
-    statsCache = data;
-    statsCacheTime = now;
-
+        // ============================================
+        // UTILIDAD: Toast de notificación
+        // ============================================
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = { error: 'bg-red-600', success: 'bg-emerald-600', info: 'bg-amber-600' };
+            toast.className = `fixed top-6 right-6 z-[9999] ${colors[type] || colors.info} text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in slide-in-from-right-8 duration-300`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
     </script>
 </body>
 

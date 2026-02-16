@@ -5,7 +5,7 @@
 //   MEJORA → /:id/results incluye datos de candidatos (nombre, party, photo) en la respuesta
 
 const express = require('express');
-const db      = require('../db');
+const db = require('../db');
 const { verifyAdminToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -129,8 +129,8 @@ router.get('/live-results', async (req, res) => {
         timestamp: new Date().toISOString(),
         globalStats: {
           totalParticipants: parseInt(globalStats.rows[0].total_participants) || 0,
-          totalResponses:    parseInt(globalStats.rows[0].total_responses)    || 0,
-          activeSurveys:     parseInt(globalStats.rows[0].active_surveys)    || 0
+          totalResponses: parseInt(globalStats.rows[0].total_responses) || 0,
+          activeSurveys: parseInt(globalStats.rows[0].active_surveys) || 0
         },
         surveys: []
       });
@@ -175,38 +175,38 @@ router.get('/live-results', async (req, res) => {
 
     const surveys = surveysData.rows.map(survey => {
       const questions = (qMap[survey.id] || []).map(q => {
-        const responses    = respMap[q.id] || [];
-        const totalForQ    = responses.reduce((sum, r) => sum + parseInt(r.count), 0);
+        const responses = respMap[q.id] || [];
+        const totalForQ = responses.reduce((sum, r) => sum + parseInt(r.count), 0);
 
         return {
           questionText: q.question_text,
           questionType: q.question_type,
           responses: responses.map(r => ({
-            value:      r.response_value,
-            count:      parseInt(r.count),
+            value: r.response_value,
+            count: parseInt(r.count),
             percentage: totalForQ > 0 ? Math.round((parseInt(r.count) / totalForQ) * 100) : 0
           }))
         };
       });
 
       return {
-        id:               survey.id,
-        title:            survey.title,
-        description:      survey.description,
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
         totalParticipants: parseInt(survey.total_participants) || 0,
-        totalResponses:   parseInt(survey.total_responses)     || 0,
-        lastResponseAt:   survey.last_response_at,
+        totalResponses: parseInt(survey.total_responses) || 0,
+        lastResponseAt: survey.last_response_at,
         questions
       };
     });
 
     res.json({
-      success:   true,
+      success: true,
       timestamp: new Date().toISOString(),
       globalStats: {
         totalParticipants: parseInt(globalStats.rows[0].total_participants) || 0,
-        totalResponses:    parseInt(globalStats.rows[0].total_responses)    || 0,
-        activeSurveys:     parseInt(globalStats.rows[0].active_surveys)    || 0
+        totalResponses: parseInt(globalStats.rows[0].total_responses) || 0,
+        activeSurveys: parseInt(globalStats.rows[0].active_surveys) || 0
       },
       surveys
     });
@@ -318,17 +318,17 @@ router.get('/:id/questions', async (req, res) => {
 
     res.json({
       survey: {
-        id:             survey.id,
-        title:          survey.title,
-        description:    survey.description,
-        electionType:   survey.election_type,
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        electionType: survey.election_type,
         municipalityId: survey.municipality_id,
-        isActive:       survey.is_active,
-        isPublic:       survey.is_public,
-        startDate:      survey.start_date,
-        endDate:        survey.end_date
+        isActive: survey.is_active,
+        isPublic: survey.is_public,
+        startDate: survey.start_date,
+        endDate: survey.end_date
       },
-      questions:  questionsResult.rows,
+      questions: questionsResult.rows,
       candidates                          // array de candidatos para poblar opciones
     });
 
@@ -346,8 +346,8 @@ router.post('/:id/response', async (req, res) => {
   let client;
   try {
     client = await db.connect();
-    const surveyId  = parseInt(req.params.id, 10);
-    const { responses } = req.body;
+    const surveyId = parseInt(req.params.id, 10);
+    const { responses, phoneHash, sessionToken } = req.body;
 
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({ error: 'Debe enviar al menos una respuesta' });
@@ -358,7 +358,7 @@ router.post('/:id/response', async (req, res) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (token) {
       try {
-        const jwt     = require('jsonwebtoken');
+        const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, USER_JWT_SECRET);
         userId = decoded.userId;
       } catch (_) {
@@ -378,12 +378,33 @@ router.post('/:id/response', async (req, res) => {
 
     const survey = surveyCheck.rows[0];
 
-    if (!survey.is_active)  return res.status(403).json({ error: 'Encuesta no está activa' });
-    if (!survey.is_public)  return res.status(403).json({ error: 'Encuesta no es pública' });
+    if (!survey.is_active) return res.status(403).json({ error: 'Encuesta no está activa' });
+    if (!survey.is_public) return res.status(403).json({ error: 'Encuesta no es pública' });
     if (!survey.allow_anonymous && !userId)
       return res.status(401).json({ error: 'Esta encuesta requiere autenticación' });
     if (survey.end_date && new Date(survey.end_date) < new Date())
       return res.status(403).json({ error: 'Encuesta finalizada' });
+
+    // ══════════════════════════════════════════
+    // CANDADO DE VOTO ÚNICO — validar phone_hash
+    // ══════════════════════════════════════════
+    if (phoneHash) {
+      const existingVote = await client.query(
+        `SELECT id FROM survey_responses 
+         WHERE survey_id = $1 AND phone_hash = $2 
+         LIMIT 1`,
+        [surveyId, phoneHash]
+      );
+
+      if (existingVote.rows.length > 0) {
+        client.release();
+        return res.status(409).json({
+          success: false,
+          alreadyVoted: true,
+          error: 'Ya registraste tu predicción en esta encuesta'
+        });
+      }
+    }
 
     // ── Insertar respuestas ──
     await client.query('BEGIN');
@@ -398,9 +419,9 @@ router.post('/:id/response', async (req, res) => {
       }
 
       await client.query(`
-        INSERT INTO survey_responses (survey_id, question_id, user_id, response_value, confidence, created_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-      `, [surveyId, response.questionId, userId, responseValue.toString(), response.confidence || null]);
+        INSERT INTO survey_responses (survey_id, question_id, user_id, response_value, confidence, phone_hash, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `, [surveyId, response.questionId, userId, responseValue.toString(), response.confidence || null, phoneHash || null]);
 
       savedCount++;
     }
@@ -417,8 +438,8 @@ router.post('/:id/response', async (req, res) => {
     await client.query('COMMIT');
 
     res.json({
-      success:        true,
-      message:        'Respuesta enviada exitosamente',
+      success: true,
+      message: 'Respuesta enviada exitosamente',
       pointsEarned,
       responsesSaved: savedCount
     });
@@ -429,7 +450,7 @@ router.post('/:id/response', async (req, res) => {
     }
     console.error('❌ /surveys/:id/response:', error.message);
     res.status(500).json({
-      error:   'Error enviando respuesta',
+      error: 'Error enviando respuesta',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   } finally {
@@ -471,7 +492,7 @@ router.get('/:id/results', async (req, res) => {
       WHERE survey_id = $1
         AND question_id IN (
           SELECT id FROM survey_questions
-          WHERE survey_id = $1 AND question_type = 'single_choice'
+          WHERE survey_id = $1 AND question_type IN ('single_choice', 'choice', 'candidate_selection')
         )
       GROUP BY response_value
       ORDER BY count DESC
@@ -481,7 +502,7 @@ router.get('/:id/results', async (req, res) => {
     const confResult = await db.query(`
       SELECT AVG(confidence) AS avg_confidence, COUNT(*) AS total
       FROM survey_responses
-      WHERE survey_id  = $1
+      WHERE survey_id = $1
         AND confidence IS NOT NULL
         AND question_id IN (
           SELECT id FROM survey_questions
@@ -514,15 +535,17 @@ router.get('/:id/results', async (req, res) => {
     const totalVotes = votesResult.rows.reduce((sum, r) => sum + parseInt(r.count), 0);
 
     votesResult.rows.forEach(r => {
-      voteMap[r.candidate_id] = parseInt(r.count);
+      // Normalizar ID: si viene como "candidato_18", dejar solo "18"
+      const cleanId = String(r.candidate_id).replace('candidato_', '');
+      voteMap[cleanId] = parseInt(r.count);
     });
 
     const results = candidates.rows.map(c => ({
-      id:         c.id,
-      name:       c.name,
-      party:      c.party,
-      photo_url:  c.photo_url,
-      votes:      voteMap[String(c.id)] || 0,
+      id: c.id,
+      name: c.name,
+      party: c.party,
+      photo_url: c.photo_url,
+      votes: voteMap[String(c.id)] || 0,
       percentage: totalVotes > 0
         ? Math.round(((voteMap[String(c.id)] || 0) / totalVotes) * 100)
         : 0
@@ -532,7 +555,7 @@ router.get('/:id/results', async (req, res) => {
       surveyId,
       totalVotes,
       avgConfidence: parseFloat(confResult.rows[0].avg_confidence) || 0,
-      candidates:    results
+      candidates: results
     });
 
   } catch (error) {
@@ -634,9 +657,9 @@ router.post('/surveys', verifyAdminToken, async (req, res) => {
       muniId,
       safeStartDate,
       endDate || null,
-      isPublic       !== false,
+      isPublic !== false,
       allowAnonymous !== false,
-      req.adminId    || null
+      req.adminId || null
     ]);
 
     const surveyId = surveyResult.rows[0].id;
@@ -698,6 +721,53 @@ router.post('/surveys', verifyAdminToken, async (req, res) => {
     res.status(500).json({ error: 'Error creando encuesta' });
   } finally {
     if (client) client.release();
+  }
+});
+
+// ============================================
+// ENDPOINT: Verificar si usuario ya votó
+// ============================================
+router.post('/:id/check-vote', async (req, res) => {
+  const { id } = req.params;
+  const { phone } = req.body;
+
+  try {
+    // Generar hash del teléfono (igual que en el registro)
+    const crypto = require('crypto');
+    const phoneHash = crypto
+      .createHash('sha256')
+      .update(phone)
+      .digest('hex');
+
+    // Verificar si existe voto previo con ese hash para esta encuesta
+    const existingVote = await db.query(
+      `SELECT id FROM survey_responses 
+       WHERE survey_id = $1 
+       AND phone_hash = $2 
+       LIMIT 1`,
+      [id, phoneHash]
+    );
+
+    if (existingVote.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        alreadyVoted: true,
+        error: 'Ya registraste tu predicción en esta encuesta'
+      });
+    }
+
+    // No ha votado - puede proceder
+    res.json({
+      success: true,
+      canVote: true
+    });
+
+  } catch (error) {
+    console.error('Error verificando voto:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al verificar voto'
+    });
   }
 });
 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -15,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
-
         :root {
             --color-primary: #FF8C00;
             /* Naranja */
@@ -163,833 +161,854 @@
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-         /* Estilos para el modal de login */
-    .auth-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        z-index: 10000;
-        justify-content: center;
-        align-items: center;
-    }
-    .auth-modal.show {
-        display: flex;
-    }
-    .auth-content {
-        background: white;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 400px;
-        width: 90%;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    .auth-step {
-        display: none;
-    }
-    .auth-step.active {
-        display: block;
-    }
-    .auth-input {
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        font-size: 16px;
-    }
-    .auth-button {
-        width: 100%;
-        padding: 12px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-    .auth-button:hover {
-        background: #0056b3;
-    }
-    .auth-timer {
-        text-align: center;
-        color: #666;
-        margin: 10px 0;
-    }
-  /* ============================================
+
+        /* Estilos para el modal de login */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-step {
+            display: none;
+        }
+
+        .auth-step.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .auth-button:hover {
+            background: #0056b3;
+        }
+
+        .auth-timer {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        /* ============================================
    📱 CORRECCIONES PARA MÓVIL V2.0 (FINAL)
    ============================================ */
 
-@media (max-width: 640px) {
-  
-  /* 1. TÍTULOS DE MODAL (Evita cortes) */
-  #survey-modal h2#modal-title {
-    font-size: 1.4rem !important; /* Un pelín más chico para asegurar ajuste */
-    line-height: 1.2 !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    text-align: center !important;
-    padding: 0 0.5rem;
-    width: 100% !important;
-    display: block !important;
-  }
+        @media (max-width: 640px) {
 
-  /* 2. TARJETAS DE CANDIDATOS (Nombres completos) */
-  #survey-modal .candidate-card {
-    padding: 0.8rem !important; /* Optimiza espacio interno */
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-  }
+            /* 1. TÍTULOS DE MODAL (Evita cortes) */
+            #survey-modal h2#modal-title {
+                font-size: 1.4rem !important;
+                /* Un pelín más chico para asegurar ajuste */
+                line-height: 1.2 !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                text-align: center !important;
+                padding: 0 0.5rem;
+                width: 100% !important;
+                display: block !important;
+            }
 
-  #survey-modal .candidate-card .w-28 {
-    width: 5rem !important; /* Foto grande pero controlada */
-    height: 5rem !important;
-    min-width: 5rem !important;
-    min-height: 5rem !important;
-    margin-bottom: 0.5rem !important;
-  }
+            /* 2. TARJETAS DE CANDIDATOS (Nombres completos) */
+            #survey-modal .candidate-card {
+                padding: 0.8rem !important;
+                /* Optimiza espacio interno */
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+            }
 
-  /* EL CAMBIO CLAVE: Nombres sin cortar */
-  #survey-modal .candidate-card h5 {
-    height: auto !important;
-    min-height: 2.5em !important; /* Altura mínima para alineación */
-    line-height: 1.1 !important;
-    font-size: 0.75rem !important; /* Letra legible y nítida */
-    white-space: normal !important; /* Permite saltos de línea */
-    word-wrap: break-word !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    display: block !important; /* Quita el flex/box que corta */
-    -webkit-line-clamp: unset !important; /* Quita límite de líneas */
-    -webkit-box-orient: unset !important;
-    margin-bottom: 0.25rem !important;
-  }
-  
-  /* Partido Político */
-  #survey-modal .candidate-card .text-10px {
-      margin-top: auto !important; /* Empuja el partido al fondo */
-      padding-top: 5px !important;
-  }
+            #survey-modal .candidate-card .w-28 {
+                width: 5rem !important;
+                /* Foto grande pero controlada */
+                height: 5rem !important;
+                min-width: 5rem !important;
+                min-height: 5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
 
-  /* Ajuste del grid */
-  #survey-modal .grid.grid-cols-2 {
-    gap: 0.5rem !important;
-    align-items: stretch !important; /* Que todas las tarjetas tengan misma altura */
-  }
+            /* EL CAMBIO CLAVE: Nombres sin cortar */
+            #survey-modal .candidate-card h5 {
+                height: auto !important;
+                min-height: 2.5em !important;
+                /* Altura mínima para alineación */
+                line-height: 1.1 !important;
+                font-size: 0.75rem !important;
+                /* Letra legible y nítida */
+                white-space: normal !important;
+                /* Permite saltos de línea */
+                word-wrap: break-word !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                display: block !important;
+                /* Quita el flex/box que corta */
+                -webkit-line-clamp: unset !important;
+                /* Quita límite de líneas */
+                -webkit-box-orient: unset !important;
+                margin-bottom: 0.25rem !important;
+            }
 
-  /* 3. GRÁFICA DE RESULTADOS (Más aire) */
-  #survey-modal #resultsChart {
-    min-height: 350px !important; /* Más altura para ver nombres largos */
-    height: auto !important;
-    padding-bottom: 20px !important; /* Espacio para etiquetas del eje X */
-  }
-  
-  /* Contenedor de la gráfica */
-  .chart-container {
-      position: relative;
-      height: 40vh !important;
-      width: 100% !important;
-  }
+            /* Partido Político */
+            #survey-modal .candidate-card .text-10px {
+                margin-top: auto !important;
+                /* Empuja el partido al fondo */
+                padding-top: 5px !important;
+            }
 
-  /* 4. SLIDER (Impacto visual) */
-  #survey-modal #confidence-display {
-    font-size: 4.5rem !important;
-    line-height: 1 !important;
-    margin-bottom: 10px !important;
-  }
+            /* Ajuste del grid */
+            #survey-modal .grid.grid-cols-2 {
+                gap: 0.5rem !important;
+                align-items: stretch !important;
+                /* Que todas las tarjetas tengan misma altura */
+            }
 
-  #survey-modal .confidence-slider-section .text-xs {
-    font-size: 0.7rem !important;
-    opacity: 0.8 !important;
-  }
-}
+            /* 3. GRÁFICA DE RESULTADOS (Más aire) */
+            #survey-modal #resultsChart {
+                min-height: 350px !important;
+                /* Más altura para ver nombres largos */
+                height: auto !important;
+                padding-bottom: 20px !important;
+                /* Espacio para etiquetas del eje X */
+            }
 
+            /* Contenedor de la gráfica */
+            .chart-container {
+                position: relative;
+                height: 40vh !important;
+                width: 100% !important;
+            }
+
+            /* 4. SLIDER (Impacto visual) */
+            #survey-modal #confidence-display {
+                font-size: 4.5rem !important;
+                line-height: 1 !important;
+                margin-bottom: 10px !important;
+            }
+
+            #survey-modal .confidence-slider-section .text-xs {
+                font-size: 0.7rem !important;
+                opacity: 0.8 !important;
+            }
+        }
     </style>
 </head>
 
 <body class="min-h-screen">
-<script>
-// ============================================
-// SISTEMA DE AUTENTICACIÓN GUARDIANES v4.0
-// DOBLE CANDADO - SESIÓN PERSISTENTE
-// ============================================
-    /* 
-    // TODO el código viejo, incluidas las funciones:
-      // requestInitialOTP, showInitialAuthModal, verifyInitialCode,
-      // refreshAccessToken, authenticatedFetch, etc.
-      
-class GuardianesAuthSystem {
-    constructor() {
-        // Tokens y sesión
-        this.accessToken = localStorage.getItem('grd_access_token');
-        this.refreshToken = localStorage.getItem('grd_refresh_token');
-        this.sessionId = localStorage.getItem('grd_session_id');
-        this.user = JSON.parse(localStorage.getItem('grd_user') || 'null');
+    <script>
+        // ============================================
+        // SISTEMA DE AUTENTICACIÓN GUARDIANES v4.0
+        // DOBLE CANDADO - SESIÓN PERSISTENTE
+        // ============================================
+        /* 
+        // TODO el código viejo, incluidas las funciones:
+          // requestInitialOTP, showInitialAuthModal, verifyInitialCode,
+          // refreshAccessToken, authenticatedFetch, etc.
+          
+    class GuardianesAuthSystem {
+        constructor() {
+            // Tokens y sesión
+            this.accessToken = localStorage.getItem('grd_access_token');
+            this.refreshToken = localStorage.getItem('grd_refresh_token');
+            this.sessionId = localStorage.getItem('grd_session_id');
+            this.user = JSON.parse(localStorage.getItem('grd_user') || 'null');
+            
+            // Control de estado
+            this.isInitialAuth = false;
+            this.lastVerification = localStorage.getItem('grd_last_verification');
+            this.pendingAction = null;
+            
+            // Configuración
+            this.SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 días
+            this.VERIFICATION_CACHE = 60 * 60 * 1000; // 1 hora sin re-verificar
+        }
         
-        // Control de estado
-        this.isInitialAuth = false;
-        this.lastVerification = localStorage.getItem('grd_last_verification');
-        this.pendingAction = null;
+        // ========================================
+        // VERIFICACIONES DE ESTADO
+        // ========================================
         
-        // Configuración
-        this.SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 días
-        this.VERIFICATION_CACHE = 60 * 60 * 1000; // 1 hora sin re-verificar
-    }
-    
-    // ========================================
-    // VERIFICACIONES DE ESTADO
-    // ========================================
-    
-    hasValidSession() {
-        // Verifica si hay una sesión válida (no necesariamente activa)
-        return this.sessionId && this.user;
-    }
-    
-    isFullyAuthenticated() {
-        // Verifica autenticación completa con token válido
-        return this.accessToken && this.user && this.sessionId;
-    }
-    
-    needsVerification() {
-        // Determina si necesita verificación para acciones sensibles
-        if (!this.lastVerification) return true;
+        hasValidSession() {
+            // Verifica si hay una sesión válida (no necesariamente activa)
+            return this.sessionId && this.user;
+        }
         
-        const lastVerifyTime = new Date(this.lastVerification).getTime();
-        const now = Date.now();
+        isFullyAuthenticated() {
+            // Verifica autenticación completa con token válido
+            return this.accessToken && this.user && this.sessionId;
+        }
         
-        return (now - lastVerifyTime) > this.VERIFICATION_CACHE;
-    }
-    
-    // ========================================
-    // FLUJO DE AUTENTICACIÓN INICIAL
-    // ========================================
-    
-    async checkInitialAccess() {
-        // Verificar si el usuario necesita autenticación inicial
-        if (!this.hasValidSession()) {
-            console.log('🔒 Sin sesión válida, requiere autenticación inicial');
+        needsVerification() {
+            // Determina si necesita verificación para acciones sensibles
+            if (!this.lastVerification) return true;
+            
+            const lastVerifyTime = new Date(this.lastVerification).getTime();
+            const now = Date.now();
+            
+            return (now - lastVerifyTime) > this.VERIFICATION_CACHE;
+        }
+        
+        // ========================================
+        // FLUJO DE AUTENTICACIÓN INICIAL
+        // ========================================
+        
+        async checkInitialAccess() {
+            // Verificar si el usuario necesita autenticación inicial
+            if (!this.hasValidSession()) {
+                console.log('🔒 Sin sesión válida, requiere autenticación inicial');
+                this.showInitialAuthModal();
+                return false;
+            }
+            
+            // Verificar si el token sigue válido
+            if (this.accessToken) {
+                try {
+                    const response = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        this.updateUserInfo(userData);
+                        console.log('✅ Sesión válida para:', userData.name);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error verificando sesión:', error);
+                }
+            }
+            
+            // Intentar refresh si hay refresh token
+            if (this.refreshToken) {
+                const refreshed = await this.refreshAccessToken();
+                if (refreshed) {
+                    console.log('✅ Token renovado exitosamente');
+                    return true;
+                }
+            }
+            
+            // Si llegamos aquí, necesita re-autenticación
+            console.log('⚠️ Sesión expirada, requiere nueva verificación');
             this.showInitialAuthModal();
             return false;
         }
         
-        // Verificar si el token sigue válido
-        if (this.accessToken) {
-            try {
-                const response = await fetch('/api/auth/me', {
-                    headers: { 'Authorization': `Bearer ${this.accessToken}` }
-                });
-                
-                if (response.ok) {
-                    const userData = await response.json();
-                    this.updateUserInfo(userData);
-                    console.log('✅ Sesión válida para:', userData.name);
-                    return true;
-                }
-            } catch (error) {
-                console.error('Error verificando sesión:', error);
-            }
-        }
+        // ========================================
+        // MODAL DE AUTENTICACIÓN INICIAL
+        // ========================================
         
-        // Intentar refresh si hay refresh token
-        if (this.refreshToken) {
-            const refreshed = await this.refreshAccessToken();
-            if (refreshed) {
-                console.log('✅ Token renovado exitosamente');
-                return true;
-            }
-        }
-        
-        // Si llegamos aquí, necesita re-autenticación
-        console.log('⚠️ Sesión expirada, requiere nueva verificación');
-        this.showInitialAuthModal();
-        return false;
-    }
-    
-    // ========================================
-    // MODAL DE AUTENTICACIÓN INICIAL
-    // ========================================
-    
-    showInitialAuthModal() {
-        this.isInitialAuth = true;
-        
-        Swal.fire({
-            title: '🛡️ Bienvenido a Guardianes Guerrero',
-            html: `
-                <div style="text-align: left;">
-                    <p style="margin-bottom: 20px;">Para acceder al sistema y participar en las predicciones electorales, verifica tu número de teléfono.</p>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">
-                        📱 Número de teléfono (10 dígitos):
-                    </label>
-                    <input type="tel" 
-                           id="swal-phone" 
-                           class="swal2-input" 
-                           placeholder="7471234567"
-                           maxlength="10"
-                           style="margin: 0;">
-                    <div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px;">
-                        <small>
-                            ✅ Tu número será verificado vía WhatsApp<br>
-                            ✅ Sesión válida por 30 días<br>
-                            ✅ Ganarás puntos por cada predicción
-                        </small>
-                    </div>
-                </div>
-            `,
-            confirmButtonText: '📲 Enviar Código',
-            confirmButtonColor: '#25D366',
-            showCancelButton: false,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            preConfirm: () => {
-                const phone = document.getElementById('swal-phone').value;
-                if (!/^\d{10}$/.test(phone)) {
-                    Swal.showValidationMessage('Ingresa 10 dígitos sin espacios');
-                    return false;
-                }
-                return phone;
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await this.requestInitialOTP(result.value);
-            }
-        });
-    }
-    
-    async requestInitialOTP(phone) {
-        try {
+        showInitialAuthModal() {
+            this.isInitialAuth = true;
+            
             Swal.fire({
-                title: 'Enviando código...',
-                text: 'Por favor espera',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            const response = await fetch('/api/auth/request-code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone })
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Error al enviar código');
-            }
-            
-            // Guardar número temporalmente
-            this.tempPhone = phone;
-            
-            // Mostrar modal de verificación
-            this.showVerificationModal(data.phoneLast4, data.debug_otp);
-            
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message,
-                confirmButtonText: 'Reintentar',
-                confirmButtonColor: '#dc3545'
-            }).then(() => {
-                this.showInitialAuthModal();
-            });
-        }
-    }
-    
-    showVerificationModal(phoneLast4, debugCode = null) {
-        let timerInterval;
-        let timeLeft = 600; // 10 minutos
-        
-        Swal.fire({
-            title: '🔐 Verificación de Código',
-            html: `
-                <div style="text-align: center;">
-                    <p>Código enviado a: ***${phoneLast4}</p>
-                    <input type="text" 
-                           id="swal-code" 
-                           class="swal2-input" 
-                           placeholder="123456"
-                           maxlength="6"
-                           style="font-size: 24px; letter-spacing: 5px; text-align: center;">
-                    <div id="timer" style="margin-top: 10px; color: #666;">
-                        Código válido por: <span id="time">10:00</span>
-                    </div>
-                    ${debugCode ? `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
-                        <small>🔑 Código de prueba: <strong>${debugCode}</strong></small>
-                    </div>` : ''}
-                </div>
-            `,
-            confirmButtonText: '✅ Verificar',
-            confirmButtonColor: '#28a745',
-            showCancelButton: true,
-            cancelButtonText: '← Cambiar Número',
-            allowOutsideClick: false,
-            didOpen: () => {
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    const minutes = Math.floor(timeLeft / 60);
-                    const seconds = timeLeft % 60;
-                    document.getElementById('time').textContent = 
-                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        Swal.close();
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Código Expirado',
-                            text: 'El código ha expirado. Solicita uno nuevo.',
-                            confirmButtonText: 'Solicitar Nuevo Código'
-                        }).then(() => {
-                            this.showInitialAuthModal();
-                        });
-                    }
-                }, 1000);
-            },
-            willClose: () => {
-                clearInterval(timerInterval);
-            },
-            preConfirm: () => {
-                const code = document.getElementById('swal-code').value;
-                if (!/^\d{6}$/.test(code)) {
-                    Swal.showValidationMessage('Ingresa el código de 6 dígitos');
-                    return false;
-                }
-                return code;
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await this.verifyInitialCode(result.value);
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                this.showInitialAuthModal();
-            }
-        });
-    }
-    
-    async verifyInitialCode(code) {
-        try {
-            Swal.fire({
-                title: 'Verificando...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            const response = await fetch('/api/auth/verify-code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    phone: this.tempPhone, 
-                    code 
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Código incorrecto');
-            }
-            
-            // Guardar sesión
-            this.saveSession(data);
-            
-            // Mostrar bienvenida
-            Swal.fire({
-                icon: 'success',
-                title: '¡Bienvenido a Guardianes!',
+                title: '🛡️ Bienvenido a Guardianes Guerrero',
                 html: `
-                    <div style="text-align: center;">
-                        <h4>${data.user.name}</h4>
-                        <p>Tu sesión está activa por 30 días</p>
-                        <hr>
-                        <p>Ahora puedes:</p>
-                        <ul style="text-align: left; display: inline-block;">
-                            <li>📊 Realizar predicciones electorales</li>
-                            <li>📈 Ver estadísticas en tiempo real</li>
-                            <li>🏆 Ganar puntos y subir en el ranking</li>
-                            <li>📱 Reportar incidentes electorales</li>
-                        </ul>
+                    <div style="text-align: left;">
+                        <p style="margin-bottom: 20px;">Para acceder al sistema y participar en las predicciones electorales, verifica tu número de teléfono.</p>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            📱 Número de teléfono (10 dígitos):
+                        </label>
+                        <input type="tel" 
+                               id="swal-phone" 
+                               class="swal2-input" 
+                               placeholder="7471234567"
+                               maxlength="10"
+                               style="margin: 0;">
+                        <div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px;">
+                            <small>
+                                ✅ Tu número será verificado vía WhatsApp<br>
+                                ✅ Sesión válida por 30 días<br>
+                                ✅ Ganarás puntos por cada predicción
+                            </small>
+                        </div>
                     </div>
                 `,
-                confirmButtonText: '¡Comenzar!',
-                confirmButtonColor: '#28a745'
-            }).then(() => {
-                // Recargar para actualizar UI
-                this.updateUIAfterLogin();
-                
-                // Si hay acción pendiente, ejecutarla
-                if (this.pendingAction) {
-                    this.executePendingAction();
+                confirmButtonText: '📲 Enviar Código',
+                confirmButtonColor: '#25D366',
+                showCancelButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                preConfirm: () => {
+                    const phone = document.getElementById('swal-phone').value;
+                    if (!/^\d{10}$/.test(phone)) {
+                        Swal.showValidationMessage('Ingresa 10 dígitos sin espacios');
+                        return false;
+                    }
+                    return phone;
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await this.requestInitialOTP(result.value);
                 }
             });
+        }
+        
+        async requestInitialOTP(phone) {
+            try {
+                Swal.fire({
+                    title: 'Enviando código...',
+                    text: 'Por favor espera',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                const response = await fetch('/api/auth/request-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error al enviar código');
+                }
+                
+                // Guardar número temporalmente
+                this.tempPhone = phone;
+                
+                // Mostrar modal de verificación
+                this.showVerificationModal(data.phoneLast4, data.debug_otp);
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonText: 'Reintentar',
+                    confirmButtonColor: '#dc3545'
+                }).then(() => {
+                    this.showInitialAuthModal();
+                });
+            }
+        }
+        
+        showVerificationModal(phoneLast4, debugCode = null) {
+            let timerInterval;
+            let timeLeft = 600; // 10 minutos
             
-        } catch (error) {
             Swal.fire({
-                icon: 'error',
-                title: 'Error de Verificación',
-                text: error.message,
-                confirmButtonText: 'Reintentar',
+                title: '🔐 Verificación de Código',
+                html: `
+                    <div style="text-align: center;">
+                        <p>Código enviado a: ***${phoneLast4}</p>
+                        <input type="text" 
+                               id="swal-code" 
+                               class="swal2-input" 
+                               placeholder="123456"
+                               maxlength="6"
+                               style="font-size: 24px; letter-spacing: 5px; text-align: center;">
+                        <div id="timer" style="margin-top: 10px; color: #666;">
+                            Código válido por: <span id="time">10:00</span>
+                        </div>
+                        ${debugCode ? `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <small>🔑 Código de prueba: <strong>${debugCode}</strong></small>
+                        </div>` : ''}
+                    </div>
+                `,
+                confirmButtonText: '✅ Verificar',
+                confirmButtonColor: '#28a745',
                 showCancelButton: true,
-                cancelButtonText: 'Cambiar Número'
-            }).then((result) => {
+                cancelButtonText: '← Cambiar Número',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    timerInterval = setInterval(() => {
+                        timeLeft--;
+                        const minutes = Math.floor(timeLeft / 60);
+                        const seconds = timeLeft % 60;
+                        document.getElementById('time').textContent = 
+                            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            Swal.close();
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Código Expirado',
+                                text: 'El código ha expirado. Solicita uno nuevo.',
+                                confirmButtonText: 'Solicitar Nuevo Código'
+                            }).then(() => {
+                                this.showInitialAuthModal();
+                            });
+                        }
+                    }, 1000);
+                },
+                willClose: () => {
+                    clearInterval(timerInterval);
+                },
+                preConfirm: () => {
+                    const code = document.getElementById('swal-code').value;
+                    if (!/^\d{6}$/.test(code)) {
+                        Swal.showValidationMessage('Ingresa el código de 6 dígitos');
+                        return false;
+                    }
+                    return code;
+                }
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    this.showVerificationModal(this.tempPhone.slice(-4));
-                } else {
+                    await this.verifyInitialCode(result.value);
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
                     this.showInitialAuthModal();
                 }
             });
         }
-    }
-    
-    // ========================================
-    // VERIFICACIÓN PARA PREDICCIONES
-    // ========================================
-    
-    async requireAuthForPrediction(prediction) {
-        // Guardar predicción pendiente
-        this.pendingAction = {
-            type: 'prediction',
-            data: prediction
-        };
         
-        // Si no tiene sesión, mostrar auth inicial
-        if (!this.hasValidSession()) {
-            this.showInitialAuthModal();
-            return false;
+        async verifyInitialCode(code) {
+            try {
+                Swal.fire({
+                    title: 'Verificando...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                const response = await fetch('/api/auth/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: this.tempPhone, 
+                        code 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Código incorrecto');
+                }
+                
+                // Guardar sesión
+                this.saveSession(data);
+                
+                // Mostrar bienvenida
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Bienvenido a Guardianes!',
+                    html: `
+                        <div style="text-align: center;">
+                            <h4>${data.user.name}</h4>
+                            <p>Tu sesión está activa por 30 días</p>
+                            <hr>
+                            <p>Ahora puedes:</p>
+                            <ul style="text-align: left; display: inline-block;">
+                                <li>📊 Realizar predicciones electorales</li>
+                                <li>📈 Ver estadísticas en tiempo real</li>
+                                <li>🏆 Ganar puntos y subir en el ranking</li>
+                                <li>📱 Reportar incidentes electorales</li>
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: '¡Comenzar!',
+                    confirmButtonColor: '#28a745'
+                }).then(() => {
+                    // Recargar para actualizar UI
+                    this.updateUIAfterLogin();
+                    
+                    // Si hay acción pendiente, ejecutarla
+                    if (this.pendingAction) {
+                        this.executePendingAction();
+                    }
+                });
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Verificación',
+                    text: error.message,
+                    confirmButtonText: 'Reintentar',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cambiar Número'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.showVerificationModal(this.tempPhone.slice(-4));
+                    } else {
+                        this.showInitialAuthModal();
+                    }
+                });
+            }
         }
         
-        // Si tiene sesión pero el token expiró, renovar
-        if (!this.isFullyAuthenticated()) {
-            const renewed = await this.refreshAccessToken();
-            if (!renewed) {
-                // No se pudo renovar, re-autenticar
+        // ========================================
+        // VERIFICACIÓN PARA PREDICCIONES
+        // ========================================
+        
+        async requireAuthForPrediction(prediction) {
+            // Guardar predicción pendiente
+            this.pendingAction = {
+                type: 'prediction',
+                data: prediction
+            };
+            
+            // Si no tiene sesión, mostrar auth inicial
+            if (!this.hasValidSession()) {
+                this.showInitialAuthModal();
+                return false;
+            }
+            
+            // Si tiene sesión pero el token expiró, renovar
+            if (!this.isFullyAuthenticated()) {
+                const renewed = await this.refreshAccessToken();
+                if (!renewed) {
+                    // No se pudo renovar, re-autenticar
+                    this.showQuickVerification();
+                    return false;
+                }
+            }
+            
+            // Si necesita re-verificación (más de 1 hora)
+            if (this.needsVerification()) {
                 this.showQuickVerification();
+                return false;
+            }
+            
+            // Todo OK, puede proceder
+            return true;
+        }
+        
+        showQuickVerification() {
+            Swal.fire({
+                title: '🔐 Verificación Rápida',
+                html: `
+                    <div style="text-align: center;">
+                        <p>Por seguridad, confirma tu identidad</p>
+                        <p style="font-size: 18px; margin: 20px 0;">
+                            Tu número termina en: <strong>***${this.user?.phoneLast4 || '????'}</strong>
+                        </p>
+                        <button onclick="authSystem.sendQuickCode()" class="swal2-confirm swal2-styled" style="background-color: #25D366;">
+                            📲 Enviar Código Rápido
+                        </button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                allowOutsideClick: false
+            });
+        }
+        
+        async sendQuickCode() {
+            // Usar el teléfono almacenado en sesión
+            if (!this.user || !this.user.phoneLast4) {
+                this.showInitialAuthModal();
+                return;
+            }
+            
+            // Aquí implementarías la lógica de código rápido
+            // Por ahora, continuar con la acción
+            Swal.close();
+            this.updateVerificationTime();
+            this.executePendingAction();
+        }
+        
+        // ========================================
+        // GESTIÓN DE SESIÓN
+        // ========================================
+        
+        saveSession(authData) {
+            this.accessToken = authData.accessToken;
+            this.refreshToken = authData.refreshToken;
+            this.user = authData.user;
+            this.sessionId = this.generateSessionId();
+            
+            localStorage.setItem('grd_access_token', this.accessToken);
+            localStorage.setItem('grd_refresh_token', this.refreshToken);
+            localStorage.setItem('grd_user', JSON.stringify(this.user));
+            localStorage.setItem('grd_session_id', this.sessionId);
+            localStorage.setItem('grd_last_verification', new Date().toISOString());
+            
+            this.updateVerificationTime();
+        }
+        
+        updateVerificationTime() {
+            this.lastVerification = new Date().toISOString();
+            localStorage.setItem('grd_last_verification', this.lastVerification);
+        }
+        
+        async refreshAccessToken() {
+            if (!this.refreshToken) return false;
+            
+            try {
+                const response = await fetch('/api/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: this.refreshToken })
+                });
+                
+                if (!response.ok) return false;
+                
+                const data = await response.json();
+                this.accessToken = data.accessToken;
+                localStorage.setItem('grd_access_token', this.accessToken);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('Error renovando token:', error);
                 return false;
             }
         }
         
-        // Si necesita re-verificación (más de 1 hora)
-        if (this.needsVerification()) {
-            this.showQuickVerification();
-            return false;
+        generateSessionId() {
+            return 'grd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
         
-        // Todo OK, puede proceder
-        return true;
-    }
-    
-    showQuickVerification() {
-        Swal.fire({
-            title: '🔐 Verificación Rápida',
-            html: `
-                <div style="text-align: center;">
-                    <p>Por seguridad, confirma tu identidad</p>
-                    <p style="font-size: 18px; margin: 20px 0;">
-                        Tu número termina en: <strong>***${this.user?.phoneLast4 || '????'}</strong>
-                    </p>
-                    <button onclick="authSystem.sendQuickCode()" class="swal2-confirm swal2-styled" style="background-color: #25D366;">
-                        📲 Enviar Código Rápido
-                    </button>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
-            allowOutsideClick: false
-        });
-    }
-    
-    async sendQuickCode() {
-        // Usar el teléfono almacenado en sesión
-        if (!this.user || !this.user.phoneLast4) {
-            this.showInitialAuthModal();
-            return;
+        // ========================================
+        // EJECUCIÓN DE ACCIONES
+        // ========================================
+        
+        executePendingAction() {
+            if (!this.pendingAction) return;
+            
+            const action = this.pendingAction;
+            this.pendingAction = null;
+            
+            switch (action.type) {
+                case 'prediction':
+                    submitAuthenticatedPrediction(action.data);
+                    break;
+                case 'survey':
+                    submitSurvey(action.data);
+                    break;
+                default:
+                    console.log('Acción pendiente desconocida:', action);
+            }
         }
         
-        // Aquí implementarías la lógica de código rápido
-        // Por ahora, continuar con la acción
-        Swal.close();
-        this.updateVerificationTime();
-        this.executePendingAction();
-    }
-    
-    // ========================================
-    // GESTIÓN DE SESIÓN
-    // ========================================
-    
-    saveSession(authData) {
-        this.accessToken = authData.accessToken;
-        this.refreshToken = authData.refreshToken;
-        this.user = authData.user;
-        this.sessionId = this.generateSessionId();
+        // ========================================
+        // UTILIDADES
+        // ========================================
         
-        localStorage.setItem('grd_access_token', this.accessToken);
-        localStorage.setItem('grd_refresh_token', this.refreshToken);
-        localStorage.setItem('grd_user', JSON.stringify(this.user));
-        localStorage.setItem('grd_session_id', this.sessionId);
-        localStorage.setItem('grd_last_verification', new Date().toISOString());
-        
-        this.updateVerificationTime();
-    }
-    
-    updateVerificationTime() {
-        this.lastVerification = new Date().toISOString();
-        localStorage.setItem('grd_last_verification', this.lastVerification);
-    }
-    
-    async refreshAccessToken() {
-        if (!this.refreshToken) return false;
-        
-        try {
-            const response = await fetch('/api/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken: this.refreshToken })
-            });
+        getAuthHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
             
-            if (!response.ok) return false;
-            
-            const data = await response.json();
-            this.accessToken = data.accessToken;
-            localStorage.setItem('grd_access_token', this.accessToken);
-            
-            return true;
-            
-        } catch (error) {
-            console.error('Error renovando token:', error);
-            return false;
-        }
-    }
-    
-    generateSessionId() {
-        return 'grd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
-    
-    // ========================================
-    // EJECUCIÓN DE ACCIONES
-    // ========================================
-    
-    executePendingAction() {
-        if (!this.pendingAction) return;
-        
-        const action = this.pendingAction;
-        this.pendingAction = null;
-        
-        switch (action.type) {
-            case 'prediction':
-                submitAuthenticatedPrediction(action.data);
-                break;
-            case 'survey':
-                submitSurvey(action.data);
-                break;
-            default:
-                console.log('Acción pendiente desconocida:', action);
-        }
-    }
-    
-    // ========================================
-    // UTILIDADES
-    // ========================================
-    
-    getAuthHeaders() {
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-        
-        if (this.accessToken) {
-            headers['Authorization'] = `Bearer ${this.accessToken}`;
-        }
-        
-        return headers;
-    }
-    
-    async authenticatedFetch(url, options = {}) {
-        options.headers = {
-            ...options.headers,
-            ...this.getAuthHeaders()
-        };
-        
-        return fetch(url, options);
-    }
-    
-    updateUserInfo(userData) {
-        this.user = { ...this.user, ...userData };
-        localStorage.setItem('grd_user', JSON.stringify(this.user));
-    }
-    
-    updateUIAfterLogin() {
-        // Actualizar nombre de usuario en la UI
-        const userElements = document.querySelectorAll('.user-name');
-        userElements.forEach(el => {
-            el.textContent = this.user.name || `Usuario ${this.user.phoneLast4}`;
-        });
-        
-        // Actualizar puntos
-        const pointsElements = document.querySelectorAll('.user-points');
-        pointsElements.forEach(el => {
-            el.textContent = this.user.points || 0;
-        });
-        
-        // Mostrar elementos para usuarios autenticados
-        document.querySelectorAll('.auth-only').forEach(el => {
-            el.style.display = 'block';
-        });
-        
-        // Ocultar elementos de login
-        document.querySelectorAll('.guest-only').forEach(el => {
-            el.style.display = 'none';
-        });
-    }
-    
-    logout() {
-        // Limpiar toda la sesión
-        localStorage.removeItem('grd_access_token');
-        localStorage.removeItem('grd_refresh_token');
-        localStorage.removeItem('grd_user');
-        localStorage.removeItem('grd_session_id');
-        localStorage.removeItem('grd_last_verification');
-        
-        this.accessToken = null;
-        this.refreshToken = null;
-        this.user = null;
-        this.sessionId = null;
-        this.lastVerification = null;
-        
-        // Recargar página
-        window.location.reload();
-    }
-}
-
-
-const authSystem = new GuardianesAuthSystem();
-
-
-// ============================================
-// INICIALIZACIÓN AL CARGAR LA PÁGINA
-// ============================================
-
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 Inicializando Sistema Guardianes v4.0');
-    */
-
-    // Verificar acceso inicial
-    const hasAccess = await authSystem.checkInitialAccess();
-    
-    if (hasAccess) {
-        console.log('✅ Usuario con sesión activa');
-        authSystem.updateUIAfterLogin();
-        
-        // Mostrar mensaje de bienvenida
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        
-        Toast.fire({
-            icon: 'success',
-            title: `Bienvenido ${authSystem.user.name}`
-        });
-    } else {
-        console.log('🔒 Usuario sin sesión, mostrando autenticación');
-    }
-    
-    // Agregar botón de logout si está autenticado
-    if (authSystem.isFullyAuthenticated()) {
-        const logoutBtn = document.createElement('button');
-        logoutBtn.innerHTML = '🚪 Cerrar Sesión';
-        logoutBtn.className = 'btn-logout';
-        logoutBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;';
-        logoutBtn.onclick = () => {
-            Swal.fire({
-                title: '¿Cerrar Sesión?',
-                text: 'Tendrás que verificar tu número nuevamente para acceder',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, cerrar sesión',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#dc3545'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    authSystem.logout();
-                }
-            });
-        };
-        document.body.appendChild(logoutBtn);
-    }
-
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
-
-function updateUserPoints() {
-    if (!authSystem.isFullyAuthenticated()) return;
-    
-    authSystem.authenticatedFetch('/api/auth/me')
-        .then(res => res.json())
-        .then(data => {
-            authSystem.updateUserInfo(data);
-            
-            // Actualizar UI
-            document.querySelectorAll('.user-points').forEach(el => {
-                el.textContent = data.points || 0;
-            });
-            
-            // Actualizar nivel si existe
-            document.querySelectorAll('.user-level').forEach(el => {
-                el.textContent = data.level || 'Observador';
-            });
-        })
-        .catch(console.error);
-}
-
-function updatePredictionStats(municipalityId) {
-    fetch(`/api/predictions/stats/${municipalityId}`)
-        .then(res => res.json())
-        .then(data => {
-            console.log('📊 Estadísticas actualizadas:', data);
-            
-            // Actualizar gráficas si existen
-            if (typeof updateCharts === 'function') {
-                updateCharts(data);
+            if (this.accessToken) {
+                headers['Authorization'] = `Bearer ${this.accessToken}`;
             }
             
-            // Actualizar contadores
-            if (document.getElementById('total-predictions')) {
-                document.getElementById('total-predictions').textContent = 
-                    data.totalVoters || 0;
-            }
-        })
-        .catch(console.error);
-}
+            return headers;
+        }
+        
+        async authenticatedFetch(url, options = {}) {
+            options.headers = {
+                ...options.headers,
+                ...this.getAuthHeaders()
+            };
+            
+            return fetch(url, options);
+        }
+        
+        updateUserInfo(userData) {
+            this.user = { ...this.user, ...userData };
+            localStorage.setItem('grd_user', JSON.stringify(this.user));
+        }
+        
+        updateUIAfterLogin() {
+            // Actualizar nombre de usuario en la UI
+            const userElements = document.querySelectorAll('.user-name');
+            userElements.forEach(el => {
+                el.textContent = this.user.name || `Usuario ${this.user.phoneLast4}`;
+            });
+            
+            // Actualizar puntos
+            const pointsElements = document.querySelectorAll('.user-points');
+            pointsElements.forEach(el => {
+                el.textContent = this.user.points || 0;
+            });
+            
+            // Mostrar elementos para usuarios autenticados
+            document.querySelectorAll('.auth-only').forEach(el => {
+                el.style.display = 'block';
+            });
+            
+            // Ocultar elementos de login
+            document.querySelectorAll('.guest-only').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+        
+        logout() {
+            // Limpiar toda la sesión
+            localStorage.removeItem('grd_access_token');
+            localStorage.removeItem('grd_refresh_token');
+            localStorage.removeItem('grd_user');
+            localStorage.removeItem('grd_session_id');
+            localStorage.removeItem('grd_last_verification');
+            
+            this.accessToken = null;
+            this.refreshToken = null;
+            this.user = null;
+            this.sessionId = null;
+            this.lastVerification = null;
+            
+            // Recargar página
+            window.location.reload();
+        }
+    }
+    
+    
+    const authSystem = new GuardianesAuthSystem();
+    
+    
+    // ============================================
+    // INICIALIZACIÓN AL CARGAR LA PÁGINA
+    // ============================================
+    
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('🚀 Inicializando Sistema Guardianes v4.0');
+        */
 
-// ============================================
-// TEST FUNCTIONS (Remover en producción)
-// ============================================
+        // Verificar acceso inicial
+        const hasAccess = await authSystem.checkInitialAccess();
 
-window.testPrediction = function() {
-    savePrediction(18, 'candidato_21', 75);
-};
+        if (hasAccess) {
+            console.log('✅ Usuario con sesión activa');
+            authSystem.updateUIAfterLogin();
 
-window.testAuth = function() {
-    authSystem.showInitialAuthModal();
-};
+            // Mostrar mensaje de bienvenida
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
 
-console.log('✅ Sistema de autenticación cargado. Funciones de test disponibles:');
-console.log('   - testPrediction(): Probar predicción');
-console.log('   - testAuth(): Probar autenticación');
-</script>
+            Toast.fire({
+                icon: 'success',
+                title: `Bienvenido ${authSystem.user.name}`
+            });
+        } else {
+            console.log('🔒 Usuario sin sesión, mostrando autenticación');
+        }
+
+        // Agregar botón de logout si está autenticado
+        if (authSystem.isFullyAuthenticated()) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.innerHTML = '🚪 Cerrar Sesión';
+            logoutBtn.className = 'btn-logout';
+            logoutBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;';
+            logoutBtn.onclick = () => {
+                Swal.fire({
+                    title: '¿Cerrar Sesión?',
+                    text: 'Tendrás que verificar tu número nuevamente para acceder',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, cerrar sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        authSystem.logout();
+                    }
+                });
+            };
+            document.body.appendChild(logoutBtn);
+        }
+
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
+
+        function updateUserPoints() {
+            if (!authSystem.isFullyAuthenticated()) return;
+
+            authSystem.authenticatedFetch('/api/auth/me')
+                .then(res => res.json())
+                .then(data => {
+                    authSystem.updateUserInfo(data);
+
+                    // Actualizar UI
+                    document.querySelectorAll('.user-points').forEach(el => {
+                        el.textContent = data.points || 0;
+                    });
+
+                    // Actualizar nivel si existe
+                    document.querySelectorAll('.user-level').forEach(el => {
+                        el.textContent = data.level || 'Observador';
+                    });
+                })
+                .catch(console.error);
+        }
+
+        function updatePredictionStats(municipalityId) {
+            fetch(`/api/predictions/stats/${municipalityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('📊 Estadísticas actualizadas:', data);
+
+                    // Actualizar gráficas si existen
+                    if (typeof updateCharts === 'function') {
+                        updateCharts(data);
+                    }
+
+                    // Actualizar contadores
+                    if (document.getElementById('total-predictions')) {
+                        document.getElementById('total-predictions').textContent =
+                            data.totalVoters || 0;
+                    }
+                })
+                .catch(console.error);
+        }
+
+        // ============================================
+        // TEST FUNCTIONS (Remover en producción)
+        // ============================================
+
+        window.testPrediction = function () {
+            savePrediction(18, 'candidato_21', 75);
+        };
+
+        window.testAuth = function () {
+            authSystem.showInitialAuthModal();
+        };
+
+        console.log('✅ Sistema de autenticación cargado. Funciones de test disponibles:');
+        console.log('   - testPrediction(): Probar predicción');
+        console.log('   - testAuth(): Probar autenticación');
+    </script>
     <!-- NAVBAR -->
     <nav class="fixed top-0 w-full z-50 glass-card bg-slate-950/80 border-b border-white/5 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -1016,49 +1035,42 @@ console.log('   - testAuth(): Probar autenticación');
     <main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
 
 
-<section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
-    <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
-        <h2 class="text-3xl font-black mb-2 italic tracking-tighter uppercase whitespace-nowrap">
-            Portal <span class="text-amber-500">Ciudadano</span>
-        </h2>
-        <p class="text-xs font-bold text-slate-500 mb-10 uppercase tracking-[0.2em]">
-            Acceso Directo • Sin Códigos
-        </p>
+        <section id="auth-section" class="max-w-md mx-auto mt-12 animate-in slide-in-from-bottom-8 duration-700">
+            <div class="glass-card p-12 rounded-[2.5rem] text-center border-white/10 shadow-2xl">
+                <h2 class="text-3xl font-black mb-2 italic tracking-tighter uppercase whitespace-nowrap">
+                    Portal <span class="text-amber-500">Ciudadano</span>
+                </h2>
+                <p class="text-xs font-bold text-slate-500 mb-10 uppercase tracking-[0.2em]">
+                    Acceso Directo • Sin Códigos
+                </p>
 
-        <div id="phone-step" class="space-y-4">
-            <input 
-                type="tel" 
-                id="user-phone" 
-                placeholder="744 123 4567"
-                maxlength="10"
-                class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-2xl font-black focus:border-amber-500 outline-none transition shadow-inner"
-                onkeypress="if(event.key === 'Enter') quickLogin()"
-            >
-            
-            <button 
-                onclick="quickLogin()"
-                class="w-full bg-amber-600 hover:bg-amber-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-amber-900/20 uppercase tracking-tighter"
-            >
-                🚀 Entrar Ahora
-            </button>
-            
-            <p class="text-[10px] text-slate-600 mt-4">
-                Solo números de Guerrero (744, 747, 733, 758, 767, 741, 742)
-            </p>
-        </div>
+                <div id="phone-step" class="space-y-4">
+                    <input type="tel" id="user-phone" placeholder="744 123 4567" maxlength="10"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center text-2xl font-black focus:border-amber-500 outline-none transition shadow-inner"
+                        onkeypress="if(event.key === 'Enter') quickLogin()">
 
-        <div class="mt-8 flex items-center justify-center gap-2 opacity-30">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="text-[10px] font-bold uppercase tracking-widest leading-none">
-                100% Anónimo
-            </span>
-        </div>
-    </div>
-</section>       
+                    <button onclick="quickLogin()"
+                        class="w-full bg-amber-600 hover:bg-amber-700 p-5 rounded-2xl font-black text-lg transition shadow-xl shadow-amber-900/20 uppercase tracking-tighter">
+                        🚀 Entrar Ahora
+                    </button>
+
+                    <p class="text-[10px] text-slate-600 mt-4">
+                        Solo números de Guerrero (744, 747, 733, 758, 767, 741, 742)
+                    </p>
+                </div>
+
+                <div class="mt-8 flex items-center justify-center gap-2 opacity-30">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest leading-none">
+                        100% Anónimo
+                    </span>
+                </div>
+            </div>
+        </section>
 
         <!-- PORTAL MAIN -->
         <section id="portal-section" class="hidden space-y-10 animate-in fade-in zoom-in-95 duration-500">
@@ -1543,7 +1555,49 @@ console.log('   - testAuth(): Probar autenticación');
                     </div>
                 </div>
 
-                <div class="mt-24">
+                <!-- CANDADO: TELÉFONO OBLIGATORIO -->
+                <div id="phone-gate" class="mt-16 p-10 glass-card rounded-[3rem] border-amber-600/20 border">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-xl">📱
+                        </div>
+                        <h4 class="text-2xl font-black uppercase tracking-tighter italic">Verificación <span
+                                class="text-emerald-500">Ciudadana</span></h4>
+                    </div>
+                    <p class="text-slate-400 text-sm mb-6">Ingresa tu número de teléfono de Guerrero (10 dígitos). Esto
+                        garantiza un voto único por persona.</p>
+                    <input id="survey-phone" type="tel" maxlength="10" placeholder="Ej: 7471234567"
+                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black text-xl tracking-widest text-center outline-none focus:border-emerald-500 transition"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    <div id="phone-error" class="text-red-500 text-xs font-bold mt-3 uppercase tracking-widest hidden">
+                    </div>
+                </div>
+
+                <!-- CANDADO: CONFIANZA OBLIGATORIA (si no hay pregunta confidence_scale) -->
+                <div id="confidence-gate"
+                    class="mt-10 p-10 glass-card rounded-[3rem] border-amber-600/20 border hidden">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center text-xl">🎯
+                        </div>
+                        <h4 class="text-2xl font-black uppercase tracking-tighter italic">Nivel de <span
+                                class="text-amber-500">Confianza</span></h4>
+                    </div>
+                    <p class="text-slate-400 text-sm mb-6">¿Qué tan seguro estás de tu predicción?</p>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="setConfidenceGate(50, this)"
+                            class="conf-btn px-8 py-4 rounded-2xl bg-yellow-600/20 border border-yellow-600/30 font-black text-yellow-500 uppercase tracking-widest text-xs hover:bg-yellow-600/40 transition">50%
+                            Dudoso</button>
+                        <button onclick="setConfidenceGate(75, this)"
+                            class="conf-btn px-8 py-4 rounded-2xl bg-blue-600/20 border border-blue-600/30 font-black text-blue-500 uppercase tracking-widest text-xs hover:bg-blue-600/40 transition">75%
+                            Probable</button>
+                        <button onclick="setConfidenceGate(100, this)"
+                            class="conf-btn px-8 py-4 rounded-2xl bg-emerald-600/20 border border-emerald-600/30 font-black text-emerald-500 uppercase tracking-widest text-xs hover:bg-emerald-600/40 transition">100%
+                            Seguro</button>
+                    </div>
+                    <div id="confidence-error"
+                        class="text-red-500 text-xs font-bold mt-3 uppercase tracking-widest hidden"></div>
+                </div>
+
+                <div class="mt-16">
                     <button onclick="submitSurvey()"
                         class="w-full bg-amber-600 p-8 rounded-[2rem] font-black text-2xl shadow-3xl shadow-amber-900/40 hover:bg-amber-700 transition transform hover:scale-[1.02] uppercase tracking-tighter italic">Sellar
                         Predicción Democrática</button>
@@ -1556,12 +1610,62 @@ console.log('   - testAuth(): Probar autenticación');
 
     <!-- LOGIC -->
     <script>
-        const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api' 
-    : 'https://pulsoguerrero.vercel.app/api';
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000/api'
+            : 'https://pulsoguerrero.vercel.app/api';
 
-    let auth_token = localStorage.getItem('guardianToken');
-    let userPhone = null;
+        let auth_token = localStorage.getItem('guardianToken');
+        let userPhone = null;
+        let gateConfidence = null; // Confidence seleccionada en el gate
+
+        // ============================================
+        // VALIDACIÓN TELÉFONO GUERRERO (10 dígitos)
+        // ============================================
+        const GUERRERO_PREFIXES = ['744', '747', '733', '741', '745', '756', '742', '735', '732', '781', '757', '736', '767', '762', '755'];
+
+        function validateGuerreroPhone(phone) {
+            if (!phone || phone.length !== 10) return { valid: false, error: 'Ingresa exactamente 10 dígitos' };
+            if (!/^\d{10}$/.test(phone)) return { valid: false, error: 'Solo dígitos numéricos' };
+            const prefix = phone.substring(0, 3);
+            if (!GUERRERO_PREFIXES.includes(prefix)) {
+                return { valid: false, error: `Prefijo ${prefix} no es de Guerrero. Usa un número local (744, 747, 733...)` };
+            }
+            return { valid: true };
+        }
+
+        // ============================================
+        // SHA-256 HASH (Web Crypto API)
+        // ============================================
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ============================================
+        // SESSION LOCK (localStorage)
+        // ============================================
+        function hasVotedInSession(surveyId) {
+            return localStorage.getItem(`grd_voted_${surveyId}`) !== null;
+        }
+        function markVotedInSession(surveyId, phoneHash) {
+            localStorage.setItem(`grd_voted_${surveyId}`, JSON.stringify({ hash: phoneHash, ts: Date.now() }));
+        }
+
+        // ============================================
+        // CONFIDENCE GATE
+        // ============================================
+        function setConfidenceGate(val, el) {
+            gateConfidence = val;
+            document.querySelectorAll('.conf-btn').forEach(b => {
+                b.classList.remove('ring-4', 'ring-amber-500', 'scale-110');
+            });
+            el.classList.add('ring-4', 'ring-amber-500', 'scale-110');
+            const errEl = document.getElementById('confidence-error');
+            if (errEl) errEl.classList.add('hidden');
+        }
 
         const MUNICIPIOS_GUERRERO = [
             { id: 1, name: "Acapulco de Juárez" }, { id: 2, name: "Acatepec" }, { id: 3, name: "Ahuacuotzingo" },
@@ -1595,15 +1699,15 @@ console.log('   - testAuth(): Probar autenticación');
             { id: 85, name: "Zitlala" }
         ];
 
-const ASPIRANTES = [
-  { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
-  { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
-  { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
-  { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
-  { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
-  { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
-  { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
-];
+        const ASPIRANTES = [
+            { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
+            { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
+            { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
+            { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
+            { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
+            { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
+            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
+        ];
 
 
         async function showPortal() {
@@ -1694,6 +1798,13 @@ const ASPIRANTES = [
 
                 document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
                 document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
+
+                // Reset locks
+                surveyResponses = {};
+                gateConfidence = null;
+                const phoneEl = document.getElementById('survey-phone');
+                if (phoneEl) phoneEl.value = '';
+                document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('ring-4', 'ring-amber-500', 'scale-110'));
 
                 // ✅ CARGAR CANDIDATOS DINÁMICAMENTE DESDE LA BD
                 let candidates = [];
@@ -1985,6 +2096,13 @@ const ASPIRANTES = [
                     return '';
                 }).join('');
 
+                // Show confidence gate if no confidence_scale question
+                const hasConfScale = data.questions.some(q => q.questionType === 'confidence_scale');
+                const confGateEl = document.getElementById('confidence-gate');
+                if (confGateEl) {
+                    confGateEl.classList.toggle('hidden', hasConfScale);
+                }
+
                 startLivePolling(id);
 
             } catch (e) {
@@ -2027,71 +2145,71 @@ const ASPIRANTES = [
             }
         }
 
-      function updateLiveChart(data) {
-    if (!data || !data.candidates) return;
+        function updateLiveChart(data) {
+            if (!data || !data.candidates) return;
 
-    const ctx = document.getElementById('resultsChart')?.getContext('2d');
-    if (!ctx) return;
+            const ctx = document.getElementById('resultsChart')?.getContext('2d');
+            if (!ctx) return;
 
-    // Usar directamente el nombre de los candidatos que viene del backend
-    const labels = data.candidates.map(c => {
-        // Primer nombre para hacerlo compacto en la gráfica
-        if (c.name && typeof c.name === 'string') {
-            const parts = c.name.trim().split(/\s+/);
-            return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
-        }
-        return `CAND ${c.id}`; // Fallback por si faltara nombre
-    });
-
-    const votes = data.candidates.map(c => c.votes || 0);
-
-    // Destruir gráfico anterior si existe
-    if (chartInstance) chartInstance.destroy();
-
-    // Crear nuevo gráfico
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Votos',
-                data: votes,
-                backgroundColor: labels.map((_, i) =>
-                    ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
-                ),
-                borderRadius: 8,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: { color: '#B0B0B0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                },
-                y: {
-                    ticks: { color: '#B0B0B0' }
+            // Usar directamente el nombre de los candidatos que viene del backend
+            const labels = data.candidates.map(c => {
+                // Primer nombre para hacerlo compacto en la gráfica
+                if (c.name && typeof c.name === 'string') {
+                    const parts = c.name.trim().split(/\s+/);
+                    return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
                 }
-            }
+                return `CAND ${c.id}`; // Fallback por si faltara nombre
+            });
+
+            const votes = data.candidates.map(c => c.votes || 0);
+
+            // Destruir gráfico anterior si existe
+            if (chartInstance) chartInstance.destroy();
+
+            // Crear nuevo gráfico
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Votos',
+                        data: votes,
+                        backgroundColor: labels.map((_, i) =>
+                            ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
+                        ),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#B0B0B0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#B0B0B0' }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar contadores
+            const totalVotesEl = document.getElementById('total-votes-live');
+            const avgConfidenceEl = document.getElementById('avg-confidence-live');
+            const lastUpdateEl = document.getElementById('last-update-live');
+
+            if (totalVotesEl) totalVotesEl.textContent = data.totalVotes || 0;
+            if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1);
+            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX');
         }
-    });
-
-    // Actualizar contadores
-    const totalVotesEl       = document.getElementById('total-votes-live');
-    const avgConfidenceEl    = document.getElementById('avg-confidence-live');
-    const lastUpdateEl       = document.getElementById('last-update-live');
-
-    if (totalVotesEl)    totalVotesEl.textContent    = data.totalVotes || 0;
-    if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1);
-    if (lastUpdateEl)    lastUpdateEl.textContent    = new Date().toLocaleTimeString('es-MX');
-}  
 
         function startLivePolling(surveyId) {
             const panel = document.getElementById('live-results-panel');
@@ -2122,72 +2240,144 @@ const ASPIRANTES = [
         }
         // ====== FIN RESULTADOS EN VIVO ======
 
-  async function submitSurvey() {
-  const inputs = document.querySelectorAll('.survey-input');
-  const responses = [];
+        function closeSurvey() {
+            document.getElementById('survey-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+            stopLivePolling();
+        }
 
-  // Recoger respuestas de inputs
-  inputs.forEach(input => {
-    const qId = parseInt(input.dataset.questionId);
-    const type = input.dataset.type;
-    const value = input.value;
-    const response = { questionId: qId, answer: value };
-    
-    if (type === 'confidence') {
-      response.confidence = parseInt(value);
-    }
-    
-    responses.push(response);
-  });
+        async function submitSurvey() {
+            // ══════════════════════════════════════════
+            // CANDADO 1: Session Lock — localStorage
+            // ══════════════════════════════════════════
+            if (hasVotedInSession(currentSurveyId)) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'Ya votaste en esta encuesta',
+                    text: 'Solo se permite un voto por persona.',
+                    confirmButtonColor: '#d97706'
+                });
+            }
 
-  // Recoger respuestas de clics
-  Object.entries(surveyResponses).forEach(([qId, val]) => {
-    const qIdInt = parseInt(qId);
-    if (!responses.find(r => r.questionId === qIdInt)) {
-      responses.push({
-        questionId: qIdInt,
-        answer: val
-      });
-    }
-  });
+            // ══════════════════════════════════════════
+            // CANDADO 2: Validar Teléfono de Guerrero
+            // ══════════════════════════════════════════
+            const phoneInput = document.getElementById('survey-phone');
+            const phoneErrorEl = document.getElementById('phone-error');
+            const phone = phoneInput ? phoneInput.value.trim() : '';
 
-  if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
+            const phoneCheck = validateGuerreroPhone(phone);
+            if (!phoneCheck.valid) {
+                if (phoneErrorEl) {
+                    phoneErrorEl.textContent = phoneCheck.error;
+                    phoneErrorEl.classList.remove('hidden');
+                }
+                phoneInput?.focus();
+                return showToast('📱 Verifica tu teléfono de Guerrero', 'error');
+            }
+            if (phoneErrorEl) phoneErrorEl.classList.add('hidden');
 
-  try {
-    // ============================================
-    // ENVÍO DIRECTO - El backend ya valida duplicados
-    // ============================================
-    const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${auth_token}` 
-      },
-      body: JSON.stringify({ responses })
-    });
+            // ══════════════════════════════════════════
+            // CANDADO 3: Confianza Obligatoria
+            // ══════════════════════════════════════════
+            const hasConfidenceQuestion = document.querySelector('[data-type="confidence"]');
+            const confGate = document.getElementById('confidence-gate');
 
-    const data = await res.json();
+            if (!hasConfidenceQuestion && confGate && !confGate.classList.contains('hidden')) {
+                if (!gateConfidence) {
+                    const confErr = document.getElementById('confidence-error');
+                    if (confErr) {
+                        confErr.textContent = 'Selecciona tu nivel de confianza';
+                        confErr.classList.remove('hidden');
+                    }
+                    return showToast('🎯 Selecciona tu nivel de confianza', 'error');
+                }
+            }
 
-    if (res.ok) {
-      showToast('✅ Sello Digital Verificado: +50 PTS', 'success');
-      
-      if (data.pointsEarned) {
-        const ptsEl = document.getElementById('user-points');
-        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
-        ptsEl.textContent = `${current + data.pointsEarned} PTS de Influencia`;
-      }
-      
-      closeSurvey();
-      loadSurveys();
-    } else {
-      showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
-    }
+            // ══════════════════════════════════════════
+            // Generar Phone Hash (SHA-256)
+            // ══════════════════════════════════════════
+            const phoneHash = await sha256(phone);
 
-  } catch (e) { 
-    console.error('Error en submitSurvey:', e);
-    showToast('Fallo de Sincronización: ' + e.message, 'error'); 
-  }
-}
+            // Recoger respuestas de inputs
+            const inputs = document.querySelectorAll('.survey-input');
+            const responses = [];
+
+            inputs.forEach(input => {
+                const qId = parseInt(input.dataset.questionId);
+                const type = input.dataset.type;
+                const value = input.value;
+                const response = { questionId: qId, answer: value };
+
+                if (type === 'confidence') {
+                    response.confidence = parseInt(value);
+                }
+
+                responses.push(response);
+            });
+
+            // Recoger respuestas de clics
+            Object.entries(surveyResponses).forEach(([qId, val]) => {
+                const qIdInt = parseInt(qId);
+                if (!responses.find(r => r.questionId === qIdInt)) {
+                    responses.push({
+                        questionId: qIdInt,
+                        answer: val,
+                        confidence: gateConfidence || null
+                    });
+                }
+            });
+
+            if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
+
+            try {
+                const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${auth_token}`
+                    },
+                    body: JSON.stringify({ responses, phoneHash })
+                });
+
+                const data = await res.json();
+
+                if (res.status === 409) {
+                    // Voto duplicado detectado por el backend
+                    markVotedInSession(currentSurveyId, phoneHash);
+                    return Swal.fire({
+                        icon: 'warning',
+                        title: 'Ya registraste tu predicción',
+                        text: data.error || 'Solo se permite un voto por persona en esta encuesta.',
+                        confirmButtonColor: '#d97706'
+                    });
+                }
+
+                if (res.ok) {
+                    // Marcar sesión local
+                    markVotedInSession(currentSurveyId, phoneHash);
+
+                    showToast('✅ Sello Digital Verificado: +50 PTS', 'success');
+
+                    if (data.pointsEarned) {
+                        const ptsEl = document.getElementById('user-points');
+                        if (ptsEl) {
+                            const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+                            ptsEl.textContent = `${current + data.pointsEarned} PTS de Influencia`;
+                        }
+                    }
+
+                    closeSurvey();
+                    loadSurveys();
+                } else {
+                    showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
+                }
+
+            } catch (e) {
+                console.error('Error en submitSurvey:', e);
+                showToast('Fallo de Sincronización: ' + e.message, 'error');
+            }
+        }
 
 
 
@@ -2382,21 +2572,21 @@ const ASPIRANTES = [
                 ]);
 
                 // Verificar que ambos respondieron OK antes de parsear
-                const participation = partRes.ok  ? await partRes.json()  : [];
-                const comparison   = compRes.ok  ? await compRes.json()  : [];
+                const participation = partRes.ok ? await partRes.json() : [];
+                const comparison = compRes.ok ? await compRes.json() : [];
 
                 // Si ambos están vacíos no hay nada que graficar
                 if ((!participation || participation.length === 0) &&
-                    (!comparison   || comparison.length === 0)) {
+                    (!comparison || comparison.length === 0)) {
                     showToast('Sin datos históricos para este municipio', 'error');
                     if (charts.part) { charts.part.destroy(); charts.part = null; }
-                    if (charts.res)  { charts.res.destroy();  charts.res  = null; }
+                    if (charts.res) { charts.res.destroy(); charts.res = null; }
                     return;
                 }
 
                 renderCharts({
                     participation: Array.isArray(participation) ? participation : [],
-                    comparison:    Array.isArray(comparison)    ? comparison    : []
+                    comparison: Array.isArray(comparison) ? comparison : []
                 });
             } catch (e) {
                 console.error('Error loading historical data:', e);
@@ -2656,51 +2846,51 @@ const ASPIRANTES = [
 
         // (updateConfidenceDisplay definida arriba — versión única)
 
-// ============================================
-// PREDICCIONES — FLUJO UNIFICADO (SIN BLOQUEO POR AUTH)
-// ============================================
+        // ============================================
+        // PREDICCIONES — FLUJO UNIFICADO (SIN BLOQUEO POR AUTH)
+        // ============================================
 
-// Función interna que realmente envía la predicción
-async function doSendPrediction(prediction) {
-    const { municipalityId, candidateId, confidence } = prediction;
+        // Función interna que realmente envía la predicción
+        async function doSendPrediction(prediction) {
+            const { municipalityId, candidateId, confidence } = prediction;
 
-    console.log('📤 Enviando predicción (doSendPrediction):', {
-        municipalityId,
-        candidateId,
-        confidence
-    });
+            console.log('📤 Enviando predicción (doSendPrediction):', {
+                municipalityId,
+                candidateId,
+                confidence
+            });
 
-    if (!municipalityId || !candidateId) {
-        showToast('Selecciona un municipio y un candidato', 'error');
-        return;
-    }
+            if (!municipalityId || !candidateId) {
+                showToast('Selecciona un municipio y un candidato', 'error');
+                return;
+            }
 
-    try {
-        const response = await fetch('/api/predictions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-                // NO mandamos Authorization; el backend maneja usuario anónimo si no hay token.
-            },
-            body: JSON.stringify({
-                municipalityId: parseInt(municipalityId, 10),
-                candidateId: candidateId, // puede ser "21" o "candidato_21"; el backend lo normaliza
-                confidence: parseInt(confidence || 50, 10)
-            })
-        });
+            try {
+                const response = await fetch('/api/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // NO mandamos Authorization; el backend maneja usuario anónimo si no hay token.
+                    },
+                    body: JSON.stringify({
+                        municipalityId: parseInt(municipalityId, 10),
+                        candidateId: candidateId, // puede ser "21" o "candidato_21"; el backend lo normaliza
+                        confidence: parseInt(confidence || 50, 10)
+                    })
+                });
 
-        const result = await response.json();
+                const result = await response.json();
 
-        if (!response.ok) {
-            throw new Error(result.error || 'Error al guardar predicción');
-        }
+                if (!response.ok) {
+                    throw new Error(result.error || 'Error al guardar predicción');
+                }
 
-        // Mostrar mensaje de éxito
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Predicción Registrada!',
-                html: result.prediction ? `
+                // Mostrar mensaje de éxito
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Predicción Registrada!',
+                        html: result.prediction ? `
                     <div style="text-align: center;">
                         <h4>${result.prediction.candidateName}</h4>
                         <p>Partido: ${result.prediction.candidateParty}</p>
@@ -2708,112 +2898,112 @@ async function doSendPrediction(prediction) {
                         ${result.pointsEarned ? `<hr><p style="color:#28a745;">+${result.pointsEarned} puntos</p>` : ''}
                     </div>
                 ` : 'Tu predicción ha sido guardada correctamente.',
-                confirmButtonText: 'Aceptar',
-                confirmButtonColor: '#28a745'
-            });
-        } else {
-            showToast(result.message || 'Predicción registrada', 'success');
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#28a745'
+                    });
+                } else {
+                    showToast(result.message || 'Predicción registrada', 'success');
+                }
+
+                // Refrescar estadísticas (si existe)
+                if (typeof updatePredictionStats === 'function') {
+                    updatePredictionStats(municipalityId);
+                }
+
+                // Refrescar puntos del usuario (si hay login real)
+                if (typeof updateUserPoints === 'function') {
+                    updateUserPoints();
+                }
+
+                return result;
+
+            } catch (error) {
+                console.error('❌ Error al enviar predicción:', error);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'No se pudo guardar tu predicción',
+                        confirmButtonText: 'Entendido'
+                    });
+                } else {
+                    showToast('Error al guardar predicción: ' + error.message, 'error');
+                }
+
+                throw error;
+            }
         }
 
-        // Refrescar estadísticas (si existe)
-        if (typeof updatePredictionStats === 'function') {
-            updatePredictionStats(municipalityId);
-        }
 
-        // Refrescar puntos del usuario (si hay login real)
-        if (typeof updateUserPoints === 'function') {
-            updateUserPoints();
-        }
+        // ============================================
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // ============================================
 
-        return result;
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log('🚀 Inicializando sistema de autenticación Guardianes');
 
-    } catch (error) {
-        console.error('❌ Error al enviar predicción:', error);
+            // Verificar si hay sesión activa
+            if (auth.isAuthenticated()) {
+                try {
+                    const response = await auth.authenticatedFetch('/api/auth/me');
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('✅ Usuario autenticado:', userData.name);
 
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'No se pudo guardar tu predicción',
-                confirmButtonText: 'Entendido'
-            });
-        } else {
-            showToast('Error al guardar predicción: ' + error.message, 'error');
-        }
-
-        throw error;
-    }
-}
-
-
-// ============================================
-// INICIALIZACIÓN AL CARGAR LA PÁGINA
-// ============================================
-
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 Inicializando sistema de autenticación Guardianes');
-    
-    // Verificar si hay sesión activa
-    if (auth.isAuthenticated()) {
-        try {
-            const response = await auth.authenticatedFetch('/api/auth/me');
-            if (response.ok) {
-                const userData = await response.json();
-                console.log('✅ Usuario autenticado:', userData.name);
-                
-                // Actualizar UI con info del usuario
-                if (document.getElementById('userInfo')) {
-                    document.getElementById('userInfo').innerHTML = `
+                        // Actualizar UI con info del usuario
+                        if (document.getElementById('userInfo')) {
+                            document.getElementById('userInfo').innerHTML = `
                         <span>👤 ${userData.name}</span>
                         <span>🏆 ${userData.points} puntos</span>
                     `;
+                        }
+                    }
+                } catch (error) {
+                    console.log('⚠️ Sesión no válida, limpiando...');
+                    auth.logout();
                 }
             }
-        } catch (error) {
-            console.log('⚠️ Sesión no válida, limpiando...');
-            auth.logout();
-        }
-    }
-});
+        });
 
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
 
-function updateUserPoints() {
-    // Actualizar puntos en la UI
-    if (auth.isAuthenticated() && auth.user) {
-        fetch('/api/auth/me', {
-            headers: auth.getAuthHeaders()
-        })
-        .then(res => res.json())
-        .then(data => {
-            auth.user.points = data.points;
-            localStorage.setItem('user', JSON.stringify(auth.user));
-            
-            // Actualizar UI
-            const pointsElements = document.querySelectorAll('.user-points');
-            pointsElements.forEach(el => {
-                el.textContent = data.points;
-            });
-        })
-        .catch(console.error);
-    }
-}
+        function updateUserPoints() {
+            // Actualizar puntos en la UI
+            if (auth.isAuthenticated() && auth.user) {
+                fetch('/api/auth/me', {
+                    headers: auth.getAuthHeaders()
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        auth.user.points = data.points;
+                        localStorage.setItem('user', JSON.stringify(auth.user));
 
-function updatePredictionStats(municipalityId) {
-    // Recargar estadísticas de predicción
-    fetch(`/api/predictions/stats/${municipalityId}`)
-        .then(res => res.json())
-        .then(data => {
-            console.log('📊 Estadísticas actualizadas:', data);
-            // Actualizar gráficas si existen
-            if (typeof updateCharts === 'function') {
-                updateCharts(data);
+                        // Actualizar UI
+                        const pointsElements = document.querySelectorAll('.user-points');
+                        pointsElements.forEach(el => {
+                            el.textContent = data.points;
+                        });
+                    })
+                    .catch(console.error);
             }
-        })
-        .catch(console.error);
-}
+        }
+
+        function updatePredictionStats(municipalityId) {
+            // Recargar estadísticas de predicción
+            fetch(`/api/predictions/stats/${municipalityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('📊 Estadísticas actualizadas:', data);
+                    // Actualizar gráficas si existen
+                    if (typeof updateCharts === 'function') {
+                        updateCharts(data);
+                    }
+                })
+                .catch(console.error);
+        }
 
         async function loadPredictionResults(municipalityId) {
             try {
@@ -2859,252 +3049,252 @@ function updatePredictionStats(municipalityId) {
         }
         if (auth_token) showPortal();
 
-// ============================================
-// FUNCIONES DE UI PARA AUTENTICACIÓN
-// ============================================
-class GuardianesAuth {
-    constructor() {
-        this.accessToken = localStorage.getItem('guardianToken');
-        this.user = JSON.parse(localStorage.getItem('user') || 'null');
-        this.pendingPrediction = null;
-    }
-    
-    isAuthenticated() {
-        return !!this.accessToken;
-    }
-    
-    getAuthHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.accessToken}`
-        };
-    }
-    
-    async authenticatedFetch(url, options = {}) {
-        options.headers = {
-            ...options.headers,
-            ...this.getAuthHeaders()
-        };
-        
-        const response = await fetch(url, options);
-        
-        if (response.status === 401) {
-            this.logout();
-            location.reload();
-        }
-        
-        return response;
-    }
-    
-    logout() {
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-const auth = new GuardianesAuth();
-function closeAuthModal() {
-    document.getElementById('authModal').classList.remove('show');
-    if (auth.otpTimer) {
-        clearInterval(auth.otpTimer);
-    }
-}
-
-async function requestOTP() {
-    const phone = document.getElementById('phoneInput').value.trim();
-    
-    if (!/^\d{10}$/.test(phone)) {
-        Swal.fire('Error', 'Ingresa 10 dígitos sin espacios ni guiones', 'error');
-        return;
-    }
-    
-    try {
-        // Mostrar loading
-        Swal.fire({
-            title: 'Enviando código...',
-            text: 'Por favor espera',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-        
-        const response = await fetch('/api/auth/request-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-        });
-        
-        const data = await response.json();
-        
-        Swal.close();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Error al enviar código');
-        }
-        
-        // Guardar número y mostrar siguiente paso
-        auth.phoneNumber = phone;
-        document.getElementById('phoneStep').classList.remove('active');
-        document.getElementById('codeStep').classList.add('active');
-        document.getElementById('phoneLast4').textContent = data.phoneLast4;
-        
-        // Iniciar timer
-        startOTPTimer();
-        
-        // En desarrollo, mostrar código
-        if (data.debug_otp) {
-            console.log('🔑 Código de prueba:', data.debug_otp);
-            Swal.fire('Código de Prueba', `Tu código es: ${data.debug_otp}`, 'info');
-        }
-        
-    } catch (error) {
-        Swal.fire('Error', error.message, 'error');
-    }
-}
-
-async function verifyCode() {
-    const code = document.getElementById('codeInput').value.trim();
-    
-    if (!/^\d{6}$/.test(code)) {
-        Swal.fire('Error', 'Ingresa el código de 6 dígitos', 'error');
-        return;
-    }
-    
-    try {
-        Swal.fire({
-            title: 'Verificando...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-        
-        const response = await fetch('/api/auth/verify-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                phone: auth.phoneNumber, 
-                code 
-            })
-        });
-        
-        const data = await response.json();
-        
-        Swal.close();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Código incorrecto');
-        }
-        
-        // Guardar tokens y usuario
-        auth.accessToken = data.accessToken;
-        auth.refreshToken = data.refreshToken;
-        auth.user = data.user;
-        
-        localStorage.setItem('accessToken', auth.accessToken);
-        localStorage.setItem('refreshToken', auth.refreshToken);
-        localStorage.setItem('user', JSON.stringify(auth.user));
-        
-        // Mostrar éxito
-        document.getElementById('codeStep').classList.remove('active');
-        document.getElementById('successStep').classList.add('active');
-        document.getElementById('welcomeMessage').textContent = 
-            `Bienvenido ${auth.user.name}. Ya puedes hacer predicciones y ganar puntos.`;
-        
-        // Si hay predicción pendiente, enviarla
-        if (auth.pendingPrediction) {
-            setTimeout(() => {
-                closeAuthModal();
-                submitAuthenticatedPrediction(auth.pendingPrediction);
-            }, 2000);
-        }
-        
-    } catch (error) {
-        Swal.fire('Error', error.message, 'error');
-    }
-}
-
-function backToPhone() {
-    document.getElementById('phoneStep').classList.add('active');
-    document.getElementById('codeStep').classList.remove('active');
-    document.getElementById('phoneInput').value = '';
-    document.getElementById('codeInput').value = '';
-    if (auth.otpTimer) {
-        clearInterval(auth.otpTimer);
-    }
-}
-
-function startOTPTimer() {
-    let seconds = 600; // 10 minutos
-    
-    auth.otpTimer = setInterval(() => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        document.getElementById('timerDisplay').textContent = 
-            `Código válido por: ${minutes}:${secs.toString().padStart(2, '0')}`;
-        
-        seconds--;
-        
-        if (seconds < 0) {
-            clearInterval(auth.otpTimer);
-            document.getElementById('timerDisplay').textContent = 'Código expirado';
-        }
-    }, 1000);
-}
-
-</script>
-<script>
-// ============================================
-// PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
-// ============================================
-
-(function() {
-    // Función interna que realmente envía la predicción
-    async function doSendPrediction(prediction) {
-        const { municipalityId, candidateId, confidence } = prediction;
-
-        console.log('📤 Enviando predicción (doSendPrediction):', {
-            municipalityId,
-            candidateId,
-            confidence
-        });
-
-        if (!municipalityId || !candidateId) {
-            if (typeof showToast === 'function') {
-                showToast('Selecciona un municipio y un candidato', 'error');
-            } else {
-                alert('Selecciona un municipio y un candidato');
-            }
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/predictions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                    // Importante: sin Authorization; backend ya maneja usuario anónimo.
-                },
-                body: JSON.stringify({
-                    municipalityId: parseInt(municipalityId, 10),
-                    candidateId: candidateId, // "21" o "candidato_21" → backend lo normaliza
-                    confidence: parseInt(confidence || 50, 10)
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Error al guardar predicción');
+        // ============================================
+        // FUNCIONES DE UI PARA AUTENTICACIÓN
+        // ============================================
+        class GuardianesAuth {
+            constructor() {
+                this.accessToken = localStorage.getItem('guardianToken');
+                this.user = JSON.parse(localStorage.getItem('user') || 'null');
+                this.pendingPrediction = null;
             }
 
-            // Mensaje de éxito
-            if (typeof Swal !== 'undefined') {
+            isAuthenticated() {
+                return !!this.accessToken;
+            }
+
+            getAuthHeaders() {
+                return {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}`
+                };
+            }
+
+            async authenticatedFetch(url, options = {}) {
+                options.headers = {
+                    ...options.headers,
+                    ...this.getAuthHeaders()
+                };
+
+                const response = await fetch(url, options);
+
+                if (response.status === 401) {
+                    this.logout();
+                    location.reload();
+                }
+
+                return response;
+            }
+
+            logout() {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        const auth = new GuardianesAuth();
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('show');
+            if (auth.otpTimer) {
+                clearInterval(auth.otpTimer);
+            }
+        }
+
+        async function requestOTP() {
+            const phone = document.getElementById('phoneInput').value.trim();
+
+            if (!/^\d{10}$/.test(phone)) {
+                Swal.fire('Error', 'Ingresa 10 dígitos sin espacios ni guiones', 'error');
+                return;
+            }
+
+            try {
+                // Mostrar loading
                 Swal.fire({
-                    icon: 'success',
-                    title: '¡Predicción Registrada!',
-                    html: result.prediction ? `
+                    title: 'Enviando código...',
+                    text: 'Por favor espera',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch('/api/auth/request-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                Swal.close();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error al enviar código');
+                }
+
+                // Guardar número y mostrar siguiente paso
+                auth.phoneNumber = phone;
+                document.getElementById('phoneStep').classList.remove('active');
+                document.getElementById('codeStep').classList.add('active');
+                document.getElementById('phoneLast4').textContent = data.phoneLast4;
+
+                // Iniciar timer
+                startOTPTimer();
+
+                // En desarrollo, mostrar código
+                if (data.debug_otp) {
+                    console.log('🔑 Código de prueba:', data.debug_otp);
+                    Swal.fire('Código de Prueba', `Tu código es: ${data.debug_otp}`, 'info');
+                }
+
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        }
+
+        async function verifyCode() {
+            const code = document.getElementById('codeInput').value.trim();
+
+            if (!/^\d{6}$/.test(code)) {
+                Swal.fire('Error', 'Ingresa el código de 6 dígitos', 'error');
+                return;
+            }
+
+            try {
+                Swal.fire({
+                    title: 'Verificando...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch('/api/auth/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: auth.phoneNumber,
+                        code
+                    })
+                });
+
+                const data = await response.json();
+
+                Swal.close();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Código incorrecto');
+                }
+
+                // Guardar tokens y usuario
+                auth.accessToken = data.accessToken;
+                auth.refreshToken = data.refreshToken;
+                auth.user = data.user;
+
+                localStorage.setItem('accessToken', auth.accessToken);
+                localStorage.setItem('refreshToken', auth.refreshToken);
+                localStorage.setItem('user', JSON.stringify(auth.user));
+
+                // Mostrar éxito
+                document.getElementById('codeStep').classList.remove('active');
+                document.getElementById('successStep').classList.add('active');
+                document.getElementById('welcomeMessage').textContent =
+                    `Bienvenido ${auth.user.name}. Ya puedes hacer predicciones y ganar puntos.`;
+
+                // Si hay predicción pendiente, enviarla
+                if (auth.pendingPrediction) {
+                    setTimeout(() => {
+                        closeAuthModal();
+                        submitAuthenticatedPrediction(auth.pendingPrediction);
+                    }, 2000);
+                }
+
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        }
+
+        function backToPhone() {
+            document.getElementById('phoneStep').classList.add('active');
+            document.getElementById('codeStep').classList.remove('active');
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('codeInput').value = '';
+            if (auth.otpTimer) {
+                clearInterval(auth.otpTimer);
+            }
+        }
+
+        function startOTPTimer() {
+            let seconds = 600; // 10 minutos
+
+            auth.otpTimer = setInterval(() => {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.getElementById('timerDisplay').textContent =
+                    `Código válido por: ${minutes}:${secs.toString().padStart(2, '0')}`;
+
+                seconds--;
+
+                if (seconds < 0) {
+                    clearInterval(auth.otpTimer);
+                    document.getElementById('timerDisplay').textContent = 'Código expirado';
+                }
+            }, 1000);
+        }
+
+    </script>
+    <script>
+        // ============================================
+        // PREDICCIONES — EXPOSICIÓN GLOBAL (window.*)
+        // ============================================
+
+        (function () {
+            // Función interna que realmente envía la predicción
+            async function doSendPrediction(prediction) {
+                const { municipalityId, candidateId, confidence } = prediction;
+
+                console.log('📤 Enviando predicción (doSendPrediction):', {
+                    municipalityId,
+                    candidateId,
+                    confidence
+                });
+
+                if (!municipalityId || !candidateId) {
+                    if (typeof showToast === 'function') {
+                        showToast('Selecciona un municipio y un candidato', 'error');
+                    } else {
+                        alert('Selecciona un municipio y un candidato');
+                    }
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/predictions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                            // Importante: sin Authorization; backend ya maneja usuario anónimo.
+                        },
+                        body: JSON.stringify({
+                            municipalityId: parseInt(municipalityId, 10),
+                            candidateId: candidateId, // "21" o "candidato_21" → backend lo normaliza
+                            confidence: parseInt(confidence || 50, 10)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Error al guardar predicción');
+                    }
+
+                    // Mensaje de éxito
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Predicción Registrada!',
+                            html: result.prediction ? `
                         <div style="text-align: center;">
                             <h4>${result.prediction.candidateName}</h4>
                             <p>Partido: ${result.prediction.candidateParty}</p>
@@ -3112,211 +3302,210 @@ function startOTPTimer() {
                             ${result.pointsEarned ? `<hr><p style="color:#28a745;">+${result.pointsEarned} puntos</p>` : ''}
                         </div>
                     ` : 'Tu predicción ha sido guardada correctamente.',
-                    confirmButtonText: 'Aceptar',
-                    confirmButtonColor: '#28a745'
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#28a745'
+                        });
+                    } else if (typeof showToast === 'function') {
+                        showToast(result.message || 'Predicción registrada', 'success');
+                    } else {
+                        alert('Predicción registrada correctamente');
+                    }
+
+                    // Refrescar estadísticas si existe
+                    if (typeof updatePredictionStats === 'function') {
+                        updatePredictionStats(municipalityId);
+                    }
+
+                    // Refrescar puntos del usuario si hay auth real
+                    if (typeof updateUserPoints === 'function') {
+                        updateUserPoints();
+                    }
+
+                    return result;
+
+                } catch (error) {
+                    console.error('❌ Error al enviar predicción:', error);
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message || 'No se pudo guardar tu predicción',
+                            confirmButtonText: 'Entendido'
+                        });
+                    } else if (typeof showToast === 'function') {
+                        showToast('Error al guardar predicción: ' + error.message, 'error');
+                    } else {
+                        alert('Error al guardar predicción: ' + error.message);
+                    }
+
+                    throw error;
+                }
+            }
+
+            // API global usada por los botones (onclick="savePrediction(...)")
+            window.savePrediction = function (municipalityId, candidateId, confidence) {
+                return doSendPrediction({ municipalityId, candidateId, confidence });
+            };
+
+            // Compatibilidad: si en algún lugar todavía llaman a submitAuthenticatedPrediction,
+            // lo redirigimos al mismo flujo.
+            window.submitAuthenticatedPrediction = function (prediction) {
+                return doSendPrediction(prediction);
+            };
+
+            console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
+
+        })();
+
+
+        // ============================================
+        // FUNCIÓN PRINCIPAL: LOGIN SIMPLIFICADO
+        // ============================================
+        async function quickLogin() {
+            const phoneInput = document.getElementById('user-phone');
+            const phone = phoneInput.value.trim().replace(/\s+/g, '');
+
+            // Validar formato
+            if (phone.length !== 10) {
+                showToast('Ingresa 10 dígitos', 'error');
+                phoneInput.focus();
+                return;
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                showToast('Solo números', 'error');
+                phoneInput.focus();
+                return;
+            }
+
+            // ============================================
+            // 🔒 VALIDACIÓN TÉCNICA DE LADAS DE GUERRERO
+            // ============================================
+            const validAreaCodes = [
+                '721', // Taxco
+                '727', // Iguala
+                '732', // Tlapa
+                '733', // Chilpancingo
+                '736', // Arcelia
+                '741', // Tierra Colorada
+                '742', // Coyuca de Benítez
+                '744', // Acapulco
+                '745', // Cruz Grande
+                '747', // Zihuatanejo
+                '753', // Teloloapan
+                '754', // San Marcos
+                '755', // Atoyac
+                '756', // Tecpan
+                '757', // Coyuca de Catalán
+                '758', // Petatlán
+                '762', // Chilapa
+                '767', // Huamuxtitlán
+                '781'  // Ometepec
+            ];
+
+            const areaCode = phone.substring(0, 3);
+
+            if (!validAreaCodes.includes(areaCode)) {
+                showToast(
+                    `❌ Código ${areaCode} no válido. Solo números de Guerrero (744, 747, 733, etc.)`,
+                    'error'
+                );
+                phoneInput.focus();
+                return;
+            }
+
+            try {
+                console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
+
+                const res = await fetch(`${API_URL}/auth/quick-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
                 });
-            } else if (typeof showToast === 'function') {
-                showToast(result.message || 'Predicción registrada', 'success');
-            } else {
-                alert('Predicción registrada correctamente');
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Guardar token y datos
+                    localStorage.setItem('guardianToken', data.token);
+                    localStorage.setItem('accessToken', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    auth_token = data.token;
+                    userPhone = phone;
+
+                    // Actualizar UI
+                    document.getElementById('user-points').textContent =
+                        `${data.user.points || 0} PTS de Influencia`;
+
+                    // Mostrar portal
+                    showPortal();
+
+                    // Mensaje de bienvenida
+                    showToast(data.message || '✅ Acceso Autorizado', 'success');
+
+                    console.log('✅ Login exitoso:', data.user);
+                } else {
+                    showToast(data.error || 'Error de acceso', 'error');
+                }
+
+            } catch (error) {
+                console.error('❌ Error en login:', error);
+                showToast('Error de conexión. Intenta de nuevo.', 'error');
             }
-
-            // Refrescar estadísticas si existe
-            if (typeof updatePredictionStats === 'function') {
-                updatePredictionStats(municipalityId);
-            }
-
-            // Refrescar puntos del usuario si hay auth real
-            if (typeof updateUserPoints === 'function') {
-                updateUserPoints();
-            }
-
-            return result;
-
-        } catch (error) {
-            console.error('❌ Error al enviar predicción:', error);
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'No se pudo guardar tu predicción',
-                    confirmButtonText: 'Entendido'
-                });
-            } else if (typeof showToast === 'function') {
-                showToast('Error al guardar predicción: ' + error.message, 'error');
-            } else {
-                alert('Error al guardar predicción: ' + error.message);
-            }
-
-            throw error;
         }
-    }
-
-    // API global usada por los botones (onclick="savePrediction(...)")
-    window.savePrediction = function(municipalityId, candidateId, confidence) {
-        return doSendPrediction({ municipalityId, candidateId, confidence });
-    };
-
-    // Compatibilidad: si en algún lugar todavía llaman a submitAuthenticatedPrediction,
-    // lo redirigimos al mismo flujo.
-    window.submitAuthenticatedPrediction = function(prediction) {
-        return doSendPrediction(prediction);
-    };
-
-console.log('✅ Funciones de predicción expuestas en window.savePrediction y window.submitAuthenticatedPrediction');
-    
-})();
 
 
-// ============================================
-// FUNCIÓN PRINCIPAL: LOGIN SIMPLIFICADO
-// ============================================
-async function quickLogin() {
-  const phoneInput = document.getElementById('user-phone');
-  const phone = phoneInput.value.trim().replace(/\s+/g, '');
-  
-  // Validar formato
-  if (phone.length !== 10) {
-    showToast('Ingresa 10 dígitos', 'error');
-    phoneInput.focus();
-    return;
-  }
-  
-  if (!/^\d{10}$/.test(phone)) {
-    showToast('Solo números', 'error');
-    phoneInput.focus();
-    return;
-  }
-  
-  // ============================================
-  // 🔒 VALIDACIÓN TÉCNICA DE LADAS DE GUERRERO
-  // ============================================
-  const validAreaCodes = [
-    '721', // Taxco
-    '727', // Iguala
-    '732', // Tlapa
-    '733', // Chilpancingo
-    '736', // Arcelia
-    '741', // Tierra Colorada
-    '742', // Coyuca de Benítez
-    '744', // Acapulco
-    '745', // Cruz Grande
-    '747', // Zihuatanejo
-    '753', // Teloloapan
-    '754', // San Marcos
-    '755', // Atoyac
-    '756', // Tecpan
-    '757', // Coyuca de Catalán
-    '758', // Petatlán
-    '762', // Chilapa
-    '767', // Huamuxtitlán
-    '781'  // Ometepec
-  ];
-  
-  const areaCode = phone.substring(0, 3);
-  
-  if (!validAreaCodes.includes(areaCode)) {
-    showToast(
-      `❌ Código ${areaCode} no válido. Solo números de Guerrero (744, 747, 733, etc.)`,
-      'error'
-    );
-    phoneInput.focus();
-    return;
-  }
+        // ============================================
+        // FUNCIÓN: MOSTRAR PORTAL
+        // ============================================
+        async function showPortal() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('portal-section').classList.remove('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
 
-  try {
-    console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
-    
-    const res = await fetch(`${API_URL}/auth/quick-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone })
-    });
-    
-    const data = await res.json();
-    
-    if (data.success) {
-      // Guardar token y datos
-      localStorage.setItem('guardianToken', data.token);
-      localStorage.setItem('accessToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      auth_token = data.token;
-      userPhone = phone;
-      
-      // Actualizar UI
-      document.getElementById('user-points').textContent = 
-        `${data.user.points || 0} PTS de Influencia`;
-      
-      // Mostrar portal
-      showPortal();
-      
-      // Mensaje de bienvenida
-      showToast(data.message || '✅ Acceso Autorizado', 'success');
-      
-      console.log('✅ Login exitoso:', data.user);
-    } else {
-      showToast(data.error || 'Error de acceso', 'error');
-    }
-    
-  } catch (error) {
-    console.error('❌ Error en login:', error);
-    showToast('Error de conexión. Intenta de nuevo.', 'error');
-  }
-}
+            // Cargar datos
+            loadSurveys();
+            populateMunicipios();
+        }
 
+        // ============================================
+        // FUNCIÓN: LOGOUT
+        // ============================================
+        function logout() {
+            localStorage.removeItem('guardianToken');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            auth_token = null;
+            location.reload();
+        }
 
-// ============================================
-// FUNCIÓN: MOSTRAR PORTAL
-// ============================================
-async function showPortal() {
-    document.getElementById('auth-section').classList.add('hidden');
-    document.getElementById('portal-section').classList.remove('hidden');
-    document.getElementById('user-info').classList.remove('hidden');
-    
-    // Cargar datos
-    loadSurveys();
-    populateMunicipios();
-}
+        // ============================================
+        // TOAST (NOTIFICACIONES)
+        // ============================================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${type === 'success' ? 'bg-emerald-600' :
+                type === 'error' ? 'bg-red-600' :
+                    'bg-amber-600'
+                }`;
+            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
+            document.body.appendChild(toast);
 
-// ============================================
-// FUNCIÓN: LOGOUT
-// ============================================
-function logout() {
-    localStorage.removeItem('guardianToken');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    auth_token = null;
-    location.reload();
-}
+            setTimeout(() => {
+                toast.classList.add('animate-out', 'fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
-// ============================================
-// TOAST (NOTIFICACIONES)
-// ============================================
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${
-        type === 'success' ? 'bg-emerald-600' : 
-        type === 'error' ? 'bg-red-600' : 
-        'bg-amber-600'
-    }`;
-    toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('animate-out', 'fade-out');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// ============================================
-// AUTO-LOGIN SI YA HAY TOKEN
-// ============================================
-if (auth_token) {
-    console.log('🔑 Token encontrado, auto-login...');
-    showPortal();
-}
-</script>
+        // ============================================
+        // AUTO-LOGIN SI YA HAY TOKEN
+        // ============================================
+        if (auth_token) {
+            console.log('🔑 Token encontrado, auto-login...');
+            showPortal();
+        }
+    </script>
 
 </body>
 

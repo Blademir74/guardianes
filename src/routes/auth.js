@@ -33,8 +33,8 @@ router.post('/quick-login', async (req, res) => {
 
     // Validar formato (10 dígitos)
     if (!phone || !/^\d{10}$/.test(phone)) {
-      return res.status(400).json({ 
-        error: 'Número inválido. Deben ser 10 dígitos (ejemplo: 7441234567)' 
+      return res.status(400).json({
+        error: 'Número inválido. Deben ser 10 dígitos (ejemplo: 7441234567)'
       });
     }
 
@@ -62,9 +62,9 @@ router.post('/quick-login', async (req, res) => {
       '767', // Ciudad Altamirano, Coyuca de Catalán, Pungarabato
       '781'  // Coyuca de Benítez, San Jerónimo de Juárez
     ];
-    
+
     const areaCode = phone.substring(0, 3);
-    
+
     if (!guerreroAreaCodes.includes(areaCode)) {
       return res.status(400).json({
         error: `Este número no es de Guerrero. Tu número debe empezar con una de estas ladas: ${guerreroAreaCodes.join(', ')}`,
@@ -93,14 +93,15 @@ router.post('/quick-login', async (req, res) => {
         INSERT INTO users (
           phone_hash,
           phone_last4,
+          area_code,
           level,
           device_fingerprint,
           is_active,
           created_at
         )
-        VALUES ($1, $2, 'Piloto', $3, true, NOW())
-        RETURNING id, phone_last4, name, points, level
-      `, [phoneHash, phone.slice(-4), fingerprint]);
+        VALUES ($1, $2, $3, 'Piloto', $4, true, NOW())
+        RETURNING id, phone_last4, area_code, name, points, level
+      `, [phoneHash, phone.slice(-4), areaCode, fingerprint]);
 
       result = insertResult;
       isNewUser = true;
@@ -111,10 +112,11 @@ router.post('/quick-login', async (req, res) => {
         UPDATE users 
         SET 
           device_fingerprint = $1,
+          area_code = $2,
           last_active = NOW()
-        WHERE id = $2
-      `, [fingerprint, result.rows[0].id]);
-      
+        WHERE id = $3
+      `, [fingerprint, areaCode, result.rows[0].id]);
+
       console.log(`✅ Usuario existente: ${phone.slice(-4)} (LADA: ${areaCode})`);
     }
 
@@ -123,7 +125,7 @@ router.post('/quick-login', async (req, res) => {
 
     // Generar JWT
     const token = jwt.sign(
-      { 
+      {
         userId: userId,
         phone: phone.slice(-4),
         level: 'Piloto',
@@ -146,14 +148,14 @@ router.post('/quick-login', async (req, res) => {
         level: 'Piloto',
         isNew: isNewUser
       },
-      message: isNewUser 
-        ? '¡Bienvenido a Guardianes Guerrero! 🗳️' 
+      message: isNewUser
+        ? '¡Bienvenido a Guardianes Guerrero! 🗳️'
         : '¡De vuelta, Guardián! 🎯'
     });
 
   } catch (error) {
     console.error('❌ Error en quick-login:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Error al procesar login',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -167,7 +169,7 @@ router.post('/quick-login', async (req, res) => {
 router.get('/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Token no proporcionado' });
     }
@@ -223,7 +225,7 @@ router.get('/me', async (req, res) => {
 router.put('/profile', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Token no proporcionado' });
     }
@@ -243,9 +245,9 @@ router.put('/profile', async (req, res) => {
       console.log(`✅ Perfil actualizado: Usuario ${decoded.userId}`);
     }
 
-    res.json({ 
-      success: true, 
-      message: 'Perfil actualizado' 
+    res.json({
+      success: true,
+      message: 'Perfil actualizado'
     });
 
   } catch (error) {

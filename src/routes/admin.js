@@ -1,12 +1,12 @@
 // src/routes/admin.js — VERSIÓN DEFINITIVA CORREGIDA
 const express = require('express');
-const router  = express.Router();
-const db      = require('../db');
+const router = express.Router();
+const db = require('../db');
 const { query } = db;
-const jwt     = require('jsonwebtoken');
-const bcrypt  = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'dev-admin-secret-2027';
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-2027-guerrero';
 
 // Helper: normalizar tipo de elección
 function normalizeElectionType(raw) {
@@ -23,9 +23,9 @@ async function syncCandidatesFromSurveyPayload(client, payload) {
     const { electionType, municipalityId, level, questions } = payload;
     let muniId = null;
     const normalizedType = normalizeElectionType(electionType);
-    
+
     const isGubernatura = (level && level.toLowerCase() === 'estado') || normalizedType === 'gubernatura';
-    
+
     if (!isGubernatura) {
       const parsed = parseInt(municipalityId, 10);
       muniId = Number.isNaN(parsed) ? null : parsed;
@@ -53,7 +53,7 @@ async function syncCandidatesFromSurveyPayload(client, payload) {
     }
 
     console.log(`🔁 Sincronizando ${candidates.length} candidatos para municipio=${muniId}`);
-    
+
     await client.query(
       `DELETE FROM candidates WHERE ((municipality_id = $1) OR ($1 IS NULL AND municipality_id IS NULL)) AND (election_type = $2 OR $2 IS NULL)`,
       [muniId, normalizedType || null]
@@ -209,10 +209,10 @@ router.put('/surveys/:id/status', authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     const { isActive } = req.body;
     if (isActive === undefined) return res.status(400).json({ error: 'isActive requerido' });
-    
+
     const result = await query('UPDATE surveys SET is_active = $1 WHERE id = $2 RETURNING id', [isActive, id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Encuesta no encontrada' });
-    
+
     res.json({ success: true, message: `Encuesta ${isActive ? 'activada' : 'pausada'}` });
   } catch (error) {
     console.error('❌ Error actualizando estado:', error.message);
@@ -229,16 +229,16 @@ router.delete('/surveys/:id', authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     client = await db.connect();
     await client.query('BEGIN');
-    
+
     await client.query('DELETE FROM survey_responses WHERE survey_id = $1', [id]);
     await client.query('DELETE FROM survey_questions WHERE survey_id = $1', [id]);
     const deleteResult = await client.query('DELETE FROM surveys WHERE id = $1 RETURNING id', [id]);
-    
+
     if (deleteResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Encuesta no encontrada' });
     }
-    
+
     await client.query('COMMIT');
     res.json({ success: true, message: 'Encuesta eliminada' });
   } catch (error) {
@@ -255,10 +255,12 @@ router.delete('/surveys/:id', authenticateAdmin, async (req, res) => {
 // ========================================
 router.get('/stats', authenticateAdmin, async (req, res) => {
   try {
-    const [users, predictions, surveys, incidents, pendingInc] = await Promise.all([
+    const [users, predictions, surveys, activeSurveys, totalResponses, incidents, pendingInc] = await Promise.all([
       query('SELECT COUNT(*) FROM users'),
       query('SELECT COUNT(*) FROM predictions'),
       query('SELECT COUNT(*) FROM surveys'),
+      query("SELECT COUNT(*) FROM surveys WHERE is_active = true"),
+      query('SELECT COUNT(*) FROM survey_responses'),
       query('SELECT COUNT(*) FROM incidents'),
       query("SELECT COUNT(*) FROM incidents WHERE status = 'pending'")
     ]);
@@ -266,7 +268,9 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
     res.json({
       totalUsers: parseInt(users.rows[0].count),
       totalPredictions: parseInt(predictions.rows[0].count),
-      activeSurveys: parseInt(surveys.rows[0].count),
+      totalSurveys: parseInt(surveys.rows[0].count),
+      activeSurveys: parseInt(activeSurveys.rows[0].count),
+      totalResponses: parseInt(totalResponses.rows[0].count),
       totalIncidents: parseInt(incidents.rows[0].count),
       pendingIncidents: parseInt(pendingInc.rows[0].count)
     });
@@ -290,6 +294,106 @@ router.get('/users', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('❌ Error usuarios:', error.message);
     res.status(500).json({ error: 'Error obteniendo usuarios' });
+  }
+});
+
+// ========================================
+// EXPORTAR CSV
+// ========================================
+router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Obtener encuesta
+    const surveyCheck = await query(`
+      SELECT s.title, s.election_type, m.name as municipality_name
+      FROM surveys s
+      LEFT JOIN municipalities m ON s.municipality_id = m.id
+      WHERE s.id = $1
+    `, [id]);
+
+    if (surveyCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Encuesta no encontrada' });
+    }
+
+    const { title, election_type, municipality_name } = surveyCheck.rows[0];
+    const surveyTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+
+    // Determinar Nivel
+    let surveyLevel = 'Estatal (Gubernatura)';
+    if (election_type === 'municipal') {
+      surveyLevel = `Municipal (${municipality_name || 'Desconocido'})`;
+    }
+
+    // ── Obtener mapa de candidatos para reemplazar IDs ──
+    const candidatesRes = await query('SELECT id, name FROM candidates');
+    const candidateMap = {};
+    candidatesRes.rows.forEach(c => {
+      candidateMap[String(c.id)] = c.name;
+      candidateMap[`candidato_${c.id}`] = c.name;
+    });
+
+    // Mapa de Ladas Guerrero
+    const guerreroRegions = {
+      '721': 'Norte', '727': 'Norte', '732': 'Tierra Caliente', '733': 'Norte',
+      '736': 'Norte', '741': 'Costa Chica', '742': 'Costa Grande', '744': 'Acapulco',
+      '745': 'Costa Chica', '747': 'Centro', '753': 'Costa Grande', '754': 'Centro',
+      '755': 'Costa Grande', '756': 'Montaña', '757': 'Montaña', '758': 'Costa Grande',
+      '762': 'Norte', '767': 'Tierra Caliente', '781': 'Costa Grande'
+    };
+
+    // Obtener respuestas con datos enriquecidos
+    const result = await query(`
+      SELECT 
+        sr.id AS response_id,
+        sq.question_text AS pregunta,
+        sq.question_type AS tipo_pregunta,
+        sr.response_value AS respuesta,
+        sr.confidence AS confianza,
+        COALESCE(CONCAT('****', RIGHT(u.phone_last4, 4)), 'ANONIMO') AS telefono_mascarado,
+        u.area_code,
+        u.name AS nombre_usuario,
+        TO_CHAR(sr.created_at, 'YYYY-MM-DD HH24:MI') AS fecha
+      FROM survey_responses sr
+      JOIN survey_questions sq ON sq.id = sr.question_id
+      LEFT JOIN users u ON u.id = sr.user_id
+      WHERE sr.survey_id = $1
+      ORDER BY sr.created_at DESC
+    `, [id]);
+
+    // Generar CSV
+    const headers = ['ID', 'Pregunta', 'Tipo', 'Respuesta', 'Confianza', 'Telefono', 'Nombre', 'Fecha'];
+    const csvRows = [headers.join(',')];
+
+    result.rows.forEach(r => {
+      // Intentar resolver nombre de candidato
+      let respuestaLimpia = r.respuesta || '';
+      if (candidateMap[respuestaLimpia]) {
+        respuestaLimpia = `${candidateMap[respuestaLimpia]} (${respuestaLimpia})`;
+      }
+
+      const row = [
+        r.response_id,
+        `"${(r.pregunta || '').replace(/"/g, '""')}"`,
+        r.tipo_pregunta,
+        `"${(respuestaLimpia).replace(/"/g, '""')}"`,
+        r.confianza || '',
+        r.telefono_mascarado,
+        `"${(r.nombre_usuario || 'ANÓNIMO').replace(/"/g, '""')}"`,
+        r.fecha
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = '\uFEFF' + csvRows.join('\n'); // BOM for Excel UTF-8
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="encuesta_${id}_${surveyTitle}.csv"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('❌ Error exportando CSV:', error.message);
+    res.status(500).json({ error: 'Error exportando datos' });
   }
 });
 
