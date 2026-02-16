@@ -1595,21 +1595,88 @@ console.log('   - testAuth(): Probar autenticación');
             { id: 85, name: "Zitlala" }
         ];
 
-        const ASPIRANTES = [
-            { id: "felix_salgado", name: "Félix Salgado", party: "Morena", img: "/img/felix_salgado.jpg" },
-            { id: "esthela_damian", name: "Esthela Damian Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
-            { id: "beatriz_mojica", name: "Beatriz Mojica", party: "Morena", img: "/img/beatriz_mojica.jpg" },
-            { id: "abelina_lopez", name: "Abelina Lopez Rodriguez", party: "Morena", img: "/img/abelina_lopez.jpg" },
-            { id: "victoriano_wences", name: "Victoriano Wences Real", party: "PT", img: "/img/victoriano_wences.jpg" },
-            { id: "ruben_cayetano", name: "Ruben Cayetano Garcia", party: "Morena", img: "/img/ruben_cayetano.jpg" },
-            { id: "pablo_sandoval", name: "Pablo Amilcar Sandoval", party: "Morena", img: "/img/pablo_sandoval.jpg" },
-            { id: "jacinto_gonzalez", name: "Jacinto Gonzalez Varona", party: "Morena", img: "/img/jacinto_gonzalez.jpg" },
-            { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
-            { id: "gabriela_bernal", name: "Gabriela Bernal Resendiz", party: "MC", img: "/img/gabriela_bernal.jpg" },
-            { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
-            { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
-            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: "null" }
-        ];
+    const ASPIRANTES = [
+  // ============================================
+  // CANDIDATOS REALES GUBERNATURA GUERRERO 2027
+  // Datos actualizados según encuestas y careos
+  // ============================================
+  
+  // MORENA (Proceso interno activo)
+  { 
+    id: "felix_salgado", 
+    name: "Félix Salgado Macedonio", 
+    party: "Morena", 
+    img: "/img/esthela_damian.jpg",
+    polls: "37% (encuesta interna)"
+  },
+  { 
+    id: "beatriz_mojica", 
+    name: "Beatriz Mojica Morga", 
+    party: "Morena", 
+    img: "/img/beatriz_mojica.jpg",
+    polls: "21% (encuesta interna)"
+  },
+  { 
+    id: "esthela_damian", 
+    name: "Esthela Damián Peralta", 
+    party: "Morena", 
+    img: "/img/esthela_damian.jpg",
+    polls: "Candidata fuerte"
+  },
+  { 
+    id: "abelina_lopez", 
+    name: "Abelina López Rodríguez", 
+    party: "Morena - PT", 
+    img: "/img/abelina_lopez.jpg",
+    polls: "Posible coalición"
+  },
+  
+  // PVEM (Verde Ecologista)
+  { 
+    id: "karen_castrejon", 
+    name: "Karen Castrejón Trujillo", 
+    party: "PVEM", 
+    img: "/img/karen_castrejon.jpg",
+    polls: "42.7% (careos internos)"
+  },
+  
+  // PRI (Proceso interno)
+  { 
+    id: "manuel_anorve", 
+    name: "Manuel Añorve Baños", 
+    party: "PRI", 
+    img: "/img/manuel_anorve.jpg",
+    polls: "34.3% (encuesta interna PRI)"
+  },
+  
+  // MOVIMIENTO CIUDADANO
+  { 
+    id: "gabriela_bernal", 
+    name: "Gabriela Bernal Reséndiz", 
+    party: "Movimiento Ciudadano", 
+    img: "/img/gabriela_bernal.jpg",
+    polls: "Oposición fuerte"
+  },
+  
+  // INDEPENDIENTE
+  { 
+    id: "pedro_segura", 
+    name: "Pedro Segura Valladares", 
+    party: "Candidato Independiente", 
+    img: "/img/pedro_segura.jpg",
+    polls: "Opción ciudadana"
+  },
+  
+  // OPCIÓN INDECISA (Crítica para análisis)
+  { 
+    id: "aun_no_decido", 
+    name: "Aún no decido", 
+    party: "Indeciso", 
+    img: null,
+    polls: "20.9% (encuestas generales)"
+  }
+];
+
 
       
 
@@ -2129,64 +2196,97 @@ console.log('   - testAuth(): Probar autenticación');
         }
         // ====== FIN RESULTADOS EN VIVO ======
 
-        async function submitSurvey() {
-            const inputs = document.querySelectorAll('.survey-input');
-            const responses = [];
+  async function submitSurvey() {
+  const inputs = document.querySelectorAll('.survey-input');
+  const responses = [];
 
-            // Recoger respuestas de inputs (texto, sliders de confianza, etc.)
-            inputs.forEach(input => {
-                const qId = parseInt(input.dataset.questionId);
-                const type = input.dataset.type;
-                const value = input.value;
+  // Recoger respuestas de inputs (texto, sliders de confianza, etc.)
+  inputs.forEach(input => {
+    const qId = parseInt(input.dataset.questionId);
+    const type = input.dataset.type;
+    const value = input.value;
+    const response = { questionId: qId, answer: value };
+    
+    if (type === 'confidence') {
+      response.confidence = parseInt(value);
+    }
+    
+    responses.push(response);
+  });
 
-                const response = { questionId: qId, answer: value };
-                if (type === 'confidence') {
-                    response.confidence = parseInt(value);
-                }
-                responses.push(response);
-            });
+  // Recoger respuestas de clics (las guardadas en surveyResponses)
+  Object.entries(surveyResponses).forEach(([qId, val]) => {
+    const qIdInt = parseInt(qId);
+    if (!responses.find(r => r.questionId === qIdInt)) {
+      responses.push({
+        questionId: qIdInt,
+        answer: val
+      });
+    }
+  });
 
-            // Recoger respuestas de clics (las guardadas en surveyResponses)
-            Object.entries(surveyResponses).forEach(([qId, val]) => {
-                const qIdInt = parseInt(qId);
-                if (!responses.find(r => r.questionId === qIdInt)) {
-                    responses.push({
-                        questionId: qIdInt,
-                        answer: val
-                    });
-                }
-            });
+  if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
 
-            if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
+  // ============================================
+  // 🔒 CANDADO DE INTEGRIDAD - VALIDACIÓN PREVIA
+  // ============================================
+  try {
+    // PASO 1: Verificar si el usuario ya votó en esta encuesta
+    const checkRes = await fetch(`${API_URL}/surveys/${currentSurveyId}/check-vote`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${auth_token}` 
+      },
+      body: JSON.stringify({ phone: userPhone })
+    });
 
-            try {
-                const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth_token}` },
-                    body: JSON.stringify({ responses })
-                });
+    const checkData = await checkRes.json();
 
-                const data = await res.json();
-                if (res.ok) {
-                    showToast('✅ Sello Digital Verificado: +50 PTS', 'success');
-                    if (data.pointsEarned) {
-                        const ptsEl = document.getElementById('user-points');
-                        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
-                        ptsEl.textContent = `${current + data.pointsEarned} PTS de Influencia`;
-                    }
-                    closeSurvey();
-                    loadSurveys();
-                } else {
-                    showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
-                }
-            } catch (e) { showToast('Fallo de Sincronización', 'error'); }
-        }
+    if (!checkRes.ok) {
+      if (checkData.alreadyVoted) {
+        // Ya votó - Mostrar error específico
+        showToast('⚠️ Ya registraste tu predicción en esta encuesta', 'error');
+        closeSurvey();
+        return;
+      } else {
+        throw new Error(checkData.error || 'Error al verificar voto');
+      }
+    }
 
-        function closeSurvey() {
-            stopLivePolling();
-            document.getElementById('survey-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
+    // PASO 2: Si no ha votado, proceder con el envío
+    const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${auth_token}` 
+      },
+      body: JSON.stringify({ responses })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast('✅ Sello Digital Verificado: +50 PTS', 'success');
+      
+      if (data.pointsEarned) {
+        const ptsEl = document.getElementById('user-points');
+        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+        ptsEl.textContent = `${current + data.pointsEarned} PTS de Influencia`;
+      }
+      
+      closeSurvey();
+      loadSurveys();
+    } else {
+      showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
+    }
+
+  } catch (e) { 
+    console.error('Error en submitSurvey:', e);
+    showToast('Fallo de Sincronización: ' + e.message, 'error'); 
+  }
+}
+
 
         // --- INCIDENTS ---
         async function reportIncident() {
@@ -3170,69 +3270,98 @@ console.log('✅ Funciones de predicción expuestas en window.savePrediction y w
 // FUNCIÓN PRINCIPAL: LOGIN SIMPLIFICADO
 // ============================================
 async function quickLogin() {
-    const phoneInput = document.getElementById('user-phone');
-    const phone = phoneInput.value.trim().replace(/\s+/g, '');
+  const phoneInput = document.getElementById('user-phone');
+  const phone = phoneInput.value.trim().replace(/\s+/g, '');
+  
+  // Validar formato
+  if (phone.length !== 10) {
+    showToast('Ingresa 10 dígitos', 'error');
+    phoneInput.focus();
+    return;
+  }
+  
+  if (!/^\d{10}$/.test(phone)) {
+    showToast('Solo números', 'error');
+    phoneInput.focus();
+    return;
+  }
+  
+  // ============================================
+  // 🔒 VALIDACIÓN TÉCNICA DE LADAS DE GUERRERO
+  // ============================================
+  const validAreaCodes = [
+    '721', // Taxco
+    '727', // Iguala
+    '732', // Tlapa
+    '733', // Chilpancingo
+    '736', // Arcelia
+    '741', // Tierra Colorada
+    '742', // Coyuca de Benítez
+    '744', // Acapulco
+    '745', // Cruz Grande
+    '747', // Zihuatanejo
+    '753', // Teloloapan
+    '754', // San Marcos
+    '755', // Atoyac
+    '756', // Tecpan
+    '757', // Coyuca de Catalán
+    '758', // Petatlán
+    '762', // Chilapa
+    '767', // Huamuxtitlán
+    '781'  // Ometepec
+  ];
+  
+  const areaCode = phone.substring(0, 3);
+  
+  if (!validAreaCodes.includes(areaCode)) {
+    showToast(
+      `❌ Código ${areaCode} no válido. Solo números de Guerrero (744, 747, 733, etc.)`,
+      'error'
+    );
+    phoneInput.focus();
+    return;
+  }
+
+  try {
+    console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
     
-    // Validar formato
-    if (phone.length !== 10) {
-        showToast('Ingresa 10 dígitos', 'error');
-        phoneInput.focus();
-        return;
+    const res = await fetch(`${API_URL}/auth/quick-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      // Guardar token y datos
+      localStorage.setItem('guardianToken', data.token);
+      localStorage.setItem('accessToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      auth_token = data.token;
+      userPhone = phone;
+      
+      // Actualizar UI
+      document.getElementById('user-points').textContent = 
+        `${data.user.points || 0} PTS de Influencia`;
+      
+      // Mostrar portal
+      showPortal();
+      
+      // Mensaje de bienvenida
+      showToast(data.message || '✅ Acceso Autorizado', 'success');
+      
+      console.log('✅ Login exitoso:', data.user);
+    } else {
+      showToast(data.error || 'Error de acceso', 'error');
     }
     
-    if (!/^\d{10}$/.test(phone)) {
-        showToast('Solo números', 'error');
-        phoneInput.focus();
-        return;
-    }
-    
-    // Validar código de área de Guerrero
-    const validAreaCodes = [
-    '721', '727', '732', '733', '736', '741', '742', '744', 
-    '745', '747', '753', '754', '755', '756', '757', '758', 
-    '762', '767', '781'
-    ];
-   
-    
-    try {
-        console.log('📱 Intentando login con:', phone.substring(0, 3) + '****' + phone.substring(7));
-        
-        const res = await fetch(`${API_URL}/auth/quick-login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-        });
-        
-        const data = await res.json();
-        
-        if (data.success) {
-            // Guardar token y datos
-            localStorage.setItem('guardianToken', data.token);
-            localStorage.setItem('accessToken', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            auth_token = data.token;
-            userPhone = phone;
-            
-            // Actualizar UI
-            document.getElementById('user-points').textContent = 
-                `${data.user.points || 0} PTS de Influencia`;
-            
-            // Mostrar portal
-            showPortal();
-            
-            // Mensaje de bienvenida
-            showToast(data.message || '✅ Acceso Autorizado', 'success');
-            
-            console.log('✅ Login exitoso:', data.user);
-        } else {
-            showToast(data.error || 'Error de acceso', 'error');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error en login:', error);
-        showToast('Error de conexión. Intenta de nuevo.', 'error');
-    }
+  } catch (error) {
+    console.error('❌ Error en login:', error);
+    showToast('Error de conexión. Intenta de nuevo.', 'error');
+  }
 }
+
 
 // ============================================
 // FUNCIÓN: MOSTRAR PORTAL
