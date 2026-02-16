@@ -300,11 +300,14 @@ router.get('/users', authenticateAdmin, async (req, res) => {
 // ========================================
 // EXPORTAR CSV
 // ========================================
+
 router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    console.log(`📊 Exportando encuesta ${id} en formato optimizado...`);
 
-    // Obtener encuesta
+    // 1. Obtener info de la encuesta
     const surveyCheck = await query(`
       SELECT s.title, s.election_type, m.name as municipality_name
       FROM surveys s
@@ -319,21 +322,15 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
     const { title, election_type, municipality_name } = surveyCheck.rows[0];
     const surveyTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
 
-    // Determinar Nivel
-    let surveyLevel = 'Estatal (Gubernatura)';
-    if (election_type === 'municipal') {
-      surveyLevel = `Municipal (${municipality_name || 'Desconocido'})`;
-    }
-
-    // ── Obtener mapa de candidatos para reemplazar IDs ──
-    const candidatesRes = await query('SELECT id, name FROM candidates');
+    // 2. Obtener mapa de candidatos
+    const candidatesRes = await query('SELECT id, name, party FROM candidates');
     const candidateMap = {};
     candidatesRes.rows.forEach(c => {
-      candidateMap[String(c.id)] = c.name;
-      candidateMap[`candidato_${c.id}`] = c.name;
+      candidateMap[String(c.id)] = { name: c.name, party: c.party };
+      candidateMap[`candidato_${c.id}`] = { name: c.name, party: c.party };
     });
 
-    // Mapa de Ladas Guerrero
+    // 3. Mapa de regiones Guerrero
     const guerreroRegions = {
       '721': 'Norte', '727': 'Norte', '732': 'Tierra Caliente', '733': 'Norte',
       '736': 'Norte', '741': 'Costa Chica', '742': 'Costa Grande', '744': 'Acapulco',
@@ -342,59 +339,142 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
       '762': 'Norte', '767': 'Tierra Caliente', '781': 'Costa Grande'
     };
 
-    // Obtener respuestas con datos enriquecidos
+    // 4. Obtener TODAS las respuestas
     const result = await query(`
       SELECT 
-        sr.id AS response_id,
-        sq.question_text AS pregunta,
-        sq.question_type AS tipo_pregunta,
-        sr.response_value AS respuesta,
-        sr.confidence AS confianza,
-        COALESCE(CONCAT('****', RIGHT(u.phone_last4, 4)), 'ANONIMO') AS telefono_mascarado,
+        sr.user_id,
+        sr.created_at,
+        sq.question_text,
+        sq.question_type,
+        sr.response_value,
+        sr.confidence,
+        COALESCE(u.phone_last4, '0000') AS phone_last4,
         u.area_code,
-        u.name AS nombre_usuario,
-        TO_CHAR(sr.created_at, 'YYYY-MM-DD HH24:MI') AS fecha
+        u.name AS user_name
       FROM survey_responses sr
       JOIN survey_questions sq ON sq.id = sr.question_id
       LEFT JOIN users u ON u.id = sr.user_id
       WHERE sr.survey_id = $1
-      ORDER BY sr.created_at DESC
+      ORDER BY sr.user_id, sr.created_at
     `, [id]);
 
-    // Generar CSV
-    const headers = ['ID', 'Pregunta', 'Tipo', 'Respuesta', 'Confianza', 'Telefono', 'Nombre', 'Fecha'];
-    const csvRows = [headers.join(',')];
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No hay respuestas para esta encuesta' });
+    }
 
-    result.rows.forEach(r => {
-      // Intentar resolver nombre de candidato
-      let respuestaLimpia = r.respuesta || '';
-      if (candidateMap[respuestaLimpia]) {
-        respuestaLimpia = `${candidateMap[respuestaLimpia]} (${respuestaLimpia})`;
+    // 5. TRANSFORMACIÓN: Agrupar por usuario (CLAVE)
+    const userResponses = {};
+    const questionSet = new Set();
+
+    result.rows.forEach(row => {
+      const userId = row.user_id || 'anonimo';
+      
+      if (!userResponses[userId]) {
+        userResponses[userId] = {
+          telefono: `****${row.phone_last4}`,
+          nombre: row.user_name || 'ANÓNIMO',
+          region: guerreroRegions[row.area_code] || 'Desconocida',
+          area_code: row.area_code || 'N/A',
+          fecha: row.created_at,
+          respuestas: {}
+        };
       }
 
+      // Limpiar pregunta para usar como columna
+      let questionKey = row.question_text
+        .replace(/[¿?]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 60);
+
+      questionSet.add(questionKey);
+
+      // Limpiar respuesta
+      let cleanAnswer = row.response_value || '';
+
+      // Si es confidence_scale, usar el valor directo
+      if (row.question_type === 'confidence_scale') {
+        cleanAnswer = row.confidence || cleanAnswer || '0';
+      } else {
+        // Resolver nombre de candidato si aplica
+        if (candidateMap[cleanAnswer]) {
+          const cand = candidateMap[cleanAnswer];
+          cleanAnswer = `${cand.name} (${cand.party})`;
+        } else {
+          // Limpiar formato residual
+          cleanAnswer = cleanAnswer
+            .replace(/candidato_\d+/g, '')
+            .replace(/\(\d+\)/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        }
+      }
+
+      userResponses[userId].respuestas[questionKey] = cleanAnswer;
+    });
+
+    // 6. Generar CSV HORIZONTAL
+    const allQuestions = Array.from(questionSet);
+
+    // Headers
+    const headers = [
+      'Teléfono',
+      'Nombre',
+      'Región',
+      'LADA',
+      'Fecha',
+      ...allQuestions
+    ];
+
+    // Rows
+    const csvRows = [headers.join(',')];
+
+    Object.values(userResponses).forEach(user => {
       const row = [
-        r.response_id,
-        `"${(r.pregunta || '').replace(/"/g, '""')}"`,
-        r.tipo_pregunta,
-        `"${(respuestaLimpia).replace(/"/g, '""')}"`,
-        r.confianza || '',
-        r.telefono_mascarado,
-        `"${(r.nombre_usuario || 'ANÓNIMO').replace(/"/g, '""')}"`,
-        r.fecha
+        user.telefono,
+        `"${user.nombre.replace(/"/g, '""')}"`,
+        user.region,
+        user.area_code,
+        new Date(user.fecha).toLocaleString('es-MX', { 
+          timeZone: 'America/Mexico_City',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       ];
+
+      // Agregar respuestas en orden
+      allQuestions.forEach(q => {
+        const answer = user.respuestas[q] || 'Sin respuesta';
+        // Escapar comillas y envolver si tiene comas
+        const escaped = String(answer).replace(/"/g, '""');
+        row.push(escaped.includes(',') ? `"${escaped}"` : escaped);
+      });
+
       csvRows.push(row.join(','));
     });
 
-    const csvContent = '\uFEFF' + csvRows.join('\n'); // BOM for Excel UTF-8
+    // 7. Generar contenido final
+    const csvContent = '\uFEFF' + csvRows.join('\n');
 
+    // 8. Enviar respuesta
+    const fileName = `encuesta_${id}_${surveyTitle}_${Date.now()}.csv`;
+    
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="encuesta_${id}_${surveyTitle}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Cache-Control', 'no-cache');
     res.send(csvContent);
 
+    console.log(`✅ Exportación completada: ${Object.keys(userResponses).length} participantes, ${allQuestions.length} preguntas`);
+
   } catch (error) {
-    console.error('❌ Error exportando CSV:', error.message);
-    res.status(500).json({ error: 'Error exportando datos' });
+    console.error('❌ Error exportando CSV:', error);
+    res.status(500).json({ 
+      error: 'Error exportando datos',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
-
 module.exports = router;
