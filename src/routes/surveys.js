@@ -7,6 +7,7 @@
 const express = require('express');
 const db = require('../db');
 const { verifyAdminToken } = require('../middleware/auth');
+const { surveyRateLimiter, registerIpVote } = require('../middleware/surveySecurity');
 
 const router = express.Router();
 
@@ -342,12 +343,12 @@ router.get('/:id/questions', async (req, res) => {
 // ========================================
 // ENVIAR RESPUESTA
 // ========================================
-router.post('/:id/response', async (req, res) => {
+router.post('/:id/response', surveyRateLimiter, async (req, res) => {
   let client;
   try {
     client = await db.connect();
     const surveyId = parseInt(req.params.id, 10);
-    const { responses, phoneHash, sessionToken } = req.body;
+    const { responses, fingerprintId } = req.body;
 
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({ error: 'Debe enviar al menos una respuesta' });
@@ -380,31 +381,56 @@ router.post('/:id/response', async (req, res) => {
 
     if (!survey.is_active) return res.status(403).json({ error: 'Encuesta no está activa' });
     if (!survey.is_public) return res.status(403).json({ error: 'Encuesta no es pública' });
-    if (!survey.allow_anonymous && !userId)
-      return res.status(401).json({ error: 'Esta encuesta requiere autenticación' });
     if (survey.end_date && new Date(survey.end_date) < new Date())
       return res.status(403).json({ error: 'Encuesta finalizada' });
 
     // ══════════════════════════════════════════
-    // CANDADO DE VOTO ÚNICO — validar phone_hash
+    // TRIPLE CANDADO DE INTEGRIDAD
     // ══════════════════════════════════════════
-    if (phoneHash) {
-      const existingVote = await client.query(
-        `SELECT id FROM survey_responses 
-         WHERE survey_id = $1 AND phone_hash = $2 
-         LIMIT 1`,
-        [surveyId, phoneHash]
-      );
-
-      if (existingVote.rows.length > 0) {
-        client.release();
-        return res.status(409).json({
-          success: false,
-          alreadyVoted: true,
-          error: 'Ya registraste tu predicción en esta encuesta'
-        });
-      }
+    
+    // Candado 1: FingerprintJS (Huella de Navegador)
+    if (!fingerprintId) {
+      client.release();
+      return res.status(400).json({ error: 'Integridad comprometida: No se detectó huella digital.' });
     }
+
+    const existingVote = await client.query(
+      `SELECT id FROM survey_responses 
+       WHERE survey_id = $1 AND fingerprint_id = $2 
+       LIMIT 1`,
+      [surveyId, fingerprintId]
+    );
+
+    if (existingVote.rows.length > 0) {
+      client.release();
+      return res.status(409).json({
+        success: false,
+        alreadyVoted: true,
+        error: 'Doble Voto Detectado: Ya registraste tu voto en esta encuesta desde este dispositivo.'
+      });
+    }
+
+    // Candado 2: Cookies Seguras Hasheadas
+    const crypto = require('crypto');
+    const expectedCookieHash = crypto.createHash('sha256').update(fingerprintId + surveyId).digest('hex');
+
+    const cookies = req.headers.cookie ? req.headers.cookie.split(';').reduce((acc, c) => {
+      const [key, val] = c.trim().split('=').map(decodeURIComponent);
+      acc[key] = val;
+      return acc;
+    }, {}) : {};
+    const receiptCookie = cookies[`surge_lock_${surveyId}`];
+    
+    if (receiptCookie === expectedCookieHash) {
+      client.release();
+      return res.status(409).json({
+        success: false,
+        alreadyVoted: true,
+        error: 'Doble Voto Detectado: Existencia de sesión segura ligada a voto previo.'
+      });
+    }
+
+    // Candado 3: Validación por IP (Ya se ejecuta en el middleware de rate limit surveySecurity.js)
 
     // ── Insertar respuestas ──
     await client.query('BEGIN');
@@ -419,9 +445,9 @@ router.post('/:id/response', async (req, res) => {
       }
 
       await client.query(`
-        INSERT INTO survey_responses (survey_id, question_id, user_id, response_value, confidence, phone_hash, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      `, [surveyId, response.questionId, userId, responseValue.toString(), response.confidence || null, phoneHash || null]);
+        INSERT INTO survey_responses (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NOW())
+      `, [surveyId, response.questionId, userId, responseValue.toString(), 100, fingerprintId, req.clientIp || null]);
 
       savedCount++;
     }
@@ -436,10 +462,25 @@ router.post('/:id/response', async (req, res) => {
     }
 
     await client.query('COMMIT');
+    
+    // Registrar la IP para el Rate Limiting (Middleware)
+    if (req.clientIp) {
+      if (typeof registerIpVote === 'function') {
+        registerIpVote(req.clientIp);
+      }
+    }
+    
+    // Setear Cookie segura con hash (HttpOnly y Secure)
+    res.cookie(`surge_lock_${surveyId}`, expectedCookieHash, {
+      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 año
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
 
     res.json({
       success: true,
-      message: 'Respuesta enviada exitosamente',
+      message: 'Voto registrado exitosamente',
       pointsEarned,
       responsesSaved: savedCount
     });

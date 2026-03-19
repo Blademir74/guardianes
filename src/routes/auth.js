@@ -137,6 +137,13 @@ router.post('/quick-login', async (req, res) => {
 
     console.log(`🔑 Token generado para usuario ${userId}`);
 
+    res.cookie('jwt_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 días
+    });
+
     res.json({
       success: true,
       token,

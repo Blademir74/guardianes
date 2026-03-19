@@ -102,6 +102,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    res.cookie('admin_jwt_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    });
+
     res.json({ success: true, token, admin: { id: admin.id, username: admin.username } });
   } catch (error) {
     console.error('❌ Login error:', error.message);
