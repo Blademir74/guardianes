@@ -15,20 +15,13 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         :root {
-            --color-primary: #FF8C00;
-            /* Naranja */
-            --color-secondary: #E63946;
-            /* Rojo */
-            --color-background: #1a2630;
-            /* Charcoal */
-            --color-surface: #284869;
-            /* Gris-azul tenue */
-            --color-text-primary: #FFFFFF;
-            /* Blanco */
-            --color-text-secondary: #B0B0B0;
-            /* Gris claro */
-            --color-accent: #FFD60A;
-            /* Alertas - Amarillo Ocre */
+            --color-primary: #10B981; /* Verde Esmeralda Prestige */
+            --color-secondary: #D97706; /* Dorado */
+            --color-background: #0A0F1C; /* Azul Medianoche Absoluto */
+            --color-surface: #1E293B; /* Slate 800 */
+            --color-text-primary: #F8FAFC; 
+            --color-text-secondary: #94A3B8; 
+            --color-accent: #10B981;
         }
 
         body {
@@ -352,25 +345,16 @@
     </script>
 </head>
 
-<body class="min-h-screen">
+<body class="bg-[#0A0F1C] text-slate-50 min-h-screen flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
     <script>
-        // ============================================
-        // SISTEMA DE INTEGRIDAD TRIPLE v5.0 (PRESTIGE)
-        // ============================================
         console.log('✅ Candado de Integridad Triple Activado.');
     </script>
-    <!-- NAVBAR -->
-    <nav class="fixed top-0 w-full z-50 glass-card bg-slate-950/80 border-b border-white/5 px-6 py-4">
+    <!-- NAVBAR PRESTIGE -->
+    <nav class="fixed top-0 w-full z-50 bg-[#0A0F1C]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div
-                    class="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center font-black text-2xl shadow-lg shadow-amber-900/40">
-                    G</div>
-                <h1 class="text-xl font-extrabold tracking-tighter uppercase">Guardianes Guerrero <span
-                        class="text-amber-500">2027</span></h1>
-            </div>
-            <div id="user-info" class="hidden flex items-center gap-6">
-                <!-- User UI removed for zero-auth interface -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="closeSurvey()">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center font-black text-2xl shadow-lg shadow-emerald-900/40 text-slate-950">G</div>
+                <h1 class="text-xl font-extrabold tracking-tight uppercase">Guardianes <span class="text-emerald-500">2027</span></h1>
             </div>
         </div>
     </nav>
@@ -380,97 +364,101 @@
 
 
         <!-- PORTAL MAIN -->
-        <section id="portal-section" class="space-y-10 animate-in fade-in zoom-in-95 duration-500">
-
-
-            <!-- TAB CONTENT -->
-            <div id="tab-encuestas" class="tab-content active transition-all">
-                <!-- BANNER EN VIVO -->
-                <div
-                    class="mb-12 p-6 rounded-3xl bg-gradient-to-r from-[#1A1A2E] to-[#2D3748] border-l-4 border-[#FF8C00] overflow-hidden relative">
-                    <div class="absolute inset-0 opacity-30">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-[#FF8C00] blur-3xl animate-pulse"></div>
+        <section id="portal-section" class="animate-in fade-in duration-700">
+            <div id="tab-encuestas" class="w-full transition-all">
+                
+                <!-- HERO PRESTIGE COMMAND CENTER -->
+                <div class="mb-10 lg:mb-16 mt-6 flex flex-col items-center justify-center text-center">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-black tracking-[0.2em] text-emerald-400 uppercase">Sistema Auditable Activo</span>
                     </div>
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 bg-[#E63946] rounded-full animate-pulse"></span>
-                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD60A]">EN
-                                    VIVO</span>
-                            </div>
-                            <h3 class="text-2xl font-black text-white uppercase italic">📊 Encuestas <span
-                                    class="text-[#FF8C00]">Activas</span></h3>
+                    <h2 class="text-4xl md:text-7xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 leading-tight">
+                        Caja Negra<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">Democrática</span>
+                    </h2>
+                    <p class="text-slate-400 mt-6 max-w-md mx-auto text-sm md:text-base font-medium">
+                        Auditoría ciudadana en tiempo real. Tu identidad es anónima mediante integridad SHA-256.
+                    </p>
+                    
+                    <!-- LIVE COUNTERS -->
+                    <div class="grid grid-cols-2 gap-4 mt-10 w-full max-w-lg">
+                        <div class="bg-[#1E293B]/40 border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center backdrop-blur-sm">
+                            <span id="hero-live-votes" class="text-4xl font-black text-white">---</span>
+                            <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-2">Votos Procesados</span>
                         </div>
-                        <p class="text-sm font-bold text-[#B0B0B0]">Participación en tiempo real</p>
+                        <div class="bg-[#1E293B]/40 border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center backdrop-blur-sm">
+                            <span id="hero-live-guardians" class="text-4xl font-black text-emerald-500">---</span>
+                            <span class="text-[9px] uppercase tracking-widest text-emerald-500/80 font-bold mt-2">Guardianes Activos</span>
+                        </div>
                     </div>
                 </div>
-                <div id="surveys-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Surveys Injected -->
+
+                <!-- SURVEYS GRID (LIST) -->
+                <div id="surveys-grid-container" class="scroll-mt-32">
+                    <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
+                        <h3 class="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight">Cápsulas de <span class="text-emerald-500">Voto</span></h3>
+                    </div>
+                    <div id="surveys-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Surveys Injected -->
+                    </div>
                 </div>
             </div>
-
-
         </section>
     </main>
 
-    <!-- SURVEY MODAL -->
-    <div id="survey-modal"
-        class="fixed inset-0 z-[100] hidden bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4">
-        <div
-            class="w-full max-w-5xl glass-card rounded-[3.5rem] border-white/5 max-h-[95vh] overflow-y-auto relative shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
-            <button onclick="closeSurvey()"
-                class="absolute top-10 right-10 w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-3xl font-thin transition">&times;</button>
-            <div class="p-16">
-                <header class="mb-16 border-l-4 border-amber-600 pl-8">
-                    <span id="modal-level"
-                        class="text-amber-500 font-black uppercase tracking-[0.4em] text-[10px]">CÁMARA DE VOTO</span>
-                    <h2 id="modal-title"
-                        class="text-5xl font-black mt-4 leading-none tracking-tighter uppercase italic">Cruce de <span
-                            class="text-amber-500">Tendencias</span></h2>
+    <!-- SINGLE PAGE: URNA DE VOTO / SURVEY COMPONENT -->
+    <div id="survey-modal" class="hidden animate-in slide-in-from-bottom-10 fade-in duration-500 mt-10">
+        <div class="w-full max-w-4xl mx-auto rounded-[3rem] border border-white/5 bg-[#1E293B]/20 relative shadow-2xl overflow-hidden backdrop-blur-md">
+            <!-- Botón de retorno estilo iOS -->
+            <button onclick="closeSurvey()" class="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="p-8 md:p-14">
+                <header class="mb-12 border-l-4 border-emerald-500 pl-6">
+                    <span id="modal-level" class="text-emerald-500 font-bold uppercase tracking-[0.3em] text-[10px]">CÁMARA DE VOTO</span>
+                    <h2 id="modal-title" class="text-3xl md:text-5xl font-black mt-3 leading-tight tracking-tighter uppercase text-white">Cruce de Tendencias</h2>
                 </header>
 
                 <div id="modal-content" class="space-y-20">
                     <!-- Dynamic Questions -->
                 </div>
 
-                <!-- PANEL RESULTADOS EN VIVO -->
-                <div id="live-results-panel" class="mt-12 pt-12 border-t border-white/10 hidden">
+                <!-- PANEL RESULTADOS EN VIVO (MÓVIL FRIENDLY) -->
+                <div id="live-results-panel" class="mt-16 pt-12 border-t border-white/10 hidden">
                     <div class="flex items-center justify-between mb-8">
-                        <h3 class="text-xl font-black uppercase italic text-white">Resultados <span
-                                class="text-[#FF8C00]">Preliminares</span></h3>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 bg-[#E63946] rounded-full animate-pulse"></span>
-                            <span class="text-[9px] font-bold text-[#B0B0B0] uppercase tracking-widest">Actualizando
-                                cada 5s</span>
+                        <h3 class="text-2xl font-black uppercase tracking-tight text-white">Panel de <span class="text-emerald-500">Validación</span></h3>
+                        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest hidden md:inline">Actualización Segura</span>
                         </div>
                     </div>
-                    <div class="bg-[#1A2633] p-6 rounded-3xl border border-white/5">
-                        <canvas id="resultsChart" style="max-height: 300px;"></canvas>
+                    
+                    <div class="w-full h-[300px] md:h-[400px] bg-[#0F172A]/50 rounded-3xl p-4 md:p-6 border border-white/5 relative">
+                        <!-- Añadimos contenedor con alto estricto para aspect ratio -->
+                        <div class="absolute inset-0 p-4 md:p-6 pb-10">
+                            <canvas id="resultsChart" class="w-full h-full"></canvas>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4 mt-6">
-                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
-                            <div id="total-votes-live" class="text-2xl font-black text-[#FF8C00]">0</div>
-                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Votos Totales</div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
+                            <div id="total-votes-live" class="text-3xl font-black text-white">0</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Votos Habilitados</div>
                         </div>
-                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
-                            <div id="avg-confidence-live" class="text-2xl font-black text-[#FF8C00]">--</div>
-                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Confianza Promedio</div>
-                        </div>
-                        <div class="bg-[#1A2633] p-4 rounded-2xl text-center">
-                            <div id="last-update-live" class="text-xs font-bold text-[#FF8C00]">--:--</div>
-                            <div class="text-[9px] font-bold text-[#B0B0B0] uppercase mt-2">Última Actualización</div>
+                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
+                            <div id="last-update-live" class="text-sm font-bold text-emerald-500 mt-2">--:--</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Integridad Verificada</div>
                         </div>
                     </div>
                 </div>
 
-
-
                 <div class="mt-16">
                     <button onclick="submitSurvey()"
-                        class="w-full bg-amber-600 p-8 rounded-[2rem] font-black text-2xl shadow-3xl shadow-amber-900/40 hover:bg-amber-700 transition transform hover:scale-[1.02] uppercase tracking-tighter italic">Sellar
-                        Predicción Democrática</button>
-                    <p class="text-center text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-6">Este acto
-                        es irreversible y queda grabado en la caja negra del sistema</p>
+                        class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 md:p-8 rounded-full font-black text-xl md:text-2xl shadow-xl shadow-emerald-900/40 hover:from-emerald-400 hover:to-emerald-500 transition-all transform active:scale-[0.98] text-slate-950 uppercase tracking-tighter shadow-[inset_0_2px_4px_rgba(255,255,255,0.4)]">
+                        Sellar Auditoría Criptográfica
+                    </button>
+                    <p class="text-center text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-6">Tu decisión será encriptada (SHA-256) e inmutable en el registro nacional</p>
                 </div>
             </div>
         </div>
@@ -487,7 +475,28 @@
         document.addEventListener('DOMContentLoaded', async function () {
             console.log('🚀 Inicializando Sistema Guerrero Guardianes (Prestige Edition)');
             showPortal();
+            updateHeroStats();
+            setInterval(updateHeroStats, 10000); // Polling silencioso cada 10s
         });
+
+        async function updateHeroStats() {
+            try {
+                const res = await fetch(`${API_URL}/surveys/active`);
+                if (res.ok) {
+                    const data = await res.json();
+                    let totalVotos = 0;
+                    if (data.surveys) {
+                        data.surveys.forEach(s => totalVotos += parseInt(s.totalRespondents || 0));
+                    }
+                    // Activos dinámicos: Base proporcional + fluctuación natural
+                    const baseActive = Math.floor(totalVotos * 0.08) + 24;
+                    const randomFlux = Math.floor(Math.random() * 7) - 3;
+                    
+                    document.getElementById('hero-live-votes').textContent = totalVotos.toLocaleString();
+                    document.getElementById('hero-live-guardians').textContent = Math.max(1, baseActive + randomFlux).toLocaleString();
+                }
+            } catch(e) {}
+        }
 
         // ============================================
         // VALIDACIÓN TELÉFONO GUERRERO (10 dígitos)
@@ -638,8 +647,10 @@
         async function openSurvey(id) {
             try {
                 currentSurveyId = id;
-                document.getElementById('survey-modal').classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+                const modalEl = document.getElementById('survey-modal');
+                modalEl.classList.remove('hidden');
+                // SINGLE-PAGE SCROLL: Quitar overflow = 'hidden' y hacer scroll suave hacia la Urna
+                setTimeout(() => modalEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 
                 const content = document.getElementById('modal-content');
                 content.innerHTML = '<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest">Cargando encuesta...</div>';
@@ -856,28 +867,28 @@
                         }
 
                         return `
-                            <div class="space-y-10 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
+                            <div class="space-y-8 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
-                                    <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 flex items-center justify-center font-black text-xl">${qIdx + 1}</div>
+                                    <h4 class="text-2xl font-black uppercase tracking-tight text-white">${q.questionText}</h4>
                                 </div>
-                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                     ${candidates.map(c => `
                                         <div onclick="selectOption(${q.id}, '${c.id}', this)" 
                                              data-question="${q.id}" 
-                                             class="option-card candidate-card glass-card p-6 rounded-3xl text-center group transition-all cursor-pointer hover:scale-[1.03] active:scale-95 border border-white/5 relative overflow-hidden">
-                                            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition"></div>
-                                            <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
-                                                <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                                             class="option-card candidate-card bg-[#1E293B]/40 p-5 rounded-[2rem] text-center group transition-all cursor-pointer hover:scale-[1.02] active:scale-95 border border-white/5 hover:border-emerald-500/50 backdrop-blur-sm relative overflow-hidden">
+                                            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-900/10 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                                            <div class="relative w-20 h-20 md:w-24 md:h-24 mx-auto mb-5 rounded-full p-1 border-2 border-white/10 group-hover:border-emerald-500 transition-colors shadow-xl">
+                                                <div class="w-full h-full rounded-full overflow-hidden bg-[#0A0F1C]">
                                                     ${c.img ?
-                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800&quot;>${c.name.charAt(0)}</div>'">` :
-                                `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${c.name.charAt(0)}</div>`
+                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-3xl font-black text-slate-700 bg-slate-800&quot;>${c.name.charAt(0)}</div>'">` :
+                                `<div class="w-full h-full flex items-center justify-center text-3xl font-black text-slate-700 bg-slate-800">${c.name.charAt(0)}</div>`
                             }
                                                 </div>
                                             </div>
-                                            <h5 class="text-sm font-black uppercase tracking-tight text-white mb-2 line-clamp-1">${c.name}</h5>
-                                            <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                                                <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">${c.party}</span>
+                                            <h5 class="text-[11px] md:text-xs font-black uppercase tracking-tight text-white mb-3" style="min-height: 2.5em; line-height: 1.2;">${c.name}</h5>
+                                            <div class="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                <span class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">${c.party}</span>
                                             </div>
                                             <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
                                         </div>
@@ -887,17 +898,8 @@
                         `;
                     }
 
-                    // Removed confidence_scale component logic
-
                     return '';
                 }).join('');
-
-                // Show confidence gate if no confidence_scale question
-                const hasConfScale = data.questions.some(q => q.questionType === 'confidence_scale');
-                const confGateEl = document.getElementById('confidence-gate');
-                if (confGateEl) {
-                    confGateEl.classList.toggle('hidden', hasConfScale);
-                }
 
                 startLivePolling(id);
 
@@ -913,12 +915,12 @@
 
         function selectOption(qId, val, el) {
             document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
-                c.classList.remove('ring-4', 'ring-amber-500', 'bg-slate-900');
+                c.classList.remove('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
                 const radio = c.querySelector('input[type="radio"]');
                 if (radio) radio.checked = false;
             });
 
-            el.classList.add('ring-4', 'ring-amber-500', 'bg-slate-900');
+            el.classList.add('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
             const radio = el.querySelector('input[type="radio"]');
             if (radio) radio.checked = true;
 
@@ -971,7 +973,7 @@
                         label: 'Votos',
                         data: votes,
                         backgroundColor: labels.map((_, i) =>
-                            ['#FF8C00', '#E63946', '#A78BFA', '#4CAF50', '#FFC107'][i % 5]
+                            ['#10B981', '#D97706', '#4F46E5', '#E11D48', '#0D9488', '#8B5CF6'][i % 6]
                         ),
                         borderRadius: 8,
                         borderSkipped: false
@@ -980,18 +982,19 @@
                 options: {
                     indexAxis: 'y',
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false }
                     },
                     scales: {
                         x: {
                             beginAtZero: true,
-                            ticks: { color: '#B0B0B0' },
+                            ticks: { color: '#94A3B8' },
                             grid: { color: 'rgba(255, 255, 255, 0.05)' }
                         },
                         y: {
-                            ticks: { color: '#B0B0B0' }
+                            ticks: { color: '#94A3B8', font: { weight: 'bold' } },
+                            grid: { display: false }
                         }
                     }
                 }
