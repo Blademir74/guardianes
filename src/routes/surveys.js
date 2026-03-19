@@ -385,6 +385,19 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
       return res.status(403).json({ error: 'Encuesta finalizada' });
 
     // ══════════════════════════════════════════
+    // AUTO-HEAL: Garantizar columnas de integridad existen
+    // Esto evita el error 500 si la migración manual no se ejecutó en Neon
+    // ══════════════════════════════════════════
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS fingerprint_id VARCHAR(255);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);`);
+    // Índice único para anti-doble-voto (safe: CREATE IF NOT EXISTS)
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_survey_fingerprint
+      ON survey_responses(survey_id, fingerprint_id)
+      WHERE fingerprint_id IS NOT NULL;
+    `);
+
+    // ══════════════════════════════════════════
     // TRIPLE CANDADO DE INTEGRIDAD
     // ══════════════════════════════════════════
     
@@ -430,9 +443,15 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
       });
     }
 
-    // Candado 3: Validación por IP (Ya se ejecuta en el middleware de rate limit surveySecurity.js)
+    // Candado 3: IP Rate Limiting → manejado por middleware surveyRateLimiter
 
-    // ── Insertar respuestas ──
+    // ── Extraer IP del cliente (Express estándar + headers de proxy/Vercel) ──
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+                  || req.headers['x-real-ip']
+                  || req.ip
+                  || 'unknown';
+
+    // ── Insertar respuestas en transacción ──
     await client.query('BEGIN');
 
     let savedCount = 0;
@@ -445,9 +464,10 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
       }
 
       await client.query(`
-        INSERT INTO survey_responses (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, created_at)
+        INSERT INTO survey_responses
+          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NOW())
-      `, [surveyId, response.questionId, userId, responseValue.toString(), 100, fingerprintId, req.clientIp || null]);
+      `, [surveyId, response.questionId, userId, responseValue.toString(), 100, fingerprintId, clientIp]);
 
       savedCount++;
     }
@@ -462,13 +482,6 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    
-    // Registrar la IP para el Rate Limiting (Middleware)
-    if (req.clientIp) {
-      if (typeof registerIpVote === 'function') {
-        registerIpVote(req.clientIp);
-      }
-    }
     
     // Setear Cookie segura con hash (HttpOnly y Secure)
     res.cookie(`surge_lock_${surveyId}`, expectedCookieHash, {
@@ -489,10 +502,11 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     if (client) {
       try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
     }
-    console.error('❌ /surveys/:id/response:', error.message);
+    // Siempre devolver el mensaje de error para diagnóstico
+    console.error('❌ /surveys/:id/response ERROR:', error.message, '\nSTACK:', error.stack);
     res.status(500).json({
       error: 'Error enviando respuesta',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: error.message
     });
   } finally {
     if (client) client.release();   // siempre liberar
