@@ -422,7 +422,7 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
         }
       }
 
-      userResponses[userId].respuestas[questionKey] = cleanAnswer;
+      userResponses[sessionKey].respuestas[questionKey] = cleanAnswer;
     });
 
     // 6. Generar CSV HORIZONTAL

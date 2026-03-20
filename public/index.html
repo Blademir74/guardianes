@@ -445,7 +445,7 @@
                         </div>
                     </div>
                     
-                    <div class="w-full h-[280px] md:h-[380px] bg-[#0F172A]/50 rounded-3xl p-4 border border-white/5 relative">
+                    <div class="w-full h-[280px] md:h-[380px] chart-container bg-[#0F172A]/50 rounded-3xl p-4 border border-white/5 relative">
                         <div class="absolute inset-0 p-4 pb-10">
                             <canvas id="resultsChart" class="w-full h-full"></canvas>
                         </div>
@@ -651,7 +651,10 @@
             }
         }
 
+        let currentSurveyId = null;
+
         async function openSurvey(id) {
+            currentSurveyId = id;
             try {
                 currentSurveyId = id;
                 const modalEl = document.getElementById('survey-modal');
