@@ -18,11 +18,23 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://pulsoguerrero.vercel.app']
-    : '*',
+  origin: (origin, callback) => {
+    // Permitir si no hay origen (como apps móviles o curl) o si coincide con dominios autorizados
+    const allowedPatterns = [
+      /^https:\/\/pulsoguerrero\.vercel\.app$/,
+      /\.vercel\.app$/, // Permitir subdominios de Vercel para mayor flexibilidad
+      /^http:\/\/localhost:\d+$/
+    ];
+    
+    if (!origin || allowedPatterns.some(pattern => pattern.test(origin))) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS Bloqueado para: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
 }));
 

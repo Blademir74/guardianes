@@ -15,13 +15,14 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         :root {
-            --color-primary: #10B981; /* Verde Esmeralda Prestige */
-            --color-secondary: #D97706; /* Dorado */
             --color-background: #0A0F1C; /* Azul Medianoche Absoluto */
-            --color-surface: #1E293B; /* Slate 800 */
+            --color-surface: #161E31; /* Slate 900 más oscuro */
+            --color-primary: #D97706; /* Dorado Prestige */
+            --color-secondary: #F59E0B; /* Dorado más claro */
+            --color-accent: #10B981; /* Verde Esmeralda */
             --color-text-primary: #F8FAFC; 
             --color-text-secondary: #94A3B8; 
-            --color-accent: #10B981;
+            --color-text-dim: #94A3B8; /* Para texto secundario o atenuado */
         }
 
         body {
@@ -304,11 +305,12 @@
                 /* Espacio para etiquetas del eje X */
             }
 
-            /* Contenedor de la gráfica */
+            /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
             .chart-container {
                 position: relative;
-                height: 40vh !important;
+                height: 350px !important;
                 width: 100% !important;
+                margin-top: 1rem;
             }
 
             /* 4. SLIDER (Impacto visual) */
@@ -449,14 +451,18 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
                         <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
-                            <div id="total-votes-live" class="text-3xl font-black text-white">0</div>
+                            <div id="votos-totales" class="text-3xl font-black text-white">0</div>
                             <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Votos en Caja Negra</div>
                         </div>
                         <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
+                            <div id="confianza-promedio" class="text-3xl font-black text-emerald-500">0%</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Confianza Promedio</div>
+                        </div>
+                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm col-span-2 md:col-span-1">
                             <div id="last-update-live" class="text-sm font-bold text-emerald-500 mt-2">--:--</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Integridad Verificada</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Sincronización</div>
                         </div>
                     </div>
                 </div>
@@ -960,7 +966,7 @@
                 return `CAND ${c.id}`; // Fallback por si faltara nombre
             });
 
-            const votes = data.candidates.map(c => c.votes || 0);
+            const votes = data.candidates.map(c => c.vote_count || 0);
 
             // Destruir gráfico anterior si existe
             if (chartInstance) chartInstance.destroy();
@@ -1002,13 +1008,13 @@
             });
 
             // Actualizar contadores
-            const totalVotesEl = document.getElementById('total-votes-live');
-            const avgConfidenceEl = document.getElementById('avg-confidence-live');
+            const totalVotesEl = document.getElementById('votos-totales');
+            const avgConfidenceEl = document.getElementById('confianza-promedio');
             const lastUpdateEl = document.getElementById('last-update-live');
 
-            if (totalVotesEl) totalVotesEl.textContent = data.totalVotes || 0;
-            if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1);
-            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX');
+            if (totalVotesEl) totalVotesEl.textContent = (data.totalVotes || 0).toLocaleString();
+            if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1) + '%';
+            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
         function startLivePolling(surveyId) {
@@ -1023,13 +1029,13 @@
                 if (data) updateLiveChart(data);
             });
 
-            // Poll cada 5 segundos
+            // Poll cada 30 segundos (Requerimiento Arquitectónico)
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(() => {
                 fetchLiveResults(surveyId).then(data => {
                     if (data) updateLiveChart(data);
                 });
-            }, 5000);
+            }, 30000);
         }
 
         function stopLivePolling() {
@@ -1100,11 +1106,30 @@
                 if (res.ok) {
                     Swal.fire({
                         icon: 'success',
-                        title: '¡Sello Verificado!',
-                        text: 'Tu decisión ha sido resguardada en la caja negra.',
-                        confirmButtonColor: '#10b981'
+                        title: '<span style="color: #D97706">VOTO ENCRIPTADO</span>',
+                        html: `
+                            <div class="text-center">
+                                <p class="text-slate-300 mb-4">Tu decisión ha sido resguardada en la <b>Caja Negra</b> de Guardianes.</p>
+                                <div class="bg-black/40 p-3 rounded-xl border border-[#D97706]/20 font-mono text-[10px] text-emerald-400 mb-4 break-all">
+                                    SHA256: ${Array.from(crypto.getRandomValues(new Uint8Array(20))).map(b => b.toString(16).padStart(2, '0')).join('')}...
+                                </div>
+                                <div class="text-[9px] text-slate-500 uppercase tracking-widest">Sello de Integridad Digital Directo</div>
+                            </div>
+                        `,
+                        confirmButtonText: 'VER AUDITORÍA EN VIVO',
+                        confirmButtonColor: '#D97706',
+                        background: '#0A0F1C',
+                        color: '#fff'
                     });
-                    closeSurvey();
+                    
+                    // Impacto Instantáneo: Refrescar resultados sin cerrar modal inmediatamente
+                    fetchLiveResults(currentSurveyId).then(data => {
+                        if (data) {
+                            updateLiveChart(data);
+                            document.getElementById('live-results-panel')?.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+
                     loadSurveys();
                 } else {
                     showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');

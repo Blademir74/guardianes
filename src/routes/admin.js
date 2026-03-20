@@ -346,10 +346,12 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
       '762': 'Norte', '767': 'Tierra Caliente', '781': 'Costa Grande'
     };
 
-    // 4. Obtener TODAS las respuestas
+    // 4. Obtener TODAS las respuestas con IDs de sesión para diferenciar anónimos
     const result = await query(`
       SELECT 
         sr.user_id,
+        sr.fingerprint_id,
+        sr.ip_address,
         sr.created_at,
         sq.question_text,
         sq.question_type,
@@ -362,23 +364,26 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
       JOIN survey_questions sq ON sq.id = sr.question_id
       LEFT JOIN users u ON u.id = sr.user_id
       WHERE sr.survey_id = $1
-      ORDER BY sr.user_id, sr.created_at
+      ORDER BY sr.created_at DESC, sr.user_id
     `, [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No hay respuestas para esta encuesta' });
     }
 
-    // 5. TRANSFORMACIÓN: Agrupar por usuario (CLAVE)
+    // 5. TRANSFORMACIÓN: Agrupar por sesión/usuario (CLAVE ÚNICA PARA NO SOBRESCRIBIR)
     const userResponses = {};
     const questionSet = new Set();
 
     result.rows.forEach(row => {
-      const userId = row.user_id || 'anonimo';
+      // Clave única basada en userId o (fingerprint + ip + fecha truncada) para agrupar respuestas de un mismo envío
+      const sessionKey = row.user_id 
+        ? `user_${row.user_id}` 
+        : `anon_${row.fingerprint_id || 'no-fp'}_${row.ip_address || 'no-ip'}_${new Date(row.created_at).getTime()}`;
       
-      if (!userResponses[userId]) {
-        userResponses[userId] = {
-          telefono: `****${row.phone_last4}`,
+      if (!userResponses[sessionKey]) {
+        userResponses[sessionKey] = {
+          telefono: row.user_id ? `****${row.phone_last4}` : 'ANÓNIMO',
           nombre: row.user_name || 'ANÓNIMO',
           region: guerreroRegions[row.area_code] || 'Desconocida',
           area_code: row.area_code || 'N/A',
