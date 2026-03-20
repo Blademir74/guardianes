@@ -278,6 +278,7 @@
                 /* Quita el flex/box que corta */
                 -webkit-line-clamp: unset !important;
                 /* Quita límite de líneas */
+                line-clamp: unset !important;
                 -webkit-box-orient: unset !important;
                 margin-bottom: 0.25rem !important;
             }
@@ -323,6 +324,42 @@
             #survey-modal .confidence-slider-section .text-xs {
                 font-size: 0.7rem !important;
                 opacity: 0.8 !important;
+            }
+
+            /* --- REPARACIÓN QUIRÚRGICA: BARRAS DE RESULTADOS --- */
+            .results-bar-container {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 1rem;
+                height: 1.25rem;
+                overflow: hidden;
+                width: 100%;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                margin-top: 0.5rem;
+            }
+
+            .results-bar-fill {
+                height: 100%;
+                border-radius: 1rem;
+                transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+                /* Evitar compresión vertical en móvil */
+                min-height: 1.25rem !important; 
+            }
+
+            /* Contraste Crítico: Nombres en Blanco sobre Azul Medianoche */
+            .candidate-name-label {
+                color: #FFFFFF !important;
+                font-weight: 800 !important;
+                letter-spacing: -0.02em;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            }
+
+            @media (max-width: 640px) {
+                .results-bar-container {
+                    height: 1rem;
+                }
+                .results-bar-fill {
+                    min-height: 1rem !important;
+                }
             }
         }
     </style>
@@ -464,6 +501,11 @@
                             <div id="last-update-live" class="text-sm font-bold text-emerald-500 mt-2">--:--</div>
                             <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Sincronización</div>
                         </div>
+                    </div>
+
+                    <!-- REPARACIÓN: Listado de Barras de Progreso Dinámicas -->
+                    <div id="resultados-preliminares" class="mt-8 space-y-6 bg-[#0F172A]/30 p-6 rounded-[2.5rem] border border-white/5">
+                        <!-- Injected via renderResults() -->
                     </div>
                 </div>
 
@@ -944,10 +986,14 @@
 
         async function fetchLiveResults(surveyId) {
             try {
-                const response = await fetch(`${API_URL}/surveys/${surveyId}/results`);
+                // Captura dinámica del surveyId
+                const targetId = surveyId || currentSurveyId;
+                if (!targetId) return null;
+
+                const response = await fetch(`${API_URL}/surveys/${targetId}/results`);
                 if (!response.ok) return null;
                 const data = await response.json();
-                console.log('📊 [DEBUG] Live Data:', data);
+                console.log('📊 [DEBUG] Surgical Live Data:', data);
                 return data;
             } catch (error) {
                 console.log('Sin resultados aún:', error);
@@ -955,28 +1001,57 @@
             }
         }
 
+        // --- REPARACIÓN QUIRÚRGICA: renderResults(data) ---
+        function renderResults(data) {
+            if (!data || !data.results) return;
+
+            // 1. Actualizar Gráfica (si existe)
+            updateLiveChart(data);
+
+            // 2. Mapear Nombres y Votos en Barras de Progreso
+            const container = document.getElementById('resultados-preliminares');
+            if (!container) return;
+
+            container.innerHTML = data.results.map((res, i) => {
+                const color = ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'][i % 5];
+                return `
+                    <div class="animate-in slide-in-from-left duration-500" style="animation-delay: ${i * 0.1}s">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="candidate-name-label text-sm uppercase tracking-tight">${res.label}</span>
+                            <div class="text-right">
+                                <span class="text-white font-black text-sm">${res.percentage}%</span>
+                                <span class="text-[9px] text-slate-500 uppercase ml-1">${res.vote_count} votos</span>
+                            </div>
+                        </div>
+                        <div class="results-bar-container">
+                            <div class="results-bar-fill" 
+                                 style="width: ${res.percentage}%; background-color: ${color}; box-shadow: 0 0 12px ${color}44;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 3. Actualizar Contadores Globales
+            const totalVotesEl = document.getElementById('votos-totales');
+            const lastUpdateEl = document.getElementById('last-update-live');
+
+            if (totalVotesEl) totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString();
+            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
         function updateLiveChart(data) {
-            if (!data || !data.candidates) return;
+            if (!data || !data.results) return;
 
             const ctx = document.getElementById('resultsChart')?.getContext('2d');
             if (!ctx) return;
 
-            // Usar directamente el nombre de los candidatos que viene del backend
-            const labels = data.candidates.map(c => {
-                // Primer nombre para hacerlo compacto en la gráfica
-                if (c.name && typeof c.name === 'string') {
-                    const parts = c.name.trim().split(/\s+/);
-                    return parts[0]; // EJ: "Gustavo Alarcón Herrera" → "Gustavo"
-                }
-                return `CAND ${c.id}`; // Fallback por si faltara nombre
-            });
+            // Nombres cortos para la gráfica
+            const labels = data.results.map(r => r.label.split(' ')[0]);
+            const votes = data.results.map(r => r.vote_count);
 
-            const votes = data.candidates.map(c => c.vote_count || 0);
-
-            // Destruir gráfico anterior si existe
             if (chartInstance) chartInstance.destroy();
 
-            // Crear nuevo gráfico
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -984,61 +1059,44 @@
                     datasets: [{
                         label: 'Votos',
                         data: votes,
-                        backgroundColor: labels.map((_, i) =>
-                            ['#10B981', '#D97706', '#4F46E5', '#E11D48', '#0D9488', '#8B5CF6'][i % 6]
+                        backgroundColor: data.results.map((_, i) =>
+                            ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'][i % 5]
                         ),
-                        borderRadius: 8,
-                        borderSkipped: false
+                        borderRadius: 8
                     }]
                 },
                 options: {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { color: '#94A3B8' },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                        },
-                        y: {
-                            ticks: { color: '#94A3B8', font: { weight: 'bold' } },
-                            grid: { display: false }
-                        }
+                        x: { beginAtZero: true, ticks: { color: '#94A3B8' }, grid: { display: false } },
+                        y: { ticks: { color: '#FFFFFF', font: { weight: 'bold' } }, grid: { display: false } }
                     }
                 }
             });
-
-            // Actualizar contadores
-            const totalVotesEl = document.getElementById('votos-totales');
-            const avgConfidenceEl = document.getElementById('confianza-promedio');
-            const lastUpdateEl = document.getElementById('last-update-live');
-
-            if (totalVotesEl) totalVotesEl.textContent = (data.totalVotes || 0).toLocaleString();
-            if (avgConfidenceEl) avgConfidenceEl.textContent = (data.avgConfidence || 0).toFixed(1) + '%';
-            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
         function startLivePolling(surveyId) {
             const panel = document.getElementById('live-results-panel');
             if (!panel) return;
 
-            // Mostrar panel
             panel.classList.remove('hidden');
 
+            const pollId = surveyId || currentSurveyId;
+            if (!pollId) return;
+
             // Fetch inicial
-            fetchLiveResults(surveyId).then(data => {
-                if (data) updateLiveChart(data);
+            fetchLiveResults(pollId).then(data => {
+                if (data && data.success) renderResults(data);
             });
 
-            // Poll cada 30 segundos (Requerimiento Arquitectónico)
+            // Polling Quirúrgico cada 30 segundos
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(() => {
-                fetchLiveResults(surveyId).then(data => {
-                    if (data) updateLiveChart(data);
+                fetchLiveResults(pollId).then(data => {
+                    if (data && data.success) renderResults(data);
                 });
             }, 30000);
         }

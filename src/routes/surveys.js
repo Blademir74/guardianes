@@ -534,121 +534,77 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
 // ========================================
 // RESULTADOS ESPECÍFICOS (polling — dashboard / landing)
-// Incluye datos de candidatos para que el frontend pueda
-// mostrar nombre, partido y foto sin otra llamada.
+// Reparación Quirúrgica: LEFT JOIN para incluir 0 votos
 // ========================================
 router.get('/:id/results', async (req, res) => {
   try {
     const surveyId = parseInt(req.params.id, 10);
     if (isNaN(surveyId)) {
-      return res.status(400).json({ error: 'ID inválido' });
+      return res.status(400).json({ success: false, error: 'ID inválido' });
     }
 
-    // ── Obtener encuesta para saber election_type y municipality_id ──
+    // ── 1. Obtener contexto de la encuesta ──
     const surveyRow = await db.query(
       'SELECT election_type, municipality_id FROM surveys WHERE id = $1',
       [surveyId]
     );
 
     if (surveyRow.rows.length === 0) {
-      return res.status(404).json({ error: 'Encuesta no encontrada' });
+      return res.status(404).json({ success: false, error: 'Encuesta no encontrada' });
     }
 
     const { election_type, municipality_id } = surveyRow.rows[0];
 
-    // ── Votos agrupados por candidato ──
-    const votesResult = await db.query(`
-      SELECT
-        response_value AS candidate_id,
-        COUNT(*)       AS count
-      FROM survey_responses
-      WHERE survey_id = $1
-        AND question_id IN (
-          SELECT id FROM survey_questions
+    // ── 2. Consulta Integral con LEFT JOIN ──
+    // Asegura que todos los candidatos del ámbito aparezcan, incluso con 0 votos
+    const resultsQuery = await db.query(`
+      SELECT 
+        c.name AS label,
+        COUNT(sr.id)::int AS vote_count
+      FROM candidates c
+      LEFT JOIN survey_responses sr ON (
+        (sr.response_value = c.id::text OR sr.response_value = 'candidato_' || c.id)
+        AND sr.survey_id = $1
+        AND sr.question_id IN (
+          SELECT id FROM survey_questions 
           WHERE survey_id = $1 
           AND (
-            question_type IN ('single_choice', 'choice', 'candidate_selection', 'multiple_choice', 'selection', 'radio', 'vote')
+            question_type IN ('single_choice', 'choice', 'candidate_selection', 'vote', 'radio')
             OR question_text ILIKE '%quién%' 
             OR question_text ILIKE '%candidato%'
           )
         )
-      GROUP BY response_value
-      ORDER BY count DESC
-    `, [surveyId]);
+      )
+      WHERE (
+        (c.municipality_id = $2) 
+        OR ($2 IS NULL AND c.municipality_id IS NULL)
+      )
+      AND (c.election_type = $3 OR $3 IS NULL OR c.election_type IS NULL)
+      GROUP BY c.id, c.name
+      ORDER BY vote_count DESC, c.name ASC
+    `, [surveyId, municipality_id, election_type]);
 
-    // ── Confianza promedio ──
-    const confResult = await db.query(`
-      SELECT AVG(CAST(NULLIF(confidence, '') AS INTEGER)) AS avg_confidence, COUNT(*) AS total
-      FROM survey_responses
-      WHERE survey_id = $1
-        AND (confidence IS NOT NULL OR question_id IN (
-          SELECT id FROM survey_questions
-          WHERE survey_id = $1 AND (question_type IN ('confidence_scale', 'confidence', 'range', 'slider') OR question_text ILIKE '%confianza%')
-        ))
-    `, [surveyId]);
+    const results = resultsQuery.rows;
+    const totalRespondents = results.reduce((sum, r) => sum + r.vote_count, 0);
 
-    // ── Candidatos con foto ──
-    let candidates;
-    if (election_type === 'gubernatura') {
-      candidates = await db.query(`
-        SELECT id, name, party,
-               COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
-        FROM candidates
-        WHERE municipality_id IS NULL
-        ORDER BY id
-      `);
-    } else {
-      const candsResult = await db.query(`
-        SELECT id, name, party,
-               COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
-        FROM candidates
-        WHERE municipality_id = $1
-        ORDER BY name
-      `, [municipality_id]);
-      
-      candidates = candsResult;
-
-      // FALLBACK: Si no hay candidatos en ese municipio, pero hay votos, traer candidatos generales o de otros municipios que coincidan con los IDs votados
-      if (candidates.rows.length === 0 && totalVotes > 0) {
-          console.warn(`⚠️ No se hallaron candidatos para municipio ${municipality_id}. Ejecutando búsqueda de rescate...`);
-          candidates = await db.query(`
-            SELECT id, name, party, photo_url FROM candidates 
-            WHERE id::text IN (SELECT DISTINCT response_value FROM survey_responses WHERE survey_id = $1)
-          `, [surveyId]);
-      }
-    }
-
-    // ── Mapear votos a candidatos ──
-    const voteMap = {};
-    const totalVotes = votesResult.rows.reduce((sum, r) => sum + parseInt(r.count), 0);
-
-    votesResult.rows.forEach(r => {
-      // Normalizar ID: si viene como "candidato_18", dejar solo "18"
-      const cleanId = String(r.candidate_id).replace('candidato_', '');
-      voteMap[cleanId] = parseInt(r.count);
-    });
-
-    const results = candidates.rows.map(c => ({
-      id: c.id,
-      name: c.name,
-      party: c.party,
-      photo_url: c.photo_url,
-      vote_count: voteMap[String(c.id)] || 0,
-      percentage: totalVotes > 0
-        ? Math.round(((voteMap[String(c.id)] || 0) / totalVotes) * 100)
-        : 0
-    })).sort((a, b) => b.vote_count - a.vote_count);
+    // ── 3. Formatear Respuesta JSON Requerida ──
+    const formattedResults = results.map(r => ({
+      label: r.label,
+      vote_count: r.vote_count,
+      percentage: totalRespondents > 0 
+        ? parseFloat(((r.vote_count / totalRespondents) * 100).toFixed(1))
+        : 0.0
+    }));
 
     res.json({
-      surveyId,
-      totalVotes,
-      avgConfidence: parseFloat(confResult.rows[0].avg_confidence) || 0,
-      candidates: results
+      success: true,
+      total_respondents: totalRespondents,
+      results: formattedResults
     });
 
   } catch (error) {
-    console.error('❌ /surveys/:id/results:', error.message);
-    res.status(500).json({ error: 'Error polling results' });
+    console.error('❌ Error Quirúrgico en /results:', error.message);
+    res.status(500).json({ success: false, error: 'Error polling results' });
   }
 });
 
