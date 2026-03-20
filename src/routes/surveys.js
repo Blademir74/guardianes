@@ -565,7 +565,12 @@ router.get('/:id/results', async (req, res) => {
       WHERE survey_id = $1
         AND question_id IN (
           SELECT id FROM survey_questions
-          WHERE survey_id = $1 AND question_type IN ('single_choice', 'choice', 'candidate_selection')
+          WHERE survey_id = $1 
+          AND (
+            question_type IN ('single_choice', 'choice', 'candidate_selection', 'multiple_choice', 'selection', 'radio', 'vote')
+            OR question_text ILIKE '%quién%' 
+            OR question_text ILIKE '%candidato%'
+          )
         )
       GROUP BY response_value
       ORDER BY count DESC
@@ -573,14 +578,13 @@ router.get('/:id/results', async (req, res) => {
 
     // ── Confianza promedio ──
     const confResult = await db.query(`
-      SELECT AVG(confidence) AS avg_confidence, COUNT(*) AS total
+      SELECT AVG(CAST(NULLIF(confidence, '') AS INTEGER)) AS avg_confidence, COUNT(*) AS total
       FROM survey_responses
       WHERE survey_id = $1
-        AND confidence IS NOT NULL
-        AND question_id IN (
+        AND (confidence IS NOT NULL OR question_id IN (
           SELECT id FROM survey_questions
-          WHERE survey_id = $1 AND question_type = 'confidence_scale'
-        )
+          WHERE survey_id = $1 AND (question_type IN ('confidence_scale', 'confidence', 'range', 'slider') OR question_text ILIKE '%confianza%')
+        ))
     `, [surveyId]);
 
     // ── Candidatos con foto ──
@@ -594,13 +598,24 @@ router.get('/:id/results', async (req, res) => {
         ORDER BY id
       `);
     } else {
-      candidates = await db.query(`
+      const candsResult = await db.query(`
         SELECT id, name, party,
                COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
         FROM candidates
         WHERE municipality_id = $1
         ORDER BY name
       `, [municipality_id]);
+      
+      candidates = candsResult;
+
+      // FALLBACK: Si no hay candidatos en ese municipio, pero hay votos, traer candidatos generales o de otros municipios que coincidan con los IDs votados
+      if (candidates.rows.length === 0 && totalVotes > 0) {
+          console.warn(`⚠️ No se hallaron candidatos para municipio ${municipality_id}. Ejecutando búsqueda de rescate...`);
+          candidates = await db.query(`
+            SELECT id, name, party, photo_url FROM candidates 
+            WHERE id::text IN (SELECT DISTINCT response_value FROM survey_responses WHERE survey_id = $1)
+          `, [surveyId]);
+      }
     }
 
     // ── Mapear votos a candidatos ──

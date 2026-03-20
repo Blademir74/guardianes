@@ -946,7 +946,9 @@
             try {
                 const response = await fetch(`${API_URL}/surveys/${surveyId}/results`);
                 if (!response.ok) return null;
-                return await response.json();
+                const data = await response.json();
+                console.log('📊 [DEBUG] Live Data:', data);
+                return data;
             } catch (error) {
                 console.log('Sin resultados aún:', error);
                 return null;
