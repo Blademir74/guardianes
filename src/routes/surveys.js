@@ -556,49 +556,48 @@ router.get('/:id/results', async (req, res) => {
     const { election_type, municipality_id } = surveyRow.rows[0];
 
     // ── 2. Consulta Integral con LEFT JOIN ──
-    // Asegura que todos los candidatos del ámbito aparezcan, incluso con 0 votos
+    // Robustez: Comparamos ID y Nombre como fallback. 
+    // Quitamos restricción de question_id para asegurar captura en encuestas con nombres de preguntas variables.
     const resultsQuery = await db.query(`
       SELECT 
         c.name AS label,
+        c.party,
         COUNT(sr.id)::int AS vote_count
       FROM candidates c
       LEFT JOIN survey_responses sr ON (
-        (sr.response_value = c.id::text OR sr.response_value = 'candidato_' || c.id)
-        AND sr.survey_id = $1
-        AND sr.question_id IN (
-          SELECT id FROM survey_questions 
-          WHERE survey_id = $1 
-          AND (
-            question_type IN ('single_choice', 'choice', 'candidate_selection', 'vote', 'radio')
-            OR question_text ILIKE '%quién%' 
-            OR question_text ILIKE '%candidato%'
-          )
+        sr.survey_id = $1
+        AND (
+          sr.response_value = c.id::text 
+          OR sr.response_value = 'candidato_' || c.id
+          OR sr.response_value = c.name
         )
       )
       WHERE (
         (c.municipality_id = $2) 
         OR ($2 IS NULL AND c.municipality_id IS NULL)
+        OR (c.election_type = 'gubernatura' AND $3 = 'gubernatura')
       )
       AND (c.election_type = $3 OR $3 IS NULL OR c.election_type IS NULL)
-      GROUP BY c.id, c.name
+      GROUP BY c.id, c.name, c.party
       ORDER BY vote_count DESC, c.name ASC
     `, [surveyId, municipality_id, election_type]);
 
     const results = resultsQuery.rows;
-    const totalRespondents = results.reduce((sum, r) => sum + r.vote_count, 0);
+    // Total de votos capturados en esta consulta
+    const totalVotes = results.reduce((sum, r) => sum + r.vote_count, 0);
 
     // ── 3. Formatear Respuesta JSON Requerida ──
     const formattedResults = results.map(r => ({
-      label: r.label,
+      label: r.party ? `${r.label} (${r.party})` : r.label, // Inyectamos partido para claridad
       vote_count: r.vote_count,
-      percentage: totalRespondents > 0 
-        ? parseFloat(((r.vote_count / totalRespondents) * 100).toFixed(1))
+      percentage: totalVotes > 0 
+        ? parseFloat(((r.vote_count / totalVotes) * 100).toFixed(1))
         : 0.0
     }));
 
     res.json({
       success: true,
-      total_respondents: totalRespondents,
+      total_respondents: totalVotes, // Usamos total de votos válidos para el porcentaje
       results: formattedResults
     });
 
