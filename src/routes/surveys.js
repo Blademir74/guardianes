@@ -562,7 +562,8 @@ router.get('/:id/results', async (req, res) => {
       SELECT 
         c.name AS label,
         c.party,
-        COUNT(sr.id)::int AS vote_count
+        COUNT(sr.id)::int AS vote_count,
+        AVG(sr.confidence)::float AS avg_confidence
       FROM candidates c
       LEFT JOIN survey_responses sr ON (
         sr.survey_id = $1
@@ -585,6 +586,10 @@ router.get('/:id/results', async (req, res) => {
     const results = resultsQuery.rows;
     // Total de votos capturados en esta consulta
     const totalVotes = results.reduce((sum, r) => sum + r.vote_count, 0);
+    // Probabilidad o confianza general (promedio de todos los votos en la encuesta)
+    const globalAvgConfidence = results.length > 0 
+      ? results.reduce((sum, r) => sum + (r.avg_confidence || 0), 0) / results.length 
+      : 0;
 
     // ── 3. Formatear Respuesta JSON Requerida ──
     const formattedResults = results.map(r => ({
@@ -598,8 +603,10 @@ router.get('/:id/results', async (req, res) => {
     res.json({
       success: true,
       total_respondents: totalVotes, // Usamos total de votos válidos para el porcentaje
+      avg_confidence: globalAvgConfidence,
       results: formattedResults
     });
+
 
   } catch (error) {
     console.error('❌ Error Quirúrgico en /results:', error.message);

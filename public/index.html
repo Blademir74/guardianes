@@ -986,14 +986,11 @@
 
         async function fetchLiveResults(surveyId) {
             try {
-                // Captura dinámica del surveyId
                 const targetId = surveyId || currentSurveyId;
                 if (!targetId) return null;
-
                 const response = await fetch(`${API_URL}/surveys/${targetId}/results`);
                 if (!response.ok) return null;
                 const data = await response.json();
-                console.log('📊 [DEBUG] Surgical Live Data:', data);
                 return data;
             } catch (error) {
                 console.log('Sin resultados aún:', error);
@@ -1001,29 +998,68 @@
             }
         }
 
+        // --- REPARACIÓN QUIRÚRGICA: COLORES PERSISTENTES ---
+        const CANDIDATE_COLORS = {
+            'MORENA': '#73091B',
+            'PRI': '#EF4444',
+            'PAN': '#3B82F6',
+            'PVEM': '#10B981',
+            'PT': '#FF0000',
+            'MC': '#FF8A00',
+            'PRD': '#FFD700',
+            'INDEPENDIENTE': '#64748B',
+            'INDECISO': '#94A3B8'
+        };
+
+        function getCandidateColor(label) {
+            const upperLabel = label.toUpperCase();
+            for (const [party, color] of Object.entries(CANDIDATE_COLORS)) {
+                if (upperLabel.includes(party)) return color;
+            }
+            // Mapeo por nombre si no hay partido (extensible)
+            if (upperLabel.includes('VIVIANO')) return '#73091B'; 
+            if (upperLabel.includes('ESTHELA')) return '#73091B';
+            
+            return '#1E293B'; // Default dark slate
+        }
+
         // --- REPARACIÓN QUIRÚRGICA: renderResults(data) ---
         function renderResults(data) {
             if (!data || !data.results) return;
 
-            // 1. Actualizar Gráfica (si existe)
+            // 1. Actualizar Gráfica
             updateLiveChart(data);
 
-            // 2. Mapear Nombres y Votos en Barras de Progreso (ELIMINADO POR DUPLICIDAD SEGÚN REQUERIMIENTO)
+            // 2. Mapear Nombres y Votos en Barras de Progreso (RESTABLECIDO)
             const container = document.getElementById('resultados-preliminares');
             if (container) {
-                // Limpiamos el contenedor para evitar duplicidad con la gráfica
-                container.innerHTML = `
-                    <div class="text-center py-4 border-t border-white/5 mt-4">
-                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Auditoría en Progreso — Gráfica en Vivo</span>
-                    </div>
-                `;
+                container.innerHTML = data.results.map(so => {
+                    const color = getCandidateColor(so.label);
+                    return `
+                        <div class="space-y-2 animate-in fade-in slide-in-from-left duration-500">
+                            <div class="flex justify-between items-end">
+                                <span class="candidate-name-label text-[11px] md:text-sm uppercase tracking-tighter">${so.label}</span>
+                                <span class="text-[11px] md:text-sm font-black text-white">${so.percentage}%</span>
+                            </div>
+                            <div class="results-bar-container">
+                                <div class="results-bar-fill shadow-lg shadow-${color}/20" 
+                                     style="width: ${so.percentage}%; background-color: ${color}"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
 
             // 3. Actualizar Contadores Globales
             const totalVotesEl = document.getElementById('votos-totales');
+            const avgConfidenceEl = document.getElementById('confianza-promedio');
             const lastUpdateEl = document.getElementById('last-update-live');
 
             if (totalVotesEl) totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString();
+            if (avgConfidenceEl) {
+                const val = data.avg_confidence || 0;
+                avgConfidenceEl.textContent = Number(val.toFixed(1)) + '%';
+            }
             if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
@@ -1033,59 +1069,62 @@
             const ctx = document.getElementById('resultsChart')?.getContext('2d');
             if (!ctx) return;
 
-            // Usar nombre completo (o label formateada con partido) para claridad total en la gráfica
             const labels = data.results.map(r => r.label);
             const votes = data.results.map(r => r.vote_count);
+            const colors = data.results.map(r => getCandidateColor(r.label));
 
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Votos',
-                        data: votes,
-                        backgroundColor: data.results.map((_, i) =>
-                            ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'][i % 5]
-                        ),
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.raw} votos`;
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = votes;
+                chartInstance.data.datasets[0].backgroundColor = colors;
+                chartInstance.update('none'); // Update without animation for smoother polling
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Votos',
+                            data: votes,
+                            backgroundColor: colors,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.raw} votos`;
+                                    }
                                 }
                             }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            beginAtZero: true, 
-                            ticks: { color: '#94A3B8', font: { size: 10 } }, 
-                            grid: { color: 'rgba(255,255,255,0.05)' } 
                         },
-                        y: { 
-                            ticks: { 
-                                color: '#FFFFFF', 
-                                font: { weight: 'bold', size: 10 },
-                                callback: function(value) {
-                                    const label = this.getLabelForValue(value);
-                                    return label.length > 20 ? label.substr(0, 17) + '...' : label;
-                                }
-                            }, 
-                            grid: { display: false } 
+                        scales: {
+                            x: { 
+                                beginAtZero: true, 
+                                ticks: { color: '#94A3B8', font: { size: 10 } }, 
+                                grid: { color: 'rgba(255,255,255,0.05)' } 
+                            },
+                            y: { 
+                                ticks: { 
+                                    color: '#FFFFFF', 
+                                    font: { weight: 'bold', size: 10 },
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.length > 20 ? label.substr(0, 17) + '...' : label;
+                                    }
+                                }, 
+                                grid: { display: false } 
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
 
         function startLivePolling(surveyId) {
