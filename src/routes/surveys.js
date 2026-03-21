@@ -592,13 +592,20 @@ router.get('/:id/results', async (req, res) => {
       : 0;
 
     // ── 3. Formatear Respuesta JSON Requerida ──
-    const formattedResults = results.map(r => ({
-      label: r.party ? `${r.label} (${r.party})` : r.label, // Inyectamos partido para claridad
-      vote_count: r.vote_count,
-      percentage: totalVotes > 0 
-        ? parseFloat(((r.vote_count / totalVotes) * 100).toFixed(1))
-        : 0.0
-    }));
+    const formattedResults = results.map(r => {
+      let finalLabel = r.label;
+      // Sólo añadir el partido si no está ya presente en el nombre
+      if (r.party && r.party !== 'INDEPENDIENTE' && !r.label.toUpperCase().includes(r.party.toUpperCase())) {
+        finalLabel = `${r.label} (${r.party})`;
+      }
+      return {
+        label: finalLabel,
+        vote_count: r.vote_count,
+        percentage: totalVotes > 0 
+          ? parseFloat(((r.vote_count / totalVotes) * 100).toFixed(1))
+          : 0.0
+      };
+    });
 
     res.json({
       success: true,

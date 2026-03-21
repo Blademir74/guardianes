@@ -1013,12 +1013,14 @@
 
         function getCandidateColor(label) {
             const upperLabel = label.toUpperCase();
+            // Mapeo prioritario por nombre (Casos Especiales)
+            if (upperLabel.includes('SALOMÓN') || upperLabel.includes('MAJUL')) return '#FF8A00'; // MC - Naranja
+            if (upperLabel.includes('VIVIANO')) return '#73091B'; 
+            if (upperLabel.includes('ESTHELA')) return '#73091B';
+
             for (const [party, color] of Object.entries(CANDIDATE_COLORS)) {
                 if (upperLabel.includes(party)) return color;
             }
-            // Mapeo por nombre si no hay partido (extensible)
-            if (upperLabel.includes('VIVIANO')) return '#73091B'; 
-            if (upperLabel.includes('ESTHELA')) return '#73091B';
             
             return '#1E293B'; // Default dark slate
         }
@@ -1030,24 +1032,14 @@
             // 1. Actualizar Gráfica
             updateLiveChart(data);
 
-            // 2. Mapear Nombres y Votos en Barras de Progreso (RESTABLECIDO)
+            // 2. Mapear Nombres y Votos en Barras de Progreso (ELIMINADO POR DUPLICIDAD - SÓLO GRÁFICA)
             const container = document.getElementById('resultados-preliminares');
             if (container) {
-                container.innerHTML = data.results.map(so => {
-                    const color = getCandidateColor(so.label);
-                    return `
-                        <div class="space-y-2 animate-in fade-in slide-in-from-left duration-500">
-                            <div class="flex justify-between items-end">
-                                <span class="candidate-name-label text-[11px] md:text-sm uppercase tracking-tighter">${so.label}</span>
-                                <span class="text-[11px] md:text-sm font-black text-white">${so.percentage}%</span>
-                            </div>
-                            <div class="results-bar-container">
-                                <div class="results-bar-fill shadow-lg shadow-${color}/20" 
-                                     style="width: ${so.percentage}%; background-color: ${color}"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                container.innerHTML = `
+                    <div class="text-center py-4 border-t border-white/5 mt-4">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Auditoría en Progreso — Gráfica en Vivo</span>
+                    </div>
+                `;
             }
 
             // 3. Actualizar Contadores Globales
