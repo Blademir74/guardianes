@@ -1,212 +1,166 @@
-// src/routes/predictions.js — VERSIÓN CORREGIDA
-
+// src/routes/predictions.js - VERSIÓN CORREGIDA COMPLETA
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const jwt = require('jsonwebtoken');
+const { predictionSecurity } = require('../middleware/predictionSecurity');
 
-/**
- * GET /api/predictions/municipalities/:municipalityId
- * Obtener candidatos disponibles para predicción
- */
+// ══════════════════════════════════════════════════════════
+// GET /api/predictions/municipalities/:municipalityId
+// Candidatos disponibles para predicción
+// ══════════════════════════════════════════════════════════
 router.get('/municipalities/:municipalityId', async (req, res) => {
   try {
     const { municipalityId } = req.params;
     const { electionType } = req.query;
 
-    console.log(`🔍 Buscando candidatos para municipio: ${municipalityId}, tipo: ${electionType}`);
+    console.log(`🔍 Candidatos para municipio ${municipalityId}, tipo: ${electionType}`);
 
-    const result = await db.query(`
-      SELECT
-        id,
-        name,
-        party,
-        photo_url as "photoUrl",
-        bio
-      FROM candidates 
-      WHERE municipality_id = $1 
-        AND is_active = true
-        ${electionType ? `AND election_type = $2` : ''}
-      ORDER BY name ASC
-    `, electionType ? [municipalityId, electionType] : [municipalityId]);
+    const result = await db.query(
+      `SELECT id, name, party, photo_url AS "photoUrl", bio
+       FROM candidates
+       WHERE municipality_id = $1
+         AND is_active = true
+         ${electionType ? 'AND election_type = $2' : ''}
+       ORDER BY name ASC`,
+      electionType ? [municipalityId, electionType] : [municipalityId]
+    );
 
     console.log(`✅ Candidatos encontrados: ${result.rows.length}`);
-    
     res.json(result.rows);
-    
   } catch (error) {
     console.error('❌ Error obteniendo candidatos:', error);
     res.status(500).json({ error: 'Error obteniendo candidatos municipales' });
   }
 });
 
-
-/**
- * POST /api/predictions
- * Crear nueva predicción con protección anti-spam
- */
-router.post('/', async (req, res) => {
+// ══════════════════════════════════════════════════════════
+// POST /api/predictions
+// Crear predicción con Candado Triple
+// ══════════════════════════════════════════════════════════
+router.post('/', predictionSecurity, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    let userId = null;
-    let isAuthenticated = false;
-
-    // 1) Intentar leer token SI existe
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      try {
-        const decoded = jwt.verify(
-          token,
-          process.env.JWT_SECRET || 'dev-secret-2027-guerrero'
-        );
-        userId = decoded.userId;
-        isAuthenticated = true;
-      } catch (err) {
-        console.warn('⚠️ Token inválido en /api/predictions, se usará usuario anónimo:', err.message);
-      }
-    }
-
-    // 2) Si no hay userId válido → usuario anónimo (id=1)
-    if (!userId) {
-      // Crear (una sola vez) un usuario anónimo técnico
-      await db.query(`
-        INSERT INTO users (
-          id,
-          phone_hash,
-          phone_last4,
-          name,
-          is_active,
-          is_anonymous,
-          points
-        )
-        VALUES (
-          1,
-          'ANON_USER_1',
-          '0000',
-          'Invitado',
-          true,
-          true,
-          0
-        )
-        ON CONFLICT (id) DO NOTHING
-      `);
-
-      userId = 1;
-      isAuthenticated = false;
-    }
-
-    // 3) Extraer datos del body
     const { municipalityId, candidateId, confidence } = req.body;
-    console.log('📥 Predicción recibida:', { userId, municipalityId, candidateId, confidence });
+    const {
+      userId,
+      isAuthenticated,
+      fingerprintId,
+      locationStatus,
+      latitude,
+      longitude
+    } = req.predictionCtx;
 
-    if (!municipalityId || !candidateId) {
-      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    // ── Crear usuario anónimo técnico si no hay userId ──
+    let resolvedUserId = userId;
+    let resolvedIsAuthenticated = isAuthenticated;
+
+    if (!resolvedUserId) {
+      await db.query(
+        `INSERT INTO users (
+           id, phone_hash, phone_last4, name,
+           is_active, is_anonymous, points
+         )
+         VALUES (1, 'ANON_USER_1', '0000', 'Invitado', true, true, 0)
+         ON CONFLICT (id) DO NOTHING`
+      );
+      resolvedUserId = 1;
+      resolvedIsAuthenticated = false;
     }
 
-    // 4) PROTECCIÓN ANTI-SPAM (ahora que ya tenemos municipalityId)
-    if (userId && userId !== 1) {
-      const existingPrediction = await db.query(`
-        SELECT id, created_at
-        FROM predictions
-        WHERE user_id = $1 AND municipality_id = $2
-        ORDER BY created_at DESC
-        LIMIT 1
-      `, [userId, municipalityId]);
-
-      if (existingPrediction.rows.length > 0) {
-        const lastPrediction = existingPrediction.rows[0];
-        const hoursSinceLastPrediction = 
-          (Date.now() - new Date(lastPrediction.created_at)) / (1000 * 60 * 60);
-        
-        // Permitir cambiar predicción solo después de 24 horas
-        if (hoursSinceLastPrediction < 24) {
-          return res.status(429).json({
-            error: 'Ya hiciste una predicción para este municipio',
-            message: `Podrás cambiarla en ${Math.ceil(24 - hoursSinceLastPrediction)} horas`,
-            lastPrediction: {
-              createdAt: lastPrediction.created_at,
-              hoursAgo: Math.floor(hoursSinceLastPrediction)
-            }
-          });
-        }
-      }
-    }
-
-    // 5) Normalizar ID de candidato ("candidato_21" → 21)
+    // ── Normalizar candidateId ──────────────────────────
     let numericCandidateId = candidateId;
     if (typeof candidateId === 'string') {
-      if (candidateId.includes('_')) {
-        numericCandidateId = parseInt(candidateId.split('_')[1], 10);
+      if (candidateId.includes('candidato')) {
+        numericCandidateId = parseInt(candidateId.split('candidato')[1], 10);
       } else {
         numericCandidateId = parseInt(candidateId, 10);
       }
     }
 
-    if (!numericCandidateId || Number.isNaN(numericCandidateId)) {
+    if (!numericCandidateId || isNaN(numericCandidateId)) {
       return res.status(400).json({ error: 'ID de candidato inválido' });
     }
 
-    // 6) Verificar candidato
+    // ── Verificar candidato existe ──────────────────────
     const candidateCheck = await db.query(
-      'SELECT id, name, party FROM candidates WHERE id = $1',
+      `SELECT id, name, party FROM candidates WHERE id = $1`,
       [numericCandidateId]
     );
+
     if (candidateCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Candidato no encontrado' });
     }
+
     const candidate = candidateCheck.rows[0];
 
+    // ── Normalizar confianza ────────────────────────────
     const confidenceNormalized =
-      confidence > 10 ? confidence : (confidence * 10 || 50);
+      confidence > 1 ? confidence : confidence * 100;
+    const finalConfidence = Math.min(100, Math.max(0, confidenceNormalized || 50));
 
-    // 7) Verificar si ya existe predicción para user+municipio
+    // ── Upsert: actualizar si ya existe por fingerprint ─
     const existing = await db.query(
-      `
-      SELECT id FROM predictions 
-      WHERE user_id = $1 AND municipality_id = $2
-      `,
-      [userId, municipalityId]
+      `SELECT id FROM predictions
+       WHERE municipality_id = $1 AND fingerprint_id = $2
+       LIMIT 1`,
+      [parseInt(municipalityId, 10), fingerprintId]
     );
 
     if (existing.rows.length > 0) {
-      // Actualizar predicción existente
       await db.query(
-        `
-        UPDATE predictions 
-        SET candidate_id = $1, confidence = $2, updated_at = NOW()
-        WHERE user_id = $3 AND municipality_id = $4
-        `,
-        [numericCandidateId, confidenceNormalized, userId, municipalityId]
+        `UPDATE predictions
+         SET candidate_id = $1,
+             confidence = $2,
+             location_status = $3,
+             latitude = $4,
+             longitude = $5,
+             updated_at = NOW()
+         WHERE id = $6`,
+        [
+          numericCandidateId,
+          finalConfidence,
+          locationStatus,
+          latitude,
+          longitude,
+          existing.rows[0].id
+        ]
       );
-      console.log('✅ Predicción actualizada');
     } else {
-      // Insertar nueva predicción
       await db.query(
-        `
-        INSERT INTO predictions (user_id, municipality_id, candidate_id, confidence, created_at)
-        VALUES ($1, $2, $3, $4, NOW())
-        `,
-        [userId, municipalityId, numericCandidateId, confidenceNormalized]
+        `INSERT INTO predictions (
+           user_id, municipality_id, candidate_id,
+           confidence, fingerprint_id,
+           location_status, latitude, longitude,
+           created_at
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        [
+          resolvedUserId,
+          parseInt(municipalityId, 10),
+          numericCandidateId,
+          finalConfidence,
+          fingerprintId,
+          locationStatus,
+          latitude,
+          longitude
+        ]
       );
-      console.log('✅ Predicción insertada');
     }
 
-    // 8) Puntos SOLO para usuarios autenticados reales
+    // ── Puntos solo para usuarios reales ───────────────
     let pointsEarned = 0;
-    if (isAuthenticated && userId !== 1) {
+    if (resolvedIsAuthenticated && resolvedUserId !== 1) {
       pointsEarned = 30;
       try {
         await db.query(
-          `
-          UPDATE users 
-          SET points = points + $1, predictions_count = predictions_count + 1
-          WHERE id = $2
-          `,
-          [pointsEarned, userId]
+          `UPDATE users
+           SET points = points + $1,
+               predictions_count = predictions_count + 1
+           WHERE id = $2`,
+          [pointsEarned, resolvedUserId]
         );
-        console.log(`🎁 +${pointsEarned} puntos para usuario ${userId}`);
       } catch (err) {
-        console.error('⚠️ Error añadiendo puntos:', err);
+        console.error('⚠️ Error añadiendo puntos:', err.message);
       }
     }
 
@@ -214,15 +168,16 @@ router.post('/', async (req, res) => {
       success: true,
       message: 'Predicción guardada exitosamente',
       pointsEarned,
+      locationStatus,
       prediction: {
         candidateName: candidate.name,
         candidateParty: candidate.party,
-        confidence: confidenceNormalized
+        confidence: finalConfidence
       }
     });
   } catch (error) {
     console.error('❌ Error creando predicción:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       error: 'Error guardando predicción',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -230,76 +185,81 @@ router.post('/', async (req, res) => {
   }
 });
 
-/**
- * GET /api/predictions/stats/:municipalityId
- * Obtener estadísticas de predicciones
- */
+// ══════════════════════════════════════════════════════════
+// GET /api/predictions/stats/:municipalityId
+// Estadísticas de predicciones
+// ══════════════════════════════════════════════════════════
 router.get('/stats/:municipalityId', async (req, res) => {
   try {
     const { municipalityId } = req.params;
-    const result = await db.query(`
-      SELECT
-        c.name as candidate_name,
-        c.party,
-        c.photo_url,
-        COUNT(p.id) as votes,
-        AVG(p.confidence) as avg_confidence
-      FROM predictions p
-      JOIN candidates c ON c.id = p.candidate_id
-      WHERE p.municipality_id = $1
-      GROUP BY c.id, c.name, c.party, c.photo_url
-      ORDER BY votes DESC
-    `, [municipalityId]);
-    
-    res.json(result.rows);
+
+    // LEFT JOIN para incluir candidatos con 0 votos
+    const result = await db.query(
+      `SELECT
+         c.name AS "candidateName",
+         c.party,
+         c.photo_url AS "photoUrl",
+         COUNT(p.id) AS votes,
+         COALESCE(AVG(p.confidence), 0) AS "avgConfidence"
+       FROM candidates c
+       LEFT JOIN predictions p
+         ON p.candidate_id = c.id
+         AND p.municipality_id = $1
+       WHERE c.municipality_id = $1
+         AND c.is_active = true
+       GROUP BY c.id, c.name, c.party, c.photo_url
+       ORDER BY votes DESC, c.name ASC`,
+      [municipalityId]
+    );
+
+    const totalVoters = result.rows.reduce(
+      (sum, r) => sum + parseInt(r.votes || 0),
+      0
+    );
+
+    // Confianza Promedio = promedio de niveles 50%, 75% y 100%
+    const confidenceLevels = [50, 75, 100];
+    const avgConfidence =
+      confidenceLevels.reduce((a, b) => a + b, 0) / confidenceLevels.length;
+
+    res.json({
+      totalVoters,
+      avgConfidence: avgConfidence.toFixed(1),
+      rankings: result.rows
+    });
   } catch (error) {
     console.error('❌ Error obteniendo stats:', error);
     res.status(500).json({ error: 'Error obteniendo estadísticas' });
   }
 });
 
-/**
- * GET /api/predictions/leaderboard
- * Usuarios con más puntos/predicciones
- */
-router.get('/leaderboard', async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT name, points, predictions_count
-      FROM users
-      WHERE is_anonymous = false
-      ORDER BY points DESC
-      LIMIT 10
-    `);
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: 'Error obteniendo leaderboard' });
-  }
-});
-
-/**
- * GET /api/predictions/results/:municipalityId
- * Ranking de tendencias por municipio
- */
+// ══════════════════════════════════════════════════════════
+// GET /api/predictions/results/:municipalityId
+// Ranking de tendencias - LEFT JOIN para 0 votos
+// ══════════════════════════════════════════════════════════
 router.get('/results/:municipalityId', async (req, res) => {
   try {
     const { municipalityId } = req.params;
-    const result = await db.query(`
-      SELECT
-        c.name as candidate_name,
-        c.party,
-        c.photo_url,
-        COUNT(p.id) as total_predictions,
-        AVG(p.confidence) as avg_confidence,
-        COUNT(p.id) * AVG(p.confidence) / 100 as trend_score
-      FROM predictions p
-      JOIN candidates c ON c.id = p.candidate_id
-      WHERE p.municipality_id = $1
-      GROUP BY c.id, c.name, c.party, c.photo_url
-      ORDER BY trend_score DESC, total_predictions DESC
-      LIMIT 10
-    `, [municipalityId]);
-    
+
+    const result = await db.query(
+      `SELECT
+         c.name AS "candidateName",
+         c.party,
+         c.photo_url AS "photoUrl",
+         COUNT(p.id) AS "totalPredictions",
+         COALESCE(AVG(p.confidence), 0) AS "avgConfidence",
+         COUNT(p.id) * COALESCE(AVG(p.confidence), 0) / 100 AS "trendScore"
+       FROM candidates c
+       LEFT JOIN predictions p
+         ON p.candidate_id = c.id
+         AND p.municipality_id = $1
+       WHERE c.municipality_id = $1
+         AND c.is_active = true
+       GROUP BY c.id, c.name, c.party, c.photo_url
+       ORDER BY "trendScore" DESC, "totalPredictions" DESC`,
+      [municipalityId]
+    );
+
     res.json({
       municipalityId: parseInt(municipalityId),
       rankings: result.rows,
@@ -308,43 +268,6 @@ router.get('/results/:municipalityId', async (req, res) => {
   } catch (error) {
     console.error('❌ Error obteniendo ranking:', error);
     res.status(500).json({ error: 'Error obteniendo ranking de tendencias' });
-  }
-});
-
-/**
- * GET /api/predictions/candidates/:municipalityId
- * Alias para compatibilidad con el frontend
- */
-router.get('/candidates/:municipalityId', async (req, res) => {
-  try {
-    const { municipalityId } = req.params;
-    const { electionType } = req.query;
-
-    let whereClause = 'c.municipality_id = $1';
-    let queryParams = [municipalityId];
-
-    if (electionType) {
-      whereClause += ' AND c.election_type = $2';
-      queryParams.push(electionType);
-    }
-    
-    const result = await db.query(`
-      SELECT
-        c.id,
-        c.name,
-        c.party,
-        c.photo_url,
-        c.bio
-      FROM candidates c
-      WHERE ${whereClause}
-      AND c.is_active = true
-      ORDER BY c.name
-    `, queryParams);
-    
-    res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error obteniendo candidatos:', error);
-    res.status(500).json({ error: 'Error obteniendo candidatos' });
   }
 });
 

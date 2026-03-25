@@ -348,7 +348,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
   try {
     client = await db.connect();
     const surveyId = parseInt(req.params.id, 10);
-    const { responses, fingerprintId } = req.body;
+    const { responses, fingerprintId, latitude, longitude, locationProvided } = req.body;
 
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({ error: 'Debe enviar al menos una respuesta' });
@@ -369,7 +369,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
     // ── Verificar encuesta ──
     const surveyCheck = await client.query(`
-      SELECT id, is_active, is_public, allow_anonymous, end_date
+      SELECT id, is_active, is_public, allow_anonymous, end_date, municipality_id, election_type, level
       FROM surveys WHERE id = $1
     `, [surveyId]);
 
@@ -390,6 +390,9 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     // ══════════════════════════════════════════
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS fingerprint_id VARCHAR(255);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS location_status VARCHAR(32);`);
     // Índice único para anti-doble-voto (safe: CREATE IF NOT EXISTS)
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_survey_fingerprint
@@ -454,6 +457,15 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     // ── Insertar respuestas en transacción ──
     await client.query('BEGIN');
 
+    // ── Validación territorial (Cero rastro: ligado únicamente al fingerprint_id) ──
+    const { computeLocationStatus } = require('../middleware/territorialValidation');
+    const territorial = await computeLocationStatus({
+      dbClient: client,
+      survey,
+      latitude: locationProvided ? latitude : null,
+      longitude: locationProvided ? longitude : null
+    });
+
     // AUDITORÍA DE INTEGRIDAD: Verificación dentro de la transacción con bloqueo (Locking)
     // Evita Race Conditions bajo carga masiva (50,000 usuarios)
     const duplicateCheck = await client.query(
@@ -483,9 +495,20 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
       await client.query(`
         INSERT INTO survey_responses
-          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NOW())
-      `, [surveyId, response.questionId, userId, responseValue.toString(), 100, fingerprintId, clientIp]);
+          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, latitude, longitude, location_status, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, NOW())
+      `, [
+        surveyId,
+        response.questionId,
+        userId,
+        responseValue.toString(),
+        100,
+        fingerprintId,
+        clientIp,
+        territorial.latitude,
+        territorial.longitude,
+        territorial.locationStatus
+      ]);
 
       savedCount++;
     }
@@ -513,7 +536,11 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
       success: true,
       message: 'Voto registrado exitosamente',
       pointsEarned,
-      responsesSaved: savedCount
+      responsesSaved: savedCount,
+      territorial: {
+        locationProvided: !!locationProvided && territorial.locationStatus !== 'NO_GPS',
+        locationStatus: territorial.locationStatus
+      }
     });
 
   } catch (error) {

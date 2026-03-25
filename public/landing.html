@@ -228,6 +228,40 @@
         </div>
     </section>
 
+    <!-- FAQ / Narrativa Técnica -->
+    <section id="faq" class="py-32 bg-[#080808] border-y border-white/5">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <span class="text-gold uppercase tracking-[0.3em] text-xs font-bold mb-4 block">03 // FAQ</span>
+                <h2 class="text-4xl md:text-5xl text-white serif mb-6">Narrativa Técnica</h2>
+                <div class="w-12 h-px bg-gold mx-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-card p-10 rounded-sm">
+                    <h3 class="text-2xl text-white mb-4 serif">¿Por qué la Caja Negra es invulnerable a bots?</h3>
+                    <p class="text-gray-400 font-light leading-relaxed">
+                        Porque cada predicción exige una <b>huella digital matemática única</b> (generada en el navegador con FingerprintJS y validada en backend).
+                        El servidor cruza esa huella con el contexto de la predicción para crear una identidad técnica persistente y, dentro de la ventana de 24 horas,
+                        evita reintentos del mismo dispositivo en el mismo municipio. A nivel de integridad, la evidencia queda sellada con cifrado SHA-256,
+                        lo que hace que los intentos automatizados no puedan replicar el “fingerprint” sin el mismo entorno técnico.
+                    </p>
+                </div>
+
+                <div class="glass-card p-10 rounded-sm">
+                    <h3 class="text-2xl text-white mb-4 serif">¿Qué pasa si intentas votar dos veces?</h3>
+                    <p class="text-gray-400 font-light leading-relaxed">
+                        Si el backend detecta que el mismo dispositivo (huella) intenta repetir la predicción antes de que concluya la ventana permitida,
+                        bloquea el reenvío y activa el mensaje de prestigio:
+                        <br><br>
+                        <b>“Tu predicción ya está sellada en la Caja Negra. Puedes actualizarla 24 horas antes del cierre”</b>.
+                        Así mantenemos integridad sin fricción por IP, pero sí con verificación por identidad técnica.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Telemetría / Resultados en vivo simplificados -->
     <section id="datos" class="py-32 bg-[#080808] border-y border-white/5 relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-6">

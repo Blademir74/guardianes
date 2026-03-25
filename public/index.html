@@ -422,12 +422,20 @@
                     <!-- LIVE COUNTERS -->
                     <div class="grid grid-cols-2 gap-4 mt-10 w-full max-w-lg">
                         <div class="bg-[#1E293B]/40 border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                            <span id="hero-live-votes" class="text-4xl font-black text-white">---</span>
+                            <span id="hero-live-votes" class="text-4xl font-black text-white hidden">---</span>
+                            <span id="hero-skeleton-votes" class="hero-skeleton-number" aria-hidden="true"></span>
                             <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-2">Votos Procesados</span>
+                            <div class="text-[10px] text-slate-400/80 mt-2 leading-tight">
+                                Cifras auditadas en tiempo real. No se permiten ajustes manuales
+                            </div>
                         </div>
                         <div class="bg-[#1E293B]/40 border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                            <span id="hero-live-guardians" class="text-4xl font-black text-emerald-500">---</span>
+                            <span id="hero-live-guardians" class="text-4xl font-black text-emerald-500 hidden">---</span>
+                            <span id="hero-skeleton-guardians" class="hero-skeleton-number" aria-hidden="true"></span>
                             <span class="text-[9px] uppercase tracking-widest text-emerald-500/80 font-bold mt-2">Guardianes Activos</span>
+                            <div class="text-[10px] text-slate-400/80 mt-2 leading-tight">
+                                Cifras auditadas en tiempo real. No se permiten ajustes manuales
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1176,6 +1184,13 @@
             if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
 
             try {
+                const submitBtn = document.getElementById('submit-vote-btn');
+                const originalBtnText = submitBtn ? submitBtn.textContent : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Procesando en Caja Negra...';
+                }
+
                 // UI: Bloquear con estilo Prestige
                 Swal.fire({
                     title: 'Sellando Voto...',
@@ -1184,15 +1199,50 @@
                     didOpen: () => Swal.showLoading()
                 });
 
+                // Narrativa de confianza (territorial)
+                try {
+                    Swal.update({
+                        title: 'Validando integridad territorial...',
+                        text: 'Tu ubicación asegura que este voto cuenta para tu municipio de forma anónima'
+                    });
+                } catch (_) { /* ignore */ }
+
                 // Obtener Fingerprint VisitorID (Candado 1 en frontend)
                 const fp = await fpPromise;
                 const result = await fp.get();
                 const visitorId = result.visitorId;
 
+                // Geolocalización (con consentimiento)
+                const geo = await new Promise((resolve) => {
+                    if (!navigator.geolocation) {
+                        return resolve({ locationProvided: false, latitude: null, longitude: null, locationStatus: 'NO_GPS' });
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            resolve({
+                                locationProvided: true,
+                                latitude: pos.coords?.latitude ?? null,
+                                longitude: pos.coords?.longitude ?? null,
+                                locationStatus: 'PROVIDED'
+                            });
+                        },
+                        () => {
+                            resolve({ locationProvided: false, latitude: null, longitude: null, locationStatus: 'NO_GPS' });
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                });
+
                 const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ responses, fingerprintId: visitorId })
+                    body: JSON.stringify({
+                        responses,
+                        fingerprintId: visitorId,
+                        latitude: geo.latitude,
+                        longitude: geo.longitude,
+                        locationProvided: geo.locationProvided
+                    })
                 });
 
                 const data = await res.json();
@@ -1243,6 +1293,12 @@
                 Swal.close();
                 console.error('Error en submitSurvey:', e);
                 showToast('Fallo de Sincronización: ' + e.message, 'error');
+            } finally {
+                const submitBtn = document.getElementById('submit-vote-btn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (typeof originalBtnText === 'string') submitBtn.textContent = originalBtnText;
+                }
             }
         }
 

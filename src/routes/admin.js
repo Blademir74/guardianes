@@ -353,6 +353,9 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
         sr.fingerprint_id,
         sr.ip_address,
         sr.created_at,
+        sr.latitude,
+        sr.longitude,
+        sr.location_status,
         sq.question_text,
         sq.question_type,
         sr.response_value,
@@ -388,6 +391,9 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
           region: guerreroRegions[row.area_code] || 'Desconocida',
           area_code: row.area_code || 'N/A',
           fecha: row.created_at,
+          latitude: row.latitude ?? null,
+          longitude: row.longitude ?? null,
+          location_status: row.location_status ?? null,
           respuestas: {}
         };
       }
@@ -435,6 +441,9 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
       'Región',
       'LADA',
       'Fecha',
+      'Latitude',
+      'Longitude',
+      'LocationStatus',
       ...allQuestions
     ];
 
@@ -454,7 +463,10 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
           day: '2-digit',
           hour: '2-digit',
           minute: '2-digit'
-        })
+        }),
+        user.latitude ?? '',
+        user.longitude ?? '',
+        user.location_status ?? ''
       ];
 
       // Agregar respuestas en orden

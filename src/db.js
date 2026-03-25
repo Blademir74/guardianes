@@ -25,7 +25,9 @@ function getPool() {
   pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },   // obligatorio para Neon
-    max: 5,                               // máximo conexiones simultáneas
+    // Para carga alta (muchas predicciones simultáneas) este valor puede
+    // convertirse en cuello de botella. Se parametriza para ajustar por entorno.
+    max: parseInt(process.env.DB_POOL_MAX || '20', 10), // máximo conexiones simultáneas
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });

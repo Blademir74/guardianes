@@ -108,7 +108,6 @@ app.get('/api/health', async (req, res) => {
 // ==========================================
 const routesPath = path.join(__dirname, '../src/routes');
 
-// Helper to safely require routes
 const requireRoute = (name) => {
   try {
     const routePath = path.join(routesPath, `${name}.js`);
@@ -125,25 +124,25 @@ const requireRoute = (name) => {
   }
 };
 
-const authRoutes = requireRoute('auth');
-const dataRoutes = require('../src/routes/data');
-const surveyRoutes = requireRoute('surveys');
-const adminRoutes = require('../src/routes/admin');
-const candidateRoutes = requireRoute('candidates');
-const predictionsRoutes = requireRoute('predictions');
+const authRoutes        = requireRoute('auth');
+const dataRoutes        = require('../src/routes/data');
+const surveyRoutes      = requireRoute('surveys');
+const adminRoutes       = require('../src/routes/admin');
+const candidateRoutes   = requireRoute('candidates');
+const predictionsRoutes = require('../src/routes/predictions'); // ← nombre unificado
 const leaderboardRoutes = requireRoute('leaderboard');
-const incidentsRoutes = requireRoute('incidents');
-const historicalRoutes = requireRoute('historical');
+const incidentsRoutes   = requireRoute('incidents');
+const historicalRoutes  = requireRoute('historical');
 
-if (authRoutes) app.use('/api/auth', authRoutes);
-if (dataRoutes) app.use('/api/data', dataRoutes);
-if (surveyRoutes) app.use('/api/surveys', surveyRoutes);
-if (adminRoutes) app.use('/api/admin', adminRoutes);
-if (candidateRoutes) app.use('/api/candidates', candidateRoutes);
-if (predictionsRoutes) app.use('/api/predictions', predictionsRoutes);
-if (leaderboardRoutes) app.use('/api/leaderboard', leaderboardRoutes);
-if (incidentsRoutes) app.use('/api/incidents', incidentsRoutes);
-if (historicalRoutes) app.use('/api/historical', historicalRoutes);
+if (authRoutes)        app.use('/api/auth',        authRoutes);
+if (dataRoutes)        app.use('/api/data',         dataRoutes);
+if (surveyRoutes)      app.use('/api/surveys',      surveyRoutes);
+if (adminRoutes)       app.use('/api/admin',        adminRoutes);
+if (candidateRoutes)   app.use('/api/candidates',   candidateRoutes);
+if (predictionsRoutes) app.use('/api/predictions',  predictionsRoutes); // ✅ consistente
+if (leaderboardRoutes) app.use('/api/leaderboard',  leaderboardRoutes);
+if (incidentsRoutes)   app.use('/api/incidents',    incidentsRoutes);
+if (historicalRoutes)  app.use('/api/historical',   historicalRoutes);
 
 // ==========================================
 // 5. STATIC FILES & HTML ROUTES
