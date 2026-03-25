@@ -417,12 +417,17 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     );
 
     if (existingVote.rows.length > 0) {
-      return res.status(409).json({
-        success: false,
-        alreadyVoted: true,
-        error: 'Doble Voto Detectado: Ya registraste tu voto en esta encuesta desde este dispositivo.'
-      });
-    }
+  return res.status(409).json({
+    success: false,
+    alreadyVoted: true,
+    error: 'Ya registraste tu voto en esta encuesta desde este dispositivo.',
+    // ✅ Agrega esto para debug en producción:
+    debug: process.env.NODE_ENV !== 'production' ? {
+      surveyId,
+      fingerprintId: fingerprintId?.slice(0, 8) + '...'
+    } : undefined
+  });
+}
 
     // Candado 2: Cookies Seguras Hasheadas
     const crypto = require('crypto');
