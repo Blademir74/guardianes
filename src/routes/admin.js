@@ -190,21 +190,35 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
 // ========================================
 // LISTAR ENCUESTAS (GET)
 // ========================================
-router.get('/surveys', authenticateAdmin, async (req, res) => {
+// src/routes/admin.js — GET /surveys
+router.get('/surveys', adminAuth, async (req, res) => {
   try {
-    const result = await query(`
-      SELECT s.*, 
-             (SELECT COUNT(*) FROM survey_responses WHERE survey_id = s.id) AS total_responses,
-             CASE WHEN s.municipality_id IS NOT NULL THEN 'Municipal' 
-                  WHEN s.election_type = 'gubernatura' THEN 'Gubernatura' 
-                  ELSE 'General' END AS level
+    const result = await db.query(`
+      SELECT
+        s.id,
+        s.title,
+        s.description,
+        s.level,
+        s.election_type,
+        s.is_active,
+        s.municipality_id,
+        s.created_at,
+        -- ✅ LEFT JOIN garantiza candidatos/encuestas con 0 votos aparecen
+        COUNT(sr.id)::int                                                      AS totalresponses,
+        COUNT(sr.id) FILTER (WHERE sr.location_status1 = 'IN_RANGE')::int     AS territorial_verified,
+        COUNT(sr.id) FILTER (WHERE sr.location_status1 = 'OUT_OF_RANGE')::int AS votes_out_range,
+        COUNT(sr.id) FILTER (WHERE sr.location_status1 = 'NO_GPS')::int       AS votes_no_gps,
+        ROUND(COALESCE(AVG(sr.confidence), 0), 1)                             AS avg_confidence
       FROM surveys s
+      LEFT JOIN survey_responses sr ON sr.survey_id = s.id
+      GROUP BY s.id
       ORDER BY s.created_at DESC
     `);
+
     res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error listando encuestas:', error.message);
-    res.status(500).json({ error: 'Error al listar encuestas' });
+  } catch (err) {
+    console.error('❌ Error GET /admin/surveys:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
