@@ -1,735 +1,835 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Guardianes 2027</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.446.0/dist/umd/lucide.min.js"></script>
-    <style>
-        :root {
-            --primary: #060f3b;
-            --accent: #ca8a04;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--primary);
-            color: #f8fafc;
-        }
-
-        .sidebar {
-            background: #0f172a;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .glass-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-        }
-
-        .btn-accent {
-            background: var(--accent);
-            color: #020617;
-            transition: all 0.2s;
-            font-weight: 900;
-        }
-
-        .btn-accent:hover {
-            background: #eab308;
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(234, 179, 8, 0.2);
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 999px;
-            font-size: 9px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .status-active {
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .status-paused {
-            background: rgba(244, 63, 94, 0.15);
-            color: #f43f5e;
-            border: 1px solid rgba(244, 63, 94, 0.2);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Guardianes 2027</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.446.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root { --primary: #060f3b; --accent: #ca8a04; }
+    body { font-family: 'Outfit', sans-serif; background-color: var(--primary); color: #f8fafc; }
+    .sidebar { background: #0f172a; border-right: 1px solid rgba(255,255,255,0.05); }
+    .glass-card { background: rgba(30,41,59,0.5); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+    .btn-accent { background: var(--accent); color: #020617; transition: all 0.2s; font-weight: 900; }
+    .btn-accent:hover { background: #eab308; transform: translateY(-1px); box-shadow: 0 10px 20px rgba(234,179,8,0.2); }
+    .status-badge { padding: 4px 12px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
+    .status-active { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+    .status-paused { background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.2); }
+    .nav-item.active { background: #ca8a04 !important; color: #020617 !important; opacity: 1 !important; }
+    .admin-view { display: none; }
+    .admin-view.active-view { display: block; }
+    #admin-portal { display: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    /* Skeleton Loader */
+    .skeleton { background: linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; border-radius:6px; color:transparent!important; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    /* Filter buttons */
+    .filter-btn { transition: all 0.2s; cursor: pointer; }
+    .filter-btn.active-filter { background: #ca8a04 !important; color: #020617 !important; opacity: 1 !important; }
+  </style>
 </head>
-
 <body class="flex min-h-screen">
-    <!-- SIDEBAR -->
-    <aside class="w-80 sidebar flex flex-col p-10 gap-12">
-        <div class="flex items-center gap-4">
-            <div
-                class="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center font-black text-3xl shadow-xl shadow-amber-900/40">
-                A</div>
-            <div>
-                <h1 class="text-xl font-black tracking-tighter uppercase italic">Control <span
-                        class="text-amber-500">2027</span></h1>
-                <p class="text-[14px] font-black opacity-30 uppercase tracking-[0.4em]">Estrategia Gubernamental</p>
-            </div>
-        </div>
 
-        <nav class="flex flex-col gap-4">
-            <button onclick="switchView('dashboard')"
-                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-            </button>
-            <button onclick="switchView('surveys')"
-                class="nav-item active flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest bg-amber-600 text-slate-950 shadow-2xl shadow-amber-900/40 text-left">
-                <i data-lucide="clipboard-list" class="w-5 h-5"></i> Gestión de Encuestas
-            </button>
-            <button onclick="switchView('incidents')"
-                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
-                <i data-lucide="alert-triangle" class="w-5 h-5"></i> Panel de Alertas
-            </button>
-            <button onclick="switchView('users')"
-                class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
-                <i data-lucide="users" class="w-5 h-5"></i> Registro Civil
-            </button>
-        </nav>
+<!-- ═══════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════ -->
+<aside class="w-80 sidebar flex flex-col p-10 gap-12">
+  <div class="flex items-center gap-4">
+    <div class="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center font-black text-3xl shadow-xl shadow-amber-900/40">A</div>
+    <div>
+      <h1 class="text-xl font-black tracking-tighter uppercase italic">Control <span class="text-amber-500">2027</span></h1>
+      <p class="text-[14px] font-black opacity-30 uppercase tracking-[0.4em]">Estrategia Gubernamental</p>
+    </div>
+  </div>
 
-        <div class="mt-auto pt-10 border-t border-white/5">
-            <div class="flex items-center gap-3 px-4 mb-6">
-                <div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=0f172a&color=fff" alt="Profile">
-                </div>
-                <div class="flex-1">
-                    <p class="text-[10px] font-black uppercase">Administrador</p>
-                    <p class="text-[8px] font-bold text-slate-500">Sesión Segura Activada</p>
-                </div>
-            </div>
-            <button onclick="adminLogout()"
-                class="w-full flex items-center justify-center gap-3 text-red-400 font-black text-[10px] uppercase tracking-widest p-4 rounded-xl hover:bg-red-500/5 transition">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Terminar Sesión
-            </button>
-        </div>
-    </aside>
+  <nav class="flex flex-col gap-4">
+    <button onclick="switchView('dashboard')" class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+    </button>
+    <button onclick="switchView('surveys')" class="nav-item active flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest text-left">
+      <i data-lucide="clipboard-list" class="w-5 h-5"></i> Gestión de Encuestas
+    </button>
+    <button onclick="switchView('incidents')" class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+      <i data-lucide="alert-triangle" class="w-5 h-5"></i> Panel de Alertas
+    </button>
+    <button onclick="switchView('users')" class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+      <i data-lucide="users" class="w-5 h-5"></i> Registro Civil
+    </button>
+  </nav>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 p-16 overflow-y-auto">
+  <div class="mt-auto pt-10 border-t border-white/5">
+    <div class="flex items-center gap-3 px-4 mb-6">
+      <div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+        <img src="https://ui-avatars.com/api/?name=Admin&background=0f172a&color=fff" alt="Profile">
+      </div>
+      <div class="flex-1">
+        <p class="text-[10px] font-black uppercase">Administrador</p>
+        <p class="text-[8px] font-bold text-slate-500">Sesión Segura Activada</p>
+      </div>
+    </div>
+    <button onclick="adminLogout()" class="w-full flex items-center justify-center gap-3 text-red-400 font-black text-[10px] uppercase tracking-widest p-4 rounded-xl hover:bg-red-500/5 transition">
+      <i data-lucide="log-out" class="w-4 h-4"></i> Terminar Sesión
+    </button>
+  </div>
+</aside>
 
-        <!-- LOGIN OVERLAY -->
-        <div id="login-overlay" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-4">
-            <div
-                class="w-full max-w-sm glass-card p-12 rounded-[3rem] text-center border-white/10 shadow-2xl animate-in zoom-in-95 duration-500">
-                <div
-                    class="w-20 h-20 bg-amber-600 mx-auto rounded-3xl mb-8 flex items-center justify-center font-black text-4xl shadow-2xl shadow-amber-900/40 italic">
-                    G</div>
-                <h2 class="text-3xl font-black mb-1 italic uppercase tracking-tighter">Entorno <span
-                        class="text-amber-500">Privado</span></h2>
-                <p class="text-[9px] font-bold text-slate-500 mb-10 uppercase tracking-widest">Ingrese credenciales de
-                    Comandancia</p>
-                <div class="space-y-4">
-                    <input type="text" id="admin-user" placeholder="Usuario"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-widest">
-                    <input type="password" id="admin-pass" placeholder="••••••••"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-[0.3em]">
-                </div>
-              <button onclick="if(typeof handleLogin === 'function') handleLogin(); else alert('Sistema cargando, intente de nuevo');"
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════════════════ -->
+<main class="flex-1 p-16 overflow-y-auto">
 
-                    class="w-full btn-accent p-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-8 shadow-xl">Autenticar
-                    Sistema</button>
-                <p class="text-[8px] mt-8 opacity-20 uppercase font-bold tracking-widest">Acceso monitoreado y grabado
-                    en archivo</p>
-            </div>
-        </div>
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm glass-card p-12 rounded-[3rem] text-center border-white/10 shadow-2xl">
+      <div class="w-20 h-20 bg-amber-600 mx-auto rounded-3xl mb-8 flex items-center justify-center font-black text-4xl shadow-2xl shadow-amber-900/40 italic">G</div>
+      <h2 class="text-3xl font-black mb-1 italic uppercase tracking-tighter">Entorno <span class="text-amber-500">Privado</span></h2>
+      <p class="text-[9px] font-bold text-slate-500 mb-10 uppercase tracking-widest">Ingrese credenciales de Comandancia</p>
+      <div class="space-y-4">
+        <input type="text" id="admin-user" placeholder="Usuario"
+          class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-widest">
+        <input type="password" id="admin-pass" placeholder="••••••••"
+          class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-center font-bold outline-none focus:border-amber-600 transition tracking-[0.3em]">
+      </div>
+      <button onclick="handleLogin()"
+        class="w-full btn-accent p-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-8 shadow-xl">
+        Autenticar Sistema
+      </button>
+      <p class="text-[8px] mt-8 opacity-20 uppercase font-bold tracking-widest">Acceso monitoreado y grabado en archivo</p>
+    </div>
+  </div>
 
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dashboard" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
-            <header class="flex justify-between items-center mb-16">
-                <div>
-                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Estado del <span
-                            class="text-amber-500">Sistema</span></h2>
-                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Métricas Globales
-                        de Intervención</p>
-                </div>
-            </header>
-            <div id="stats-dashboard-grid" class="grid grid-cols-4 gap-8 mb-16">
-                <!-- Stats injected here -->
-            </div>
-            <!-- Recent Activity Placeholder -->
-            <div
-                class="glass-card p-12 rounded-[3rem] border-white/5 opacity-30 text-center uppercase font-black italic tracking-widest">
-                Monitoreo de Actividad en Tiempo Real
-            </div>
-        </div>
+  <!-- PORTAL (visible tras login) -->
+  <div id="admin-portal">
 
-        <!-- SURVEYS VIEW -->
-        <div id="view-surveys" class="admin-view animate-in fade-in slide-in-from-right-8 duration-500">
-            <header class="flex justify-between items-center mb-16">
-                <div>
-                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Terminal de <span
-                            class="text-amber-500">Encuestas</span></h2>
-                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Intervención
-                        Democrática en Tiempo Real</p>
-                </div>
-                <button onclick="openCreateModal()"
-                    class="btn-accent px-8 py-4 rounded-[1.25rem] text-[10px] flex items-center gap-3 shadow-2xl uppercase tracking-widest transition transform hover:scale-105">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Desplegar Nueva Encuesta
-                </button>
-            </header>
-
-            <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
-                <table class="w-full text-left">
-                    <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
-                        <tr>
-                            <th class="px-10 py-8">Cartografía / Título</th>
-                            <th class="px-10 py-8">Nivel Estratégico</th>
-                            <th class="px-10 py-8">Estado Operativo</th>
-                            <th class="px-10 py-8 text-center">Votos Registrados</th>
-                            <th class="px-10 py-8 text-right">Protocolos</th>
-                        </tr>
-                    </thead>
-                    <tbody id="surveys-table-body" class="divide-y divide-white/5 italic">
-                        <!-- Table rows injected here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- INCIDENTS VIEW -->
-        <div id="view-incidents" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
-            <header class="flex justify-between items-center mb-16">
-                <div>
-                    <h2 class="text-5xl font-black tracking-tighter uppercase italic">Centro de <span
-                            class="text-red-500">Alertas</span></h2>
-                    <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Reportes de
-                        Anomalías Territoriales</p>
-                </div>
-            </header>
-            <div id="incidents-container" class="grid grid-cols-1 gap-6">
-                <!-- Incidents injected here -->
-                <div
-                    class="glass-card p-20 rounded-[3rem] text-center opacity-20 uppercase font-black italic tracking-[0.3em]">
-                    Buscando reportes activos en la red...
-                </div>
-            </div>
-        </div>
-
-        <!-- USERS VIEW -->
-        <div id="view-users" class="admin-view hidden animate-in fade-in slide-in-from-right-8 duration-500">
-    <header class="flex justify-between items-center mb-16">
+    <!-- ── DASHBOARD VIEW ── -->
+    <div id="view-dashboard" class="admin-view">
+      <header class="flex justify-between items-center mb-16">
         <div>
-            <h2 class="text-5xl font-black tracking-tighter uppercase italic">Registro <span
-                    class="text-emerald-500">Civil</span></h2>
-            <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Base de Datos de
-                Influencia Ciudadana</p>
+          <h2 class="text-5xl font-black tracking-tighter uppercase italic">Estado del <span class="text-amber-500">Sistema</span></h2>
+          <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Métricas Globales de Intervención</p>
         </div>
-    </header>
-    
-    <!-- TABLA DE USUARIOS -->
-    <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
+      </header>
+      <div id="stats-dashboard-grid" class="grid grid-cols-4 gap-8 mb-16">
+        <!-- Stats injected by renderStats() -->
+        <div class="glass-card p-8 rounded-[2.5rem] col-span-4 text-center skeleton" style="height:96px;"></div>
+      </div>
+      <div class="glass-card p-12 rounded-[3rem] border-white/5 opacity-30 text-center uppercase font-black italic tracking-widest">
+        Monitoreo de Actividad en Tiempo Real
+      </div>
+    </div>
+
+    <!-- ── SURVEYS VIEW ── -->
+    <div id="view-surveys" class="admin-view active-view">
+      <header class="flex justify-between items-center mb-10">
+        <div>
+          <h2 class="text-5xl font-black tracking-tighter uppercase italic">Terminal de <span class="text-amber-500">Encuestas</span></h2>
+          <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Intervención Democrática en Tiempo Real</p>
+
+          <!-- FILTRO EN VIVO: Votos Totales vs Territoriales Verificados -->
+          <div class="flex gap-3 mt-6">
+            <button class="filter-btn active-filter text-[9px] font-black uppercase tracking-widest px-5 py-2 rounded-xl border border-amber-600/40"
+              data-filter="all" onclick="setFilter('all')">
+              ● Votos Totales
+            </button>
+            <button class="filter-btn opacity-40 text-[9px] font-black uppercase tracking-widest border border-white/10 px-5 py-2 rounded-xl hover:border-emerald-500 hover:text-emerald-400"
+              data-filter="territorial" onclick="setFilter('territorial')">
+              ✓ Territoriales Verificados (GPS)
+            </button>
+          </div>
+        </div>
+        <button onclick="openCreateModal()"
+          class="btn-accent px-8 py-4 rounded-[1.25rem] text-[10px] flex items-center gap-3 shadow-2xl uppercase tracking-widest transition transform hover:scale-105">
+          <i data-lucide="plus" class="w-4 h-4"></i> Desplegar Nueva Encuesta
+        </button>
+      </header>
+
+      <!-- Panel de Validación / Módulo de Prestigio -->
+      <div class="glass-card p-6 rounded-2xl border-white/5 mb-8 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-emerald-400 text-xl">🔒</span>
+          <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">
+            Cifras auditadas en tiempo real. Integridad SHA-256
+          </span>
+        </div>
+        <div class="text-right">
+          <p class="text-[8px] text-slate-500 uppercase tracking-widest font-bold">Confianza Promedio</p>
+          <p id="avg-confidence-display" class="text-2xl font-black text-amber-400 italic">—%</p>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
         <table class="w-full text-left">
-            <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
-                <tr>
-                    <th class="px-10 py-8">Teléfono</th>
-                    <th class="px-10 py-8">Nombre</th>
-                    <th class="px-10 py-8 text-center">Puntos</th>
-                    <th class="px-10 py-8">Nivel</th>
-                    <th class="px-10 py-8 text-right">Total Votos</th>
-                </tr>
-            </thead>
-            <tbody id="users-table-body" class="divide-y divide-white/5 italic">
-                <!-- Rows injected by loadUsers() -->
-                <tr>
-                    <td colspan="5" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest">
-                        Cargando registros...
-                    </td>
-                </tr>
-            </tbody>
+          <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
+            <tr>
+              <th class="px-10 py-8">Cartografía / Título</th>
+              <th class="px-10 py-8">Nivel Estratégico</th>
+              <th class="px-10 py-8">Tipo de Evento</th>
+              <th class="px-10 py-8">Estado Operativo</th>
+              <th class="px-10 py-8 text-center" id="votes-col-header">
+                Votos Totales
+              </th>
+              <th class="px-10 py-8 text-right">Protocolos</th>
+            </tr>
+          </thead>
+          <tbody id="surveys-table-body" class="divide-y divide-white/5 italic">
+            <tr><td colspan="6" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest skeleton" style="height:80px;"></td></tr>
+          </tbody>
         </table>
+      </div>
     </div>
-</div>
-    </main>
 
-    <!-- MODAL -->
-    <div id="create-modal"
-        class="fixed inset-0 z-[500] hidden bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
-        <div
-            class="w-full max-w-xl glass-card p-14 rounded-[3.5rem] relative border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300">
-            <button onclick="closeCreateModal()"
-                class="absolute top-10 right-10 opacity-30 hover:opacity-100 transition text-2xl font-thin">&times;</button>
-            <h3 class="text-4xl font-black mb-10 italic uppercase tracking-tighter leading-none">Nueva <span
-                    class="text-amber-500">Misión</span></h3>
-
-            <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
-                <div>
-                    <label
-                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Título
-                        de Inteligencia</label>
-                    <input type="text" id="s-title" placeholder="Ej: Tendencia Gubernatura Guerrero 2027"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-lg tracking-tight italic">
-                </div>
-                <div>
-                    <label
-                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Descripción
-                        de Operación</label>
-                    <textarea id="s-desc"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-medium h-24 outline-none focus:border-amber-600 transition placeholder:opacity-20 italic"
-                        placeholder="Breve contexto para el ciudadano..."></textarea>
-                </div>
-                    <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label
-                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Ámbito
-                            Geográfico</label>
-                        <select id="s-level" onchange="toggleMunicipalitySelector()"
-                            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
-                            <option value="Gubernatura">Gubernatura</option>
-                            <option value="Municipio">Municipio</option>
-                            <option value="Distrito Local">Distrito Local</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Tipo
-                            de Evento</label>
-                        <select id="s-type"
-                            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
-                            <option value="gubernatura">ELECCIONES 2027</option>
-                            <option value="ayuntamiento">AYUNTAMIENTOS</option>
-                            <option value="general">CONSULTA GENERAL</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- SELECTOR DE MUNICIPIO (solo visible cuando es Municipal) -->
-                <div id="municipality-selector" class="hidden">
-                    <label
-                        class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Municipio
-                        Específico</label>
-                    <select id="s-municipality"
-                        class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
-                        <option value="">CARGANDO MUNICIPIOS...</option>
-                    </select>
-                </div>
-
-                <!-- OPTIONS BUILDER -->
-                <div class="pt-6 border-t border-white/5">
-                    <div class="flex justify-between items-center mb-4">
-                        <label
-                            class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block pl-1">Candidatos
-                            / Opciones</label>
-                        <button onclick="addOptionField()"
-                            class="text-amber-500 text-[10px] font-black uppercase tracking-widest hover:underline">+
-                            Añadir</button>
-                    </div>
-                    <div id="options-list" class="space-y-3">
-                        <!-- Dynamic fields -->
-                    </div>
-                </div>
-
-                <div class="p-6 bg-amber-600/5 border border-amber-600/10 rounded-[2rem] flex gap-4 items-center">
-                    <div
-                        class="w-10 h-10 rounded-full bg-amber-600/10 flex items-center justify-center flex-shrink-0 text-amber-500">
-                        <i data-lucide="shield-check" class="w-5 h-5"></i>
-                    </div>
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic leading-relaxed">
-                        Se incluirá automáticamente el <span class="text-amber-500">slider de confianza</span> al final
-                        de la encuesta.
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex gap-6 mt-12">
-                <button onclick="closeCreateModal()"
-                    class="flex-1 p-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-white transition">Interrumpir</button>
-                <button onclick="createSurvey()"
-                    class="flex-[3] btn-accent p-5 rounded-2xl text-[11px] uppercase tracking-[0.3em] shadow-2xl">Confirmar
-                    Despliegue</button>
-            </div>
+    <!-- ── INCIDENTS VIEW ── -->
+    <div id="view-incidents" class="admin-view">
+      <header class="flex justify-between items-center mb-16">
+        <div>
+          <h2 class="text-5xl font-black tracking-tighter uppercase italic">Centro de <span class="text-red-500">Alertas</span></h2>
+          <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Reportes de Anomalías Territoriales</p>
         </div>
+      </header>
+      <div id="incidents-container" class="grid grid-cols-1 gap-6">
+        <div class="glass-card p-20 rounded-[3rem] text-center opacity-20 uppercase font-black italic tracking-[0.3em]">
+          Buscando reportes activos en la red...
+        </div>
+      </div>
     </div>
 
-    <!-- SCRIPTS -->
-    <script>
-        const API_URL = '/api';
-        let adminToken = localStorage.getItem('guardianAdminToken');
+    <!-- ── USERS VIEW ── -->
+    <div id="view-users" class="admin-view">
+      <header class="flex justify-between items-center mb-16">
+        <div>
+          <h2 class="text-5xl font-black tracking-tighter uppercase italic">Registro <span class="text-emerald-500">Civil</span></h2>
+          <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Base de Datos de Influencia Ciudadana</p>
+        </div>
+      </header>
+      <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
+        <table class="w-full text-left">
+          <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
+            <tr>
+              <th class="px-10 py-8">Teléfono</th>
+              <th class="px-10 py-8">Nombre</th>
+              <th class="px-10 py-8 text-center">Puntos</th>
+              <th class="px-10 py-8">Nivel</th>
+              <th class="px-10 py-8 text-right">Total Votos</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body" class="divide-y divide-white/5 italic">
+            <tr><td colspan="5" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest">Cargando registros...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        // --- AUTH ---
-        async function handleLogin() {
-            const username = document.getElementById('admin-user').value;
-            const password = document.getElementById('admin-pass').value;
+  </div><!-- /#admin-portal -->
+</main>
 
-            try {
-                const res = await fetch(`${API_URL}/admin/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    localStorage.setItem('guardianAdminToken', data.token);
-                    adminToken = data.token;
-                    showPortal();
-                } else { alert('Acceso Denegado: ' + (data.error || '')); }
-            } catch (e) { alert('Error de Red Critico'); }
-        }
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — NUEVA ENCUESTA
+═══════════════════════════════════════════════════════════ -->
+<div id="create-modal" class="fixed inset-0 z-[500] hidden bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
+  <div class="w-full max-w-xl glass-card p-14 rounded-[3.5rem] relative border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+    <button onclick="closeCreateModal()" class="absolute top-10 right-10 opacity-30 hover:opacity-100 transition text-2xl font-thin">✕</button>
+    <h3 class="text-4xl font-black mb-10 italic uppercase tracking-tighter leading-none">Nueva <span class="text-amber-500">Misión</span></h3>
 
-        function showPortal() {
-            document.getElementById('login-overlay').classList.add('hidden');
-            // document.getElementById('admin-portal').classList.remove('hidden'); // Eliminado ID inexistente
-            lucide.createIcons();
-            loadStats();
-            loadSurveys();
-        }
+    <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Título de Inteligencia</label>
+        <input type="text" id="s-title" placeholder="Ej: Tendencia Gubernatura Guerrero 2027"
+          class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-lg tracking-tight italic">
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Descripción de Operación</label>
+        <textarea id="s-desc" class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-medium h-24 outline-none focus:border-amber-600 transition placeholder:opacity-20 italic" placeholder="Breve contexto para el ciudadano..."></textarea>
+      </div>
 
-        // --- DATA ---
-        // ============================================
-        // STATS con caché de 5 segundos
-        // ============================================
-        let statsCache = null;
-        let statsCacheTime = 0;
-        const CACHE_DURATION = 5000;
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Ámbito Geográfico = nivel -->
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Ámbito Geográfico</label>
+          <select id="s-level" onchange="toggleMunicipalitySelector()"
+            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+            <option value="Gubernatura">Gubernatura</option>
+            <option value="Municipio">Municipio</option>
+            <option value="Distrito Local">Distrito Local</option>
+          </select>
+          <!-- Badge dinámico que muestra el alcance de validación territorial -->
+          <p id="level-scope-hint" class="text-[8px] text-amber-400 font-bold mt-2 pl-1 uppercase tracking-widest">
+            📍 Validación: Todo Guerrero (Estatal)
+          </p>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Tipo de Evento</label>
+          <select id="s-type"
+            class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+            <option value="gubernatura">Elecciones 2027</option>
+            <option value="ayuntamiento">Ayuntamientos</option>
+            <option value="general">Consulta General</option>
+          </select>
+        </div>
+      </div>
 
-        function renderStats(data) {
-            const grids = document.querySelectorAll('#stats-dashboard-grid');
-            grids.forEach(grid => {
-                grid.innerHTML = `
-                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Unidad Poblacional</span>
-                        <div class="text-4xl font-black italic tracking-tighter">${data.totalUsers || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Cels</span></div>
-                    </div>
-                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Predicciones Almacenadas</span>
-                        <div class="text-4xl font-black italic tracking-tighter">${data.totalPredictions || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Vot.</span></div>
-                    </div>
-                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-l-[6px] border-amber-600">
-                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Operaciones Activas</span>
-                        <div class="text-4xl font-black italic tracking-tighter text-amber-500">${data.activeSurveys || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Enc.</span></div>
-                    </div>
-                    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
-                        <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Focos de Alerta</span>
-                        <div class="text-4xl font-black italic tracking-tighter text-red-500">${data.pendingIncidents || 0} <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Inc.</span></div>
-                    </div>
-                `;
-            });
-        }
+      <!-- Selector de municipio (solo cuando nivel = Municipio) -->
+      <div id="municipality-selector" class="hidden">
+        <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-3 pl-1">Municipio Específico</label>
+        <select id="s-municipality"
+          class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl font-black outline-none focus:border-amber-600 transition text-xs tracking-widest uppercase italic">
+          <option value="">CARGANDO MUNICIPIOS...</option>
+        </select>
+      </div>
 
-        async function loadStats() {
-            const now = Date.now();
-            if (statsCache && (now - statsCacheTime) < CACHE_DURATION) {
-                renderStats(statsCache);
-                return;
-            }
-            try {
-                const res = await fetch(`${API_URL}/admin/stats`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const data = await res.json();
-                statsCache = data;
-                statsCacheTime = now;
-                renderStats(data);
-            } catch (e) { console.error('Error cargando stats:', e); }
-        }
+      <!-- Candidatos -->
+      <div class="pt-6 border-t border-white/5">
+        <div class="flex justify-between items-center mb-4">
+          <label class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] block pl-1">Candidatos / Opciones</label>
+          <button onclick="addOptionField()" class="text-amber-500 text-[10px] font-black uppercase tracking-widest hover:underline">+ Añadir</button>
+        </div>
+        <div id="options-list" class="space-y-3"><!-- Dynamic fields --></div>
+      </div>
 
-   async function loadSurveys() {
+      <!-- Nota de confianza -->
+      <div class="p-6 bg-amber-600/5 border border-amber-600/10 rounded-[2rem] flex gap-4 items-center">
+        <div class="w-10 h-10 rounded-full bg-amber-600/10 flex items-center justify-center flex-shrink-0 text-amber-500">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic leading-relaxed">
+          Se incluirá automáticamente el <span class="text-amber-500">slider de confianza</span> al final de la encuesta.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex gap-6 mt-12">
+      <button onclick="closeCreateModal()" class="flex-1 p-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-white transition">Interrumpir</button>
+      <button onclick="createSurvey()" class="flex-[3] btn-accent p-5 rounded-2xl text-[11px] uppercase tracking-[0.3em] shadow-2xl">Confirmar Despliegue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════ -->
+<script>
+const API_URL = '/api';
+let adminToken = localStorage.getItem('guardianAdminToken');
+
+// ══════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════
+async function handleLogin() {
+  const username = document.getElementById('admin-user').value;
+  const password = document.getElementById('admin-pass').value;
   try {
-    const res = await fetch(`${API_URL}/admin/surveys`, {
-      headers: { 'Authorization': `Bearer ${adminToken}` }
+    const res  = await fetch(`${API_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
     });
-    
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('guardianAdminToken', data.token);
+      adminToken = data.token;
+      showPortal();
+    } else {
+      showToast('Acceso Denegado: ' + (data.error || ''), 'error');
+    }
+  } catch (e) {
+    showToast('Error de Red Crítico', 'error');
+  }
+}
+
+function showPortal() {
+  document.getElementById('login-overlay').classList.add('hidden');
+  document.getElementById('admin-portal').style.display = 'block';
+  lucide.createIcons();
+  switchView('surveys');
+}
+
+function adminLogout() {
+  localStorage.removeItem('guardianAdminToken');
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STATS — con caché de 5 segundos
+// ══════════════════════════════════════════════════════════════
+let statsCache = null;
+let statsCacheTime = 0;
+const CACHE_DURATION = 5000;
+
+function renderStats(data) {
+  const grid = document.getElementById('stats-dashboard-grid');
+  grid.innerHTML = `
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+      <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Unidad Poblacional</span>
+      <div class="text-4xl font-black italic tracking-tighter">${data.totalUsers || 0}
+        <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Cels</span>
+      </div>
+    </div>
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+      <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Predicciones Almacenadas</span>
+      <div class="text-4xl font-black italic tracking-tighter">${data.totalPredictions || 0}
+        <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Vot.</span>
+      </div>
+    </div>
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-l-[6px] border-amber-600">
+      <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Operaciones Activas</span>
+      <div class="text-4xl font-black italic tracking-tighter text-amber-500">${data.activeSurveys || 0}
+        <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Enc.</span>
+      </div>
+    </div>
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-white/5">
+      <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Focos de Alerta</span>
+      <div class="text-4xl font-black italic tracking-tighter text-red-500">${data.pendingIncidents || 0}
+        <span class="text-sm not-italic opacity-40 uppercase tracking-widest font-thin ml-1">Inc.</span>
+      </div>
+    </div>`;
+}
+
+async function loadStats() {
+  const now = Date.now();
+  if (statsCache && (now - statsCacheTime < CACHE_DURATION)) { renderStats(statsCache); return; }
+  try {
+    const res  = await fetch(`${API_URL}/admin/stats`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const data = await res.json();
+    statsCache = data; statsCacheTime = now;
+    renderStats(data);
+  } catch (e) { console.error('Error cargando stats', e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN DE NIVEL TERRITORIAL
+// Gubernatura → estatal | Municipio → local
+// ══════════════════════════════════════════════════════════════
+const SURVEY_LEVEL_CONFIG = {
+  'Gubernatura': {
+    label:      'Estatal',
+    auditScope: 'Todo Guerrero',
+    color:      'text-amber-500',
+    hint:       '📍 Validación: Todo Guerrero (Estatal)'
+  },
+  'Municipio': {
+    label:      'Municipal',
+    auditScope: 'Municipio Local',
+    color:      'text-emerald-400',
+    hint:       '📍 Validación: Municipio Local'
+  },
+  'Distrito Local': {
+    label:      'Distrital',
+    auditScope: 'Distrito',
+    color:      'text-blue-400',
+    hint:       '📍 Validación: Distrito Electoral'
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// CARGA Y RENDERIZADO DE ENCUESTAS
+// ══════════════════════════════════════════════════════════════
+let allSurveysCache = [];
+let activeFilter    = 'all';  // 'all' | 'territorial'
+
+async function loadSurveys() {
+  try {
+    const res     = await fetch(`${API_URL}/admin/surveys`, { headers: { Authorization: `Bearer ${adminToken}` } });
     const surveys = await res.json();
-    const tbody = document.getElementById('surveys-table-body');
-    
-    tbody.innerHTML = surveys.map(s => `
+    allSurveysCache = Array.isArray(surveys) ? surveys : [];
+    renderSurveysTable(allSurveysCache);
+    updateAvgConfidence(allSurveysCache);
+  } catch (e) {
+    console.error('Error cargando encuestas', e);
+    showToast('Error cargando encuestas', 'error');
+  }
+}
+
+// ── Filtro en vivo ───────────────────────────────────────────
+function setFilter(type) {
+  activeFilter = type;
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active-filter', 'border-amber-600/40');
+    btn.classList.add('opacity-40');
+  });
+  const activeBtn = document.querySelector(`.filter-btn[data-filter="${type}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('active-filter');
+    activeBtn.classList.remove('opacity-40');
+  }
+
+  // Actualizar cabecera de columna
+  const colHeader = document.getElementById('votes-col-header');
+  if (colHeader) colHeader.textContent = type === 'territorial' ? '✓ Votos GPS Verificados' : 'Votos Totales';
+
+  renderSurveysTable(allSurveysCache);
+}
+
+function renderSurveysTable(surveys) {
+  const tbody = document.getElementById('surveys-table-body');
+  if (!tbody) return;
+
+  if (!surveys.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest">SIN ENCUESTAS DESPLEGADAS</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = surveys.map(s => {
+    const levelCfg = SURVEY_LEVEL_CONFIG[s.level] || { label: s.level || 'General', color: 'text-slate-400', auditScope: '' };
+
+    const totalVotes      = parseInt(s.totalresponses || 0);
+    const territorialVotes = parseInt(s.territorial_verified || s.votes_in_range || 0);
+    const displayVotes    = activeFilter === 'territorial' ? territorialVotes : totalVotes;
+
+    const votesCell = activeFilter === 'territorial'
+      ? `<span class="text-emerald-400">${territorialVotes.toLocaleString('es-MX')}</span><span class="text-[9px] opacity-40 ml-1">GPS</span>`
+      : `${totalVotes.toLocaleString('es-MX')}
+         ${territorialVotes > 0
+           ? `<div class="text-[8px] text-emerald-400 opacity-60 font-bold mt-1">↑${territorialVotes.toLocaleString('es-MX')} verificados</div>`
+           : ''}`;
+
+    return `
       <tr class="hover:bg-amber-600/[0.03] transition-all group">
         <td class="px-10 py-10">
-          <div class="font-black text-base uppercase tracking-tighter">${s.title}</div>
-          <div class="text-[9px] font-bold text-slate-600 mt-2 line-clamp-1 uppercase tracking-widest overflow-hidden opacity-60">${s.description || '- SIN DESCRIPCIÓN -'}</div>
+          <div class="font-black text-base uppercase tracking-tight">${s.title}</div>
+          <div class="text-[9px] font-bold text-slate-600 mt-2 line-clamp-1 uppercase tracking-widest overflow-hidden opacity-60">
+            ${s.description || '- SIN DESCRIPCIÓN -'}
+          </div>
         </td>
-        <td class="px-10 py-10 font-black text-[10px] text-amber-500 uppercase tracking-[0.2em] italic">${s.election_type || 'GENERAL'}</td>
+        <td class="px-10 py-10">
+          <span class="font-black text-[10px] uppercase tracking-widest italic ${levelCfg.color}">${levelCfg.label}</span>
+          <span class="text-[8px] text-slate-500 block">${levelCfg.auditScope}</span>
+        </td>
+        <td class="px-10 py-10 font-black text-[10px] text-amber-500 uppercase tracking-[0.2em] italic">
+          ${s.election_type || 'GENERAL'}
+        </td>
         <td class="px-10 py-10">
           <span class="status-badge ${s.is_active ? 'status-active' : 'status-paused'}">
             ${s.is_active ? 'Operativo' : 'Inactivo'}
           </span>
         </td>
-        <td class="px-10 py-10 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_responses || 0}</td>
+        <td class="px-10 py-10 text-center font-black text-2xl tracking-tighter italic opacity-80">
+          ${votesCell}
+        </td>
         <td class="px-10 py-10 text-right">
           <div class="flex flex-col gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
-            <button onclick="exportCSV(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">📥 Exportar</button>
-            <button onclick="toggleStatus(${s.id}, ${s.is_active})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">🔄 ${s.is_active ? 'Pausar' : 'Activar'}</button>
-            <button onclick="deleteSurvey(${s.id})" class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-red-600 hover:text-red-500 transition shadow-inner shadow-black/20">🗑️ Eliminar</button>
+            <button onclick="exportCSV(${s.id})"
+              class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">
+              Exportar CSV
+            </button>
+            <button onclick="toggleStatus(${s.id}, ${s.is_active})"
+              class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">
+              ${s.is_active ? 'Pausar' : 'Activar'}
+            </button>
+            <button onclick="deleteSurvey(${s.id})"
+              class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-red-600 hover:text-red-500 transition shadow-inner shadow-black/20">
+              Eliminar
+            </button>
           </div>
         </td>
-      </tr>
-    `).join('');
-    
-  } catch (e) { 
-    console.error('Error cargando encuestas:', e);
-    showToast('Error cargando encuestas', 'error');
+      </tr>`;
+  }).join('');
+}
+
+// ── Confianza Promedio (niveles 50%, 75%, 100%) ──────────────
+function updateAvgConfidence(surveys) {
+  const el = document.getElementById('avg-confidence-display');
+  if (!el) return;
+  const total = surveys.reduce((a, s) => a + parseInt(s.totalresponses || 0), 0);
+  if (total === 0) { el.textContent = '—%'; return; }
+  // Promedio ponderado: (votos×conf) / total — usa avg_confidence del backend si existe
+  const weighted = surveys.reduce((a, s) => {
+    const votes = parseInt(s.totalresponses || 0);
+    const conf  = parseFloat(s.avg_confidence || s.prestige_confidence || 75);
+    return a + (votes * conf);
+  }, 0);
+  el.textContent = (weighted / total).toFixed(1) + '%';
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORTACIÓN CSV — con columnas de ubicación
+// ══════════════════════════════════════════════════════════════
+async function exportCSV(id) {
+  try {
+    // Intentar endpoint geo enriquecido primero
+    const res = await fetch(`${API_URL}/admin/surveys/${id}/export-geo`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+
+    if (res.ok) {
+      const { rows, surveyTitle } = await res.json();
+
+      const headers = [
+        'ID Respuesta', 'Fingerprint ID', 'Opción Elegida', 'Confianza (%)',
+        'Latitud', 'Longitud', 'Estado Territorial', 'Fecha Registro', 'Municipio ID'
+      ];
+
+      const csvRows = [
+        headers.join(','),
+        ...rows.map(r => [
+          r.id,
+          r.fingerprint_id ? `"${String(r.fingerprint_id).slice(0, 8)}..."` : 'ANÓNIMO',
+          `"${r.selected_option || ''}"`,
+          r.confidence || 0,
+          r.latitude  ?? 'N/A',
+          r.longitude ?? 'N/A',
+          r.location_status1 || r.location_status || 'NO_GPS',
+          new Date(r.created_at).toLocaleString('es-MX'),
+          r.municipality_id || 'N/A'
+        ].join(','))
+      ];
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `guardianes_${surveyTitle || id}_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exportación con auditoría territorial completada ✓', 'success');
+    } else {
+      // Fallback al endpoint original
+      window.open(`${API_URL}/admin/surveys/${id}/export?token=${adminToken}`, '_blank');
+    }
+  } catch (e) {
+    console.error('Error exportando CSV:', e);
+    window.open(`${API_URL}/admin/surveys/${id}/export?token=${adminToken}`, '_blank');
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// ACTIONS: toggleStatus / deleteSurvey
+// ══════════════════════════════════════════════════════════════
+async function toggleStatus(id, currentStatus) {
+  try {
+    const res = await fetch(`${API_URL}/admin/surveys/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ isActive: !currentStatus })
+    });
+    if (res.ok) { loadSurveys(); showToast('Estado actualizado', 'success'); }
+    else { const d = await res.json(); showToast('Error: ' + d.error, 'error'); }
+  } catch (e) { showToast('Falla de red', 'error'); }
+}
 
-        async function toggleStatus(id, currentStatus) {
-            try {
-                const res = await fetch(`${API_URL}/admin/surveys/${id}/status`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${adminToken}`
-                    },
-                    body: JSON.stringify({ isActive: !currentStatus })
-                });
-                if (res.ok) loadSurveys();
-                else {
-                    const data = await res.json();
-                    alert('Error: ' + (data.error || 'No se pudo cambiar el estado'));
-                }
-            } catch (e) { alert('Falla de red'); }
-        }
+async function deleteSurvey(id) {
+  if (!confirm('⚠️ ADVERTENCIA CRÍTICA\n\n¿Seguro que desea eliminar esta encuesta y TODOS sus votos?\nEsta acción es irreversible.')) return;
+  try {
+    const res = await fetch(`${API_URL}/admin/surveys/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    if (res.ok) { loadSurveys(); loadStats(); showToast('Encuesta eliminada', 'success'); }
+    else { const d = await res.json(); showToast('Error: ' + d.error, 'error'); }
+  } catch (e) { showToast('Falla de red', 'error'); }
+}
 
-        async function deleteSurvey(id) {
-            if (!confirm('¿ADVERTENCIA CRÍTICA: Seguro que desea eliminar esta encuesta y TODOS sus votos? Esta acción es irreversible.')) return;
-            try {
-                const res = await fetch(`${API_URL}/admin/surveys/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                if (res.ok) {
-                    loadSurveys();
-                    loadStats();
-                } else {
-                    const data = await res.json();
-                    alert('Error: ' + (data.error || 'No se pudo eliminar'));
-                }
-            } catch (e) { alert('Falla de red'); }
-        }
+// ══════════════════════════════════════════════════════════════
+// INCIDENTS
+// ══════════════════════════════════════════════════════════════
+async function loadIncidents() {
+  try {
+    const res  = await fetch(`${API_URL}/incidents`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const data = await res.json();
+    const container = document.getElementById('incidents-container');
+    if (!data.incidents || !data.incidents.length) {
+      container.innerHTML = `<div class="glass-card p-20 rounded-[3rem] text-center opacity-20 uppercase font-black italic tracking-[0.3em]">Sin reportes activos</div>`;
+      return;
+    }
+    container.innerHTML = data.incidents.map(i => `
+      <div class="glass-card p-8 rounded-[2rem] flex justify-between items-center border-white/5 group hover:border-red-500/30 transition">
+        <div class="flex gap-6 items-center">
+          <div class="w-14 h-14 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-500 font-black">!</div>
+          <div>
+            <h4 class="font-black uppercase tracking-tighter italic text-red-500">${i.type}</h4>
+            <p class="text-xs text-slate-500 font-medium truncate w-96">${i.description}</p>
+            <div class="flex gap-4 mt-2">
+              <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">Municipio: ${i.municipalityName}</span>
+              <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">${timeAgo(i.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="updateIncidentStatus(${i.id}, 'verified')"
+            class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-emerald-600 hover:text-slate-950 transition">Verificar</button>
+          <button onclick="updateIncidentStatus(${i.id}, 'rejected')"
+            class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-slate-950 transition">Descartar</button>
+        </div>
+      </div>`).join('');
+  } catch (e) { console.error('Error cargando incidentes', e); }
+}
 
-        function exportCSV(id) {
-            // El backend permite token por query string para descargas directas
-            window.open(`${API_URL}/admin/surveys/${id}/export?token=${adminToken}`, '_blank');
-        }
+async function updateIncidentStatus(id, status) {
+  try {
+    const res = await fetch(`${API_URL}/incidents/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) loadIncidents();
+  } catch (e) { showToast('Error actualizando incidente', 'error'); }
+}
 
-        async function loadIncidents() {
-            try {
-                const res = await fetch(`${API_URL}/incidents`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const data = await res.json();
-                const container = document.getElementById('incidents-container');
-                container.innerHTML = (data.incidents || []).map(i => `
-                    <div class="glass-card p-8 rounded-[2rem] flex justify-between items-center border-white/5 group hover:border-red-500/30 transition">
-                        <div class="flex gap-6 items-center">
-                            <div class="w-14 h-14 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-500 font-black">!</div>
-                            <div>
-                                <h4 class="font-black uppercase tracking-tighter italic text-red-500">${i.type}</h4>
-                                <p class="text-xs text-slate-500 font-medium truncate w-96">${i.description}</p>
-                                <div class="flex gap-4 mt-2">
-                                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">Municipio: ${i.municipalityName}</span>
-                                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-600">Hace ${timeAgo(i.createdAt)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="updateIncidentStatus(${i.id}, 'verified')" class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-emerald-600 hover:text-slate-950 transition">Verificar</button>
-                            <button onclick="updateIncidentStatus(${i.id}, 'rejected')" class="text-[9px] font-black uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-slate-950 transition">Descartar</button>
-                        </div>
-                    </div>
-                `).join('') || container.innerHTML;
-            } catch (e) { }
-        }
+function timeAgo(date) {
+  const s = Math.floor((new Date() - new Date(date)) / 1000);
+  if (s < 60)   return `${s}s`;
+  if (s < 3600) return `${Math.floor(s/60)}m`;
+  if (s < 86400) return `${Math.floor(s/3600)}h`;
+  return `${Math.floor(s/86400)}d`;
+}
 
-        function timeAgo(date) {
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            if (seconds < 60) return seconds + 's';
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return minutes + 'm';
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return hours + 'h';
-            return Math.floor(hours / 24) + 'd';
-        }
+// ══════════════════════════════════════════════════════════════
+// USERS
+// ══════════════════════════════════════════════════════════════
+async function loadUsers() {
+  try {
+    const res   = await fetch(`${API_URL}/admin/users`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const users = await res.json();
+    const tbody = document.getElementById('users-table-body');
+    tbody.innerHTML = users.map(u => `
+      <tr class="hover:bg-emerald-600/[0.03] transition-all">
+        <td class="px-10 py-8 font-black text-slate-500">****${u.phone?.slice(-4) || '????'}</td>
+        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">${u.name || 'ANÓNIMO'}</td>
+        <td class="px-10 py-8 text-center font-black text-amber-500">${u.points || 0}</td>
+        <td class="px-10 py-8 font-bold text-[10px] uppercase opacity-40">${u.level || 'OBSERVADOR'}</td>
+        <td class="px-10 py-8 text-right font-black text-[10px] uppercase tracking-widest text-emerald-500">${u.totalvotes || 0} Votos</td>
+      </tr>`).join('') || `<tr><td colspan="5" class="p-20 text-center opacity-20 uppercase font-black italic">SIN REGISTROS</td></tr>`;
+  } catch (e) { console.error('Error cargando usuarios', e); }
+}
 
-        // --- ACTIONS ---
-        function addOptionField() {
-            const list = document.getElementById('options-list');
-            const div = document.createElement('div');
-            div.className = 'flex gap-3 animate-in fade-in zoom-in-95 duration-200';
-            div.innerHTML = `
-                <input type="text" placeholder="Nombre Candidato" class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-xs font-bold outline-none focus:border-amber-600">
-                <input type="text" placeholder="URL Foto (opcional)" class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-medium outline-none focus:border-amber-600">
-                <button onclick="this.parentElement.remove()" class="flex-none w-10 h-10 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition">×</button>
-            `;
-            list.appendChild(div);
-        }
-        // --- TOGGLE MUNICIPIO SELECTOR ---
+// ══════════════════════════════════════════════════════════════
+// MODAL — CREAR ENCUESTA
+// ══════════════════════════════════════════════════════════════
+function addOptionField() {
+  const list = document.getElementById('options-list');
+  const div  = document.createElement('div');
+  div.className = 'flex gap-3 animate-in fade-in zoom-in-95 duration-200';
+  div.innerHTML = `
+    <input type="text" placeholder="Nombre Candidato"
+      class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-xs font-bold outline-none focus:border-amber-600">
+    <input type="text" placeholder="URL Foto (opcional)"
+      class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-medium outline-none focus:border-amber-600">
+    <button onclick="this.parentElement.remove()"
+      class="flex-none w-10 h-10 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition">✕</button>`;
+  list.appendChild(div);
+}
+
 function toggleMunicipalitySelector() {
-    const level = document.getElementById('s-level').value;
-    const municipalityDiv = document.getElementById('municipality-selector');
-    
-    if (level === 'Municipio') {
-        municipalityDiv.classList.remove('hidden');
-        loadMunicipalities(); // Cargar municipios si aún no se han cargado
-    } else {
-        municipalityDiv.classList.add('hidden');
-        document.getElementById('s-municipality').value = ''; // Limpiar selección
-    }
+  const level       = document.getElementById('s-level').value;
+  const hint        = document.getElementById('level-scope-hint');
+  const municipalDiv = document.getElementById('municipality-selector');
+  const cfg         = SURVEY_LEVEL_CONFIG[level] || {};
+
+  // Actualizar hint de validación territorial
+  if (hint) hint.textContent = cfg.hint || '';
+
+  if (level === 'Municipio') {
+    municipalDiv.classList.remove('hidden');
+    loadMunicipalities();
+  } else {
+    municipalDiv.classList.add('hidden');
+    document.getElementById('s-municipality').value = '';
+  }
 }
 
-// --- CARGAR MUNICIPIOS EN SELECTOR ---
 async function loadMunicipalities() {
-    const select = document.getElementById('s-municipality');
-    
-    // Si ya tiene opciones (más de 1), no recargar
-    if (select.options.length > 1) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/data/municipalities`);
-        const data = await res.json();
-        
-        const validData = data.filter(m => m.name && m.name.trim().length > 0);
-        
-        select.innerHTML = '<option value="">SELECCIONA MUNICIPIO</option>' + 
-            validData.map(m => {
-                const cleanName = m.name.replace(/^[0-9\s\-]+/, '').toUpperCase();
-                if (!cleanName.trim()) return '';
-                return `<option value="${m.id}">${cleanName}</option>`;
-            }).join('');
-            
-    } catch (e) {
-        console.error('Error cargando municipios:', e);
-        select.innerHTML = '<option value="">ERROR CARGANDO MUNICIPIOS</option>';
-    }
+  const select = document.getElementById('s-municipality');
+  if (select.options.length > 1) return;
+  try {
+    const res  = await fetch(`${API_URL}/data/municipalities`);
+    const data = await res.json();
+    const valid = data.filter(m => m.name && m.name.trim().length > 0);
+    select.innerHTML = `<option value="">SELECCIONA MUNICIPIO</option>` +
+      valid.map(m => {
+        const name = m.name.replace(/[0-9-]/g, ' ').toUpperCase().trim();
+        return name ? `<option value="${m.id}">${name}</option>` : '';
+      }).join('');
+  } catch (e) {
+    select.innerHTML = `<option value="">ERROR CARGANDO MUNICIPIOS</option>`;
+  }
 }
 
-        async function createSurvey() {
-            const title = document.getElementById('s-title').value;
-            if (!title) return alert('Operación requiere nombre descriptivo');
+async function createSurvey() {
+  const title = document.getElementById('s-title').value;
+  if (!title) { showToast('Operación requiere nombre descriptivo', 'error'); return; }
 
-            const optionFields = document.getElementById('options-list').children;
-            const options = Array.from(optionFields).map(f => ({
-                label: f.children[0].value,
-                value: f.children[0].value,
-                photo: f.children[1].value || null
-            })).filter(o => o.label);
+  const optionFields = document.getElementById('options-list').children;
+  const options = Array.from(optionFields)
+    .map(f => ({ label: f.children[0].value, value: f.children[0].value, photo: f.children[1].value || null }))
+    .filter(o => o.label.trim());
 
-                const payload = {
-                    title: title,
-                    description: document.getElementById('s-desc').value,
-                    level: document.getElementById('s-level').value,
-                    electionType: document.getElementById('s-type').value,
-                    municipalityId: document.getElementById('s-municipality').value || null,
-                    questions: [
-                    {
-                        text: '¿Quién crees que ganará?',
-                        type: 'single_choice',
-                        options: options
-                    },
-                    {
-                        text: 'Nivel de Confianza',
-                        type: 'confidence_scale',
-                        isRequired: true
-                    }
-                ]
-            };
+  const level = document.getElementById('s-level').value;
+  const payload = {
+    title,
+    description:   document.getElementById('s-desc').value,
+    level,
+    electionType:  document.getElementById('s-type').value,
+    municipalityId: document.getElementById('s-municipality').value || null,
+    questions: [
+      { text: '¿Quién crees que ganará?', type: 'singlechoice', options },
+      { text: 'Nivel de Confianza', type: 'confidencescale', isRequired: true }
+    ]
+  };
 
-            try {
-                const res = await fetch(`${API_URL}/admin/surveys`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                    body: JSON.stringify(payload)
-                });
+  try {
+    const res = await fetch(`${API_URL}/admin/surveys`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      closeCreateModal(); loadSurveys(); loadStats();
+      showToast('Encuesta desplegada con éxito ✓', 'success');
+    } else {
+      const d = await res.json();
+      showToast('Error en protocolo: ' + (d.error || 'Desconocido'), 'error');
+    }
+  } catch (e) { showToast('Falla en la red', 'error'); }
+}
 
-                if (res.ok) {
-                    closeCreateModal();
-                    loadSurveys();
-                    loadStats();
-                } else {
-                    const data = await res.json();
-                    alert('Error en protocolo: ' + (data.error || 'Desconocido'));
-                }
-            } catch (e) { alert('Falla en la red'); }
-        }
+function openCreateModal() {
+  document.getElementById('create-modal').classList.remove('hidden');
+  document.getElementById('options-list').innerHTML = '';
+  addOptionField(); addOptionField();
+}
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.add('hidden');
+}
 
-        async function loadUsers() {
-            try {
-                const res = await fetch(`${API_URL}/admin/users`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const users = await res.json();
-                const tbody = document.getElementById('users-table-body');
-                tbody.innerHTML = (users || []).map(u => `
-                    <tr class="hover:bg-emerald-600/[0.03] transition-all">
-                        <td class="px-10 py-8 font-black text-slate-500">**** ${u.phone_last4 || '????'}</td>
-                        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">${u.name || 'ANÓNIMO'}</td>
-                        <td class="px-10 py-8 text-center font-black text-amber-500">${u.points || 0}</td>
-                        <td class="px-10 py-8 font-bold text-[10px] uppercase opacity-40">${u.level || 'OBSERVADOR'}</td>
-                        <td class="px-10 py-8 text-right font-black text-[10px] uppercase tracking-widest text-emerald-500">${u.total_votes || 0} Votos</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="5" class="p-20 text-center opacity-20">SIN REGISTROS</td></tr>';
-            } catch (e) { }
-        }
+// ══════════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════════════════════════
+function switchView(viewId) {
+  document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active-view'));
+  const target = document.getElementById(`view-${viewId}`);
+  if (target) target.classList.add('active-view');
 
-        async function updateIncidentStatus(id, status) {
-            try {
-                const res = await fetch(`${API_URL}/incidents/${id}/status`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                    body: JSON.stringify({ status })
-                });
-                if (res.ok) loadIncidents();
-            } catch (e) { }
-        }
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.remove('active');
+    btn.classList.add('opacity-40');
+  });
+  const activeBtn = document.querySelector(`[onclick="switchView('${viewId}')"]`);
+  if (activeBtn) { activeBtn.classList.add('active'); activeBtn.classList.remove('opacity-40'); }
 
-        // --- VIEW ---
-        function switchView(viewId) {
-            // Hide all views
-            document.querySelectorAll('.admin-view').forEach(v => v.classList.add('hidden'));
-            // Show target view
-            document.getElementById('view-' + viewId).classList.remove('hidden');
+  if (viewId === 'dashboard') loadStats();
+  if (viewId === 'surveys')   loadSurveys();
+  if (viewId === 'incidents') loadIncidents();
+  if (viewId === 'users')     loadUsers();
+}
 
-            // Update sidebar buttons
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('active', 'bg-amber-600', 'text-slate-950', 'opacity-100');
-                btn.classList.add('opacity-40');
-            });
-            const activeBtn = document.querySelector(`[onclick="switchView('${viewId}')"]`);
-            activeBtn.classList.add('active', 'bg-amber-600', 'text-slate-950', 'opacity-100');
-            activeBtn.classList.remove('opacity-40');
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+function showToast(msg, type = 'info') {
+  const colors = { error: 'bg-red-600', success: 'bg-emerald-600', info: 'bg-amber-600' };
+  const toast  = document.createElement('div');
+  toast.className = `fixed top-6 right-6 z-[9999] ${colors[type] || colors.info} text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in slide-in-from-right-8 duration-300`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
 
-            if (viewId === 'dashboard') loadStats();
-            if (viewId === 'surveys') loadSurveys();
-            if (viewId === 'incidents') loadIncidents();
-            if (viewId === 'users') loadUsers();
-        }
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+if (adminToken) showPortal();
+</script>
 
-        function openCreateModal() {
-            document.getElementById('create-modal').classList.remove('hidden');
-            document.getElementById('options-list').innerHTML = '';
-            // Add some default options
-            addOptionField();
-            addOptionField();
-        }
-        function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
-        function adminLogout() { localStorage.removeItem('guardianAdminToken'); location.reload(); }
-
-        if (adminToken) showPortal();
-
-        // ============================================
-        // UTILIDAD: Toast de notificación
-        // ============================================
-        function showToast(msg, type = 'info') {
-            const toast = document.createElement('div');
-            const colors = { error: 'bg-red-600', success: 'bg-emerald-600', info: 'bg-amber-600' };
-            toast.className = `fixed top-6 right-6 z-[9999] ${colors[type] || colors.info} text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in slide-in-from-right-8 duration-300`;
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
-    </script>
 </body>
-
 </html>

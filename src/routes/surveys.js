@@ -16,7 +16,7 @@ const router = express.Router();
 // ========================================
 async function syncCandidatesFromSurveyPayload(client, payload) {
   try {
-    const { electionType, municipalityId, level, questions } = payload;
+    const { electionType, municipalityId, questions } = payload;
 
     // 1) Determinar ámbito: gubernatura → municipality_id NULL, municipal → municipality_id numérico
     let muniId = null;
@@ -369,7 +369,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
     // ── Verificar encuesta ──
     const surveyCheck = await client.query(`
-      SELECT id, is_active, is_public, allow_anonymous, end_date, municipality_id, election_type, level
+      SELECT id, is_active, is_public, allow_anonymous, end_date, municipality_id, election_type
       FROM surveys WHERE id = $1
     `, [surveyId]);
 
@@ -406,7 +406,6 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     
     // Candado 1: FingerprintJS (Huella de Navegador)
     if (!fingerprintId) {
-      client.release();
       return res.status(400).json({ error: 'Integridad comprometida: No se detectó huella digital.' });
     }
 
@@ -418,7 +417,6 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     );
 
     if (existingVote.rows.length > 0) {
-      client.release();
       return res.status(409).json({
         success: false,
         alreadyVoted: true,
@@ -438,7 +436,6 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     const receiptCookie = cookies[`surge_lock_${surveyId}`];
     
     if (receiptCookie === expectedCookieHash) {
-      client.release();
       return res.status(409).json({
         success: false,
         alreadyVoted: true,
