@@ -191,7 +191,7 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
 // LISTAR ENCUESTAS (GET)
 // ========================================
 // src/routes/admin.js — GET /surveys
-router.get('/surveys', adminAuth, async (req, res) => {
+router.get('/surveys', authenticateAdmin, async (req, res) => {
   try {
     const result = await db.query(`
       SELECT
