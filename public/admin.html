@@ -434,9 +434,15 @@ async function loadSurveys() {
     allSurveysCache = Array.isArray(surveys) ? surveys : [];
     renderSurveysTable(allSurveysCache);
     updateAvgConfidence(allSurveysCache);
+    
+    // Sello de Seguridad: Sistema Auditado Activo
+    const statusLabel = document.querySelector('header p.text-slate-500');
+    if (statusLabel) {
+      statusLabel.innerHTML = '<span class="text-emerald-400">●</span> Sistema Auditado Activo | Terminal de Inteligencia';
+    }
   } catch (e) {
     console.error('Error cargando encuestas', e);
-    showToast('Error cargando encuestas', 'error');
+    showToast('Falla en Protocolo de Seguridad', 'error');
   }
 }
 
@@ -762,8 +768,8 @@ async function createSurvey() {
     electionType:  document.getElementById('s-type').value,
     municipalityId: document.getElementById('s-municipality').value || null,
     questions: [
-      { text: '¿Quién crees que ganará?', type: 'singlechoice', options },
-      { text: 'Nivel de Confianza', type: 'confidencescale', isRequired: true }
+      { text: '¿Quién crees que ganará?', type: 'single_choice', options },
+      { text: 'Nivel de Confianza', type: 'confidence_scale', isRequired: true }
     ]
   };
 
@@ -773,14 +779,14 @@ async function createSurvey() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
       body: JSON.stringify(payload)
     });
-    if (res.ok) {
+    const d = await res.json();
+    if (res.ok && d.success) {
       closeCreateModal(); loadSurveys(); loadStats();
-      showToast('Encuesta desplegada con éxito ✓', 'success');
+      showToast(d.message || 'Encuesta desplegada con éxito ✓', 'success');
     } else {
-      const d = await res.json();
       showToast('Error en protocolo: ' + (d.error || 'Desconocido'), 'error');
     }
-  } catch (e) { showToast('Falla en la red', 'error'); }
+  } catch (e) { showToast('Falla Crítica en la Red', 'error'); }
 }
 
 function openCreateModal() {

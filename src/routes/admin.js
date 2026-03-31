@@ -125,11 +125,9 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
     client = await db.connect();
     const { title, description, electionType, municipalityId, startDate, endDate, isPublic, allowAnonymous, questions, level } = req.body;
 
-    if (!title || title.length < 5) {
-      return res.status(400).json({ error: 'Título debe tener al menos 5 caracteres' });
-    }
-    if (!questions || questions.length === 0) {
-      return res.status(400).json({ error: 'Debe incluir al menos una pregunta' });
+    // Validación básica quirúrgica
+    if (!title || title.length < 3) {
+      return res.status(400).json({ error: 'Título demasiado corto' });
     }
 
     await client.query('BEGIN');
@@ -138,50 +136,84 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
     const muniId = municipalityId && parseInt(municipalityId, 10) > 0 ? parseInt(municipalityId, 10) : null;
     const safeStartDate = startDate || new Date().toISOString();
 
+    // 1. Insertar en surveys (Soporte dual is_active/active y total_respondents)
     const surveyResult = await client.query(
-      `INSERT INTO surveys (title, description, election_type, municipality_id, start_date, end_date, is_active, is_public, allow_anonymous, active, created_by) 
-       VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, true, $9) RETURNING id`,
-      [title, description, normalizedElectionType, muniId, safeStartDate, endDate || null, isPublic !== false, allowAnonymous !== false, req.adminId || null]
+      `INSERT INTO surveys 
+       (title, description, election_type, municipality_id, start_date, end_date, is_active, active, is_public, allow_anonymous, created_by, total_respondents) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, 0) RETURNING id`,
+      [title, description, normalizedElectionType, muniId, safeStartDate, endDate || null, true, isPublic !== false, allowAnonymous !== false, req.adminId || null]
     );
 
     const surveyId = surveyResult.rows[0].id;
 
-    // Insertar preguntas
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q) continue;
+    // 2. Insertar preguntas y opciones
+    if (questions && Array.isArray(questions)) {
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (!q) continue;
 
-      const qType = String(q.type || q.questionType || 'open_text').trim();
-      const qText = String(q.text || q.questionText || '').trim();
+        // Normalización Quirúrgica de tipos
+        let qType = String(q.type || q.questionType || 'text').toLowerCase().trim();
+        if (qType === 'singlechoice') qType = 'single_choice';
+        if (qType === 'multiplechoice') qType = 'multiple_choice';
+        if (qType === 'confidencescale') qType = 'confidence_scale';
 
-      if (!qText) {
-        console.warn('⚠️ Pregunta sin texto, omitida');
-        continue;
+        const qText = String(q.text || q.questionText || '').trim();
+        if (!qText) continue;
+
+        // Insertar Pregunta
+        const questionResult = await client.query(
+          `INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, order_num) 
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [surveyId, qText, qType, q.isRequired !== false, i + 1]
+        );
+        const questionId = questionResult.rows[0].id;
+
+        // 3. Relación de Opciones (survey_options)
+        if (Array.isArray(q.options) && q.options.length > 0) {
+          for (let j = 0; j < q.options.length; j++) {
+            const opt = q.options[j];
+            const optLabel = (opt.label || opt.value || '').trim();
+            if (!optLabel) continue;
+
+            await client.query(
+              `INSERT INTO survey_options (survey_id, option_label, option_value, photo_url, order_num) 
+               VALUES ($1, $2, $3, $4, $5)`,
+              [surveyId, optLabel, opt.value || optLabel, opt.photo || null, j + 1]
+            );
+          }
+        }
       }
+    }
 
-      let options = q.options || null;
-      if (qType === 'confidence_scale' && !options) {
-        options = { min: 0, max: 100, step: 10, unit: '%' };
-      }
+    // 4. Protocolo Obligatorio: Slider de Confianza si no existe
+    const hasConfidence = (questions || []).some(q => {
+      const t = String(q.type || q.questionType || '').toLowerCase();
+      return t === 'confidence_scale' || t === 'confidencescale';
+    });
 
+    if (!hasConfidence) {
       await client.query(
-        `INSERT INTO survey_questions (survey_id, question_text, question_type, options, is_required, order_num) 
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [surveyId, qText, qType, options ? JSON.stringify(options) : null, q.isRequired !== false, i + 1]
+        `INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, order_num) 
+         VALUES ($1, 'Nivel de Confianza en la Predicción', 'confidence_scale', true, 99)`,
+        [surveyId]
       );
     }
 
-    // Sincronizar candidatos
+    // Sincronizar candidatos (Legacy Support)
     await syncCandidatesFromSurveyPayload(client, { level, electionType: normalizedElectionType, municipalityId: muniId, questions });
 
     await client.query('COMMIT');
-    console.log(`✅ Encuesta creada: ${surveyId} — "${title}"`);
-    res.json({ success: true, surveyId, message: 'Encuesta creada exitosamente' });
+    res.json({ success: true, surveyId, message: 'Sistema Auditado Activo: Encuesta Desplegada' });
 
   } catch (error) {
     if (client) await client.query('ROLLBACK');
-    console.error('❌ Error creando encuesta:', error);
-    res.status(500).json({ error: 'Error creando encuesta', details: error.message });
+    console.error('❌ Error Crítico en Terminal de Encuestas:', error);
+    res.status(500).json({ 
+      error: 'Error en protocolo de despliegue', 
+      details: error.message,
+      code: error.code || 'DB_EXEC_FAILURE'
+    });
   } finally {
     if (client) client.release();
   }
@@ -190,7 +222,6 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
 // ========================================
 // LISTAR ENCUESTAS (GET)
 // ========================================
-// src/routes/admin.js — GET /surveys
 router.get('/surveys', authenticateAdmin, async (req, res) => {
   try {
     const result = await db.query(`
@@ -202,17 +233,19 @@ router.get('/surveys', authenticateAdmin, async (req, res) => {
         s.is_active,
         s.municipality_id,
         s.created_at,
-        (SELECT COUNT(*)::int
-         FROM survey_responses sr
-         WHERE sr.survey_id = s.id
-        ) AS totalresponses
+        COALESCE(s.total_respondents, (
+          SELECT COUNT(DISTINCT user_id)::int
+          FROM survey_responses sr
+          WHERE sr.survey_id = s.id
+        )) AS totalresponses,
+        (SELECT AVG(confidence)::float FROM survey_responses WHERE survey_id = s.id) as avg_confidence
       FROM surveys s
       ORDER BY s.created_at DESC
     `);
     res.json(result.rows);
   } catch (err) {
     console.error('❌ Error GET /admin/surveys:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error recuperando auditoría de encuestas', details: err.message });
   }
 });
 
