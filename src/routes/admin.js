@@ -17,55 +17,60 @@ function normalizeElectionType(raw) {
   return lower;
 }
 
-// Helper: sincronizar candidatos
+// Helper: sincronizar candidatos (Intervención Quirúrgica)
 async function syncCandidatesFromSurveyPayload(client, payload) {
   try {
     const { electionType, municipalityId, level, questions } = payload;
     let muniId = null;
     const normalizedType = normalizeElectionType(electionType);
 
-    const isGubernatura = (level && level.toLowerCase() === 'estado') || normalizedType === 'gubernatura';
+    const isGubernatura = (level && level.toLowerCase() === 'estado') || normalizedType === 'gubernatura' || (level && level.toLowerCase() === 'gubernatura');
 
     if (!isGubernatura) {
       const parsed = parseInt(municipalityId, 10);
       muniId = Number.isNaN(parsed) ? null : parsed;
     }
 
+    // 1. Borrar agresivamente candidatos antiguos para evitar el bug de "Fantasmas" de hace 3 meses
+    if (isGubernatura) {
+      console.log('🧹 Limpieza quirúrgica: Borrando candidatos estatales antiguos...');
+      await client.query(
+        `DELETE FROM candidates WHERE municipality_id IS NULL AND (election_type = $1 OR election_type IS NULL)`,
+        [normalizedType]
+      );
+    } else {
+      await client.query(
+        `DELETE FROM candidates WHERE (municipality_id = $1) AND (election_type = $2 OR $2 IS NULL)`,
+        [muniId, normalizedType || null]
+      );
+    }
+
+    // 2. Extraer candidatos desde preguntas
     const candidates = [];
     (questions || []).forEach(q => {
       const qType = (q.type || q.questionType || '').toLowerCase();
-      if (qType === 'single_choice' && Array.isArray(q.options)) {
+      if ((qType === 'single_choice' || qType === 'singlechoice') && Array.isArray(q.options)) {
         q.options.forEach(opt => {
           const rawLabel = (opt.label || opt.value || '').trim();
           if (!rawLabel) return;
           candidates.push({
             name: rawLabel,
-            party: opt.party || 'INDEPENDIENTE',
+            party: opt.party || 'IND',
             photo_url: opt.photo || null
           });
         });
       }
     });
 
-    if (!candidates.length) {
-      console.log('ℹ️ Sin candidatos para sincronizar');
-      return;
-    }
+    if (!candidates.length) return;
 
-    console.log(`🔁 Sincronizando ${candidates.length} candidatos para municipio=${muniId}`);
-
-    await client.query(
-      `DELETE FROM candidates WHERE ((municipality_id = $1) OR ($1 IS NULL AND municipality_id IS NULL)) AND (election_type = $2 OR $2 IS NULL)`,
-      [muniId, normalizedType || null]
-    );
-
+    // 3. Insertar nuevos candidatos (Relación limpia)
     for (const cand of candidates) {
       await client.query(
         `INSERT INTO candidates (name, party, municipality_id, election_type, is_active, photo_url) VALUES ($1, $2, $3, $4, true, $5)`,
         [cand.name, cand.party, muniId, normalizedType || null, cand.photo_url]
       );
     }
-    console.log(`✅ ${candidates.length} candidatos sincronizados`);
   } catch (err) {
     console.error('❌ Error sync candidatos:', err.message);
   }

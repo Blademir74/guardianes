@@ -237,11 +237,13 @@ router.get('/active', async (req, res) => {
         end_date        AS "endDate",
         created_at
       FROM surveys
-      WHERE is_active  = true
+      WHERE (is_active = true OR active = true)
         AND is_public  = true
         AND (start_date IS NULL OR start_date <= NOW())
         AND (end_date   IS NULL OR end_date   >= NOW())
+        AND created_at > NOW() - INTERVAL '30 days'
       ORDER BY created_at DESC
+      LIMIT 1
     `);
 
     res.json({ surveys: result.rows, total: result.rows.length });
