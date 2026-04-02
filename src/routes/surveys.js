@@ -235,7 +235,12 @@ router.get('/active', async (req, res) => {
         is_public       AS "isPublic",
         start_date      AS "startDate",
         end_date        AS "endDate",
-        created_at
+        created_at,
+        (
+          SELECT COUNT(DISTINCT COALESCE(user_id::text, fingerprint_id))::int
+          FROM survey_responses sr
+          WHERE sr.survey_id = surveys.id
+        ) AS "totalRespondents"
       FROM surveys
       WHERE (is_active = true OR active = true)
         AND is_public  = true

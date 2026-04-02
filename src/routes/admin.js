@@ -238,11 +238,11 @@ router.get('/surveys', authenticateAdmin, async (req, res) => {
         s.is_active,
         s.municipality_id,
         s.created_at,
-        COALESCE(s.total_respondents, (
-          SELECT COUNT(DISTINCT user_id)::int
+        (
+          SELECT COUNT(DISTINCT COALESCE(user_id::text, fingerprint_id))::int
           FROM survey_responses sr
           WHERE sr.survey_id = s.id
-        )) AS totalresponses,
+        ) AS totalresponses,
         (SELECT AVG(confidence)::float FROM survey_responses WHERE survey_id = s.id) as avg_confidence
       FROM surveys s
       ORDER BY s.created_at DESC
