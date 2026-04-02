@@ -602,6 +602,7 @@ router.get('/:id/results', async (req, res) => {
           sr.response_value = c.id::text 
           OR sr.response_value = 'candidato_' || c.id
           OR sr.response_value = c.name
+          OR (LENGTH(sr.response_value) > 3 AND c.name ILIKE sr.response_value || '%')
         )
       )
       WHERE (

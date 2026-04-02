@@ -380,12 +380,12 @@
     <script>
         // Objeto central de configuración para fácil edición
         const candidatas = [
-            { id: "1", nombre: "Karen Castrejón", partido: "PVEM", colorClase: "bg-pvem", colorHex: "#22c55e", imagen: "https://i.ibb.co/kVyCR0Wn/karen-castrejon.jpg" },
-            { id: "2", nombre: "Beatriz Mojica", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/Hfdw3DdZ/Beatriz.jpg" },
-            { id: "3", nombre: "Esthela Damián", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/RkX5Tb3V/esthela-damian.jpg" },
-            { id: "4", nombre: "Abelina López", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/G3cwx4Bv/abelina-lopez.jpg'" },
-            { id: "5", nombre: "Yesenia Galarza", partido: "PAN", colorClase: "bg-pan", colorHex: "#0284c7", imagen: "https://i.ibb.co/k26SCnxB/yesenia.jpg" },
-            { id: "6", nombre: "Indeciso", partido: "CIUDADANO", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/zTPzGm3x/indeciso.jpg" }
+            { id: "1", nombreCorto: "Karen Castrejón", nombre: "Karen Castrejón Trujillo", partido: "PVEM", colorClase: "bg-pvem", colorHex: "#22c55e", imagen: "https://i.ibb.co/kVyCR0Wn/karen-castrejon.jpg" },
+            { id: "2", nombreCorto: "Beatriz Mojica", nombre: "Beatriz Mojica Morga", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/Hfdw3DdZ/Beatriz.jpg" },
+            { id: "3", nombreCorto: "Esthela Damián", nombre: "Esthela Damián Peralta", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/RkX5Tb3V/esthela-damian.jpg" },
+            { id: "4", nombreCorto: "Abelina López", nombre: "Abelina López Rodríguez", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/G3cwx4Bv/abelina-lopez.jpg" },
+            { id: "5", nombreCorto: "Yesenia Galarza", nombre: "Yesenia Galarza Castro", partido: "PAN", colorClase: "bg-pan", colorHex: "#0284c7", imagen: "https://i.ibb.co/k26SCnxB/yesenia.jpg" },
+            { id: "6", nombreCorto: "Indeciso", nombre: "Indeciso", partido: "CIUDADANO", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/zTPzGm3x/indeciso.jpg" }
         ];
 
         let selectedCandidate = null;
@@ -449,7 +449,7 @@
             btn.disabled = false;
             btn.classList.remove('btn-disabled');
             btnIcon.classList.remove('hidden');
-            ctaHeading.textContent = `Has seleccionado a ${selectedCandidate.nombre}`;
+            ctaHeading.textContent = `Has seleccionado a ${selectedCandidate.nombreCorto}`;
             ctaHeading.classList.remove('text-gray-500');
             ctaHeading.classList.add('text-gold');
         }
@@ -470,7 +470,7 @@
                             <div class="flex justify-between items-end">
                                 <div>
                                     <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}]">${candidata.partido}</span>
-                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${candidata.nombre}</h3>
+                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${candidata.nombreCorto}</h3>
                                 </div>
                                 <div class="black-box-container relative flex items-center justify-center">
                                     <div class="black-box-icon">
