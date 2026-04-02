@@ -256,7 +256,7 @@
         }
     </style>
 </head>
-<body class="relative min-h-screen">
+<body class="relative min-h-[100dvh]">
 
     <!-- Fondo de ambiente -->
     <div class="ambient-glow"></div>
@@ -449,7 +449,7 @@
             btn.disabled = false;
             btn.classList.remove('btn-disabled');
             btnIcon.classList.remove('hidden');
-            ctaHeading.textContent = `Has seleccionado a ${selectedCandidate.nombreCorto}`;
+            ctaHeading.innerHTML = `Has seleccionado a ${sanitizeHTML(selectedCandidate.nombreCorto)}`;
             ctaHeading.classList.remove('text-gray-500');
             ctaHeading.classList.add('text-gold');
         }
@@ -469,8 +469,8 @@
                         <div class="power-tag pointer-events-none">
                             <div class="flex justify-between items-end">
                                 <div>
-                                    <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}]">${candidata.partido}</span>
-                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${candidata.nombreCorto}</h3>
+                                    <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}]">${sanitizeHTML(candidata.partido)}</span>
+                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${sanitizeHTML(candidata.nombreCorto)}</h3>
                                 </div>
                                 <div class="black-box-container relative flex items-center justify-center">
                                     <div class="black-box-icon">
@@ -485,6 +485,22 @@
                 `;
                 gridContainer.innerHTML += cardHTML;
             });
+        }
+
+        // Utilidad de Sanitización XSS
+        function sanitizeHTML(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        // Criptografía SHA-256 para anonimizado local de huella
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         // Manejar el Voto
@@ -503,7 +519,8 @@
                 // 1. Obtener Fingerprint
                 const fp = await fpPromise;
                 const result = await fp.get();
-                const fingerprintId = result.visitorId;
+                // Hasheado local previo a viajar por red: Nadie puede desanominizar.
+                const fingerprintId = await sha256(result.visitorId);
 
                 // 2. Obtener Ubicación (opcional/tratar de forzar)
                 let lat = null, lng = null, provided = false;

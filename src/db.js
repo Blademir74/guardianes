@@ -17,26 +17,31 @@ let pool = null;
 function getPool() {
   if (pool) return pool;
 
-  const connectionString = process.env.DATABASE_URL;
+  let connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('FATAL: DATABASE_URL no está definida en las variables de entorno.');
+  }
+
+  // Neon connection multiplexing hook
+  if (connectionString.includes('neon.tech') && !connectionString.includes('pgbouncer=true')) {
+    connectionString += (connectionString.includes('?') ? '&' : '?') + 'pgbouncer=true';
   }
 
   pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },   // obligatorio para Neon
-    // Para carga alta (muchas predicciones simultáneas) este valor puede
-    // convertirse en cuello de botella. Se parametriza para ajustar por entorno.
-    max: parseInt(process.env.DB_POOL_MAX || '20', 10), // máximo conexiones simultáneas
+    // Para Serverless Vercel se recomienda Max=2 por proceso y dejar al pgbouncer atajar
+    max: parseInt(process.env.DB_POOL_MAX || '2', 10), // máximo conexiones simultáneas
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });
 
   // Si el pool detecta un error en un cliente inactivo,
-  // lo invalidamos para que se recree en el siguiente intento.
+  // lo invalidamos (forzando pool.end()) para que se recree en el siguiente intento sin Memory Leaks.
   pool.on('error', (err) => {
     console.error('❌ Pool error (idle client):', err.message);
-    pool = null;   // ← KEY: permite re-creación en next call
+    try { pool.end(); } catch (e) {} // Drenaje forzoso
+    pool = null;   // ← KEY: permite re-creación en next call libre de fugas de memoria
   });
 
   console.log('🔒 DB Pool creado.');

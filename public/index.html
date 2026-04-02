@@ -384,7 +384,7 @@
     </script>
 </head>
 
-<body class="bg-[#0A0F1C] text-slate-50 min-h-screen flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+<body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
     <script>
         console.log('✅ Candado de Integridad Triple Activado.');
     </script>
@@ -1210,7 +1210,8 @@
                 // Obtener Fingerprint VisitorID (Candado 1 en frontend)
                 const fp = await fpPromise;
                 const result = await fp.get();
-                const visitorId = result.visitorId;
+                // Hasheado local previo a viajar por red: Nadie puede desanominizar.
+                const visitorId = await sha256(result.visitorId);
 
                 // Geolocalización (con consentimiento)
                 const geo = await new Promise((resolve) => {

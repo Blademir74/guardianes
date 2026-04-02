@@ -8,13 +8,25 @@
         "maxDuration": 60,
         "includeFiles": ["src/**", "api/**"]
       }
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
     }
   ],
   "rewrites": [
+    {
+      "source": "/img/(.*)",
+      "destination": "/public/img/$1"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/public/assets/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/public/js/$1"
+    },
+    {
+      "source": "/css/(.*)",
+      "destination": "/public/css/$1"
+    },
     {
       "source": "/api/webhook",
       "destination": "/api/index.js"
