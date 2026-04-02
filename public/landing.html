@@ -3,364 +3,620 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pulso Guerrero | Instituto de Investigación Estratégica 2027</title>
-    <meta name="description" content="Estudio continuo de inteligencia electoral y medición de tendencias en el Estado de Guerrero.">
+    <title>Guardianes Guerrero | Duelo de Perfiles</title>
+    <meta name="description" content="Duelo de Perfiles para Guerrero 2027. Tú decides el rumbo de la Gubernatura.">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        midnight: '#030814',
+                        'midnight-light': '#0a1428',
+                        gold: '#d4af37',
+                        'gold-light': '#fcd34d',
+                        emerald: '#10b981',
+                        morena: '#8a1c14',
+                        pvem: '#22c55e',
+                        pan: '#0284c7',
+                        pri: '#dc2626',
+                        pt: '#e11d48',
+                        mc: '#f97316'
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shimmer': 'shimmer 3s infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%) rotate(45deg)' },
+                            '100%': { transform: 'translateX(100%) rotate(45deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #050505; 
+            background-color: #030814; 
             color: #d1d5db; 
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
-        
-        h1, h2, h3, h4, .serif { 
-            font-family: 'Playfair Display', serif; 
-        }
-        
-        .text-gold { color: #d4af37; }
-        .bg-gold { background-color: #d4af37; }
-        .border-gold { border-color: #d4af37; }
-        
-        .gold-gradient { 
-            background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-        }
-        
-        .glass-panel { 
-            background: rgba(20, 20, 20, 0.6); 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-        }
-        
-        .glass-card { 
-            background: linear-gradient(180deg, rgba(30, 30, 30, 0.4) 0%, rgba(10, 10, 10, 0.8) 100%); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(212, 175, 55, 0.15); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); 
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        .glass-card:hover {
-            border-color: rgba(212, 175, 55, 0.4);
-            transform: translateY(-5px);
-            box-shadow: 0 30px 60px -12px rgba(212, 175, 55, 0.1); 
-        }
 
-        .bg-grid { 
-            background-image: 
-                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), 
-                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px); 
-            background-size: 60px 60px; 
-            background-position: center center;
-        }
-
+        /* Ambiente de luces */
         .ambient-glow {
             position: absolute;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, rgba(212,175,55,0.03) 0%, rgba(0,0,0,0) 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: -1;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 40%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 60%, rgba(16, 185, 129, 0.03) 0%, transparent 40%);
+            top: 0;
+            left: 0;
+            z-index: 0;
             pointer-events: none;
         }
 
-        .btn-gold {
-            background: transparent;
-            color: #d4af37;
-            border: 1px solid #d4af37;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
+        .glass-nav {
+            background: rgba(3, 8, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
         }
 
-        .btn-gold::before {
+        /* Duelo de Perfiles / Battle Grid */
+        .battle-grid {
+            perspective: 1200px;
+        }
+
+        .candidate-card {
+            background: linear-gradient(160deg, rgba(20, 30, 50, 0.4) 0%, rgba(5, 10, 20, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            /* Ángulo moderno base */
+            transform: rotateX(8deg) rotateY(0deg) scale(0.97);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .candidate-card::before {
             content: '';
             position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-            transition: all 0.5s ease;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.9) 100%);
+            z-index: 10;
+            pointer-events: none;
         }
 
-        .btn-gold:hover::before {
-            left: 100%;
+        .candidate-card:hover {
+            transform: rotateX(0deg) rotateY(0deg) scale(1.02) translateY(-8px);
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(212, 175, 55, 0.15),
+                0 0 15px rgba(212, 175, 55, 0.2) inset;
         }
 
-        .btn-gold:hover {
-            background: rgba(212, 175, 55, 0.1);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+        .card-inner-img {
+            width: 100%;
+            height: 480px;
+            object-fit: cover;
+            object-position: top center;
+            transition: transform 0.8s ease, filter 0.5s ease;
+            filter: contrast(115%) sepia(20%) grayscale(25%) brightness(0.85);
+            transform: scale(1.02);
+            z-index: 1;
         }
-        
-        .btn-solid-gold {
-            background: linear-gradient(135deg, #d4af37 0%, #996515 100%);
-            color: #000;
+
+        .candidate-card:hover .card-inner-img, .candidate-card.selected-card .card-inner-img {
+            filter: contrast(125%) sepia(0%) grayscale(0%) brightness(1.05);
+            transform: scale(1.1);
+        }
+
+        .candidate-card.selected-card {
+            transform: rotateX(0deg) rotateY(0deg) scale(1.04) translateY(-10px);
+            border-color: #d4af37;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(212, 175, 55, 0.4),
+                0 0 20px rgba(212, 175, 55, 0.3) inset;
+        }
+
+        .candidate-card.selected-card::before {
+            background: linear-gradient(to bottom, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0.8) 100%);
+        }
+
+        .candidate-card.selected-card .power-tag {
+            border-top: 1px solid rgba(212, 175, 55, 0.8);
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(30,25,10,0.9) 80%, transparent 100%);
+        }
+
+        .power-tag {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            z-index: 20;
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 70%, transparent 100%);
+            border-top: 1px solid rgba(212, 175, 55, 0.0);
             transition: all 0.3s ease;
         }
+
+        .candidate-card:hover .power-tag {
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(10,10,10,0.9) 80%, transparent 100%);
+        }
+
+        .party-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #fff;
+            border-radius: 2px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Black Box Icon (Auditoría) */
+        .black-box-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background: #000;
+            border: 1px solid #10b981;
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
         
-        .btn-solid-gold:hover {
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-            transform: scale(1.02);
+        .black-box-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+            position: absolute;
+            bottom: 120%;
+            right: 0;
+            white-space: nowrap;
+            background: #000;
+            border: 1px solid #10b981;
+            padding: 4px 8px;
+            font-size: 0.6rem;
+            border-radius: 4px;
+        }
+
+        .black-box-container:hover .black-box-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Botón CTA Magnífico */
+        .btn-center-action {
+            background: linear-gradient(135deg, #d4af37 0%, #b48509 50%, #855f00 100%);
+            color: #000;
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.4);
+            border: 1px solid #fcd34d;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-center-action::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+
+        .btn-center-action:hover:not(:disabled) {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(212, 175, 55, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.2em;
+        }
+
+        .btn-disabled {
+            background: linear-gradient(135deg, #333 0%, #111 100%);
+            color: #666;
+            border: 1px solid #444;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        
+        .btn-disabled::after {
+            display: none;
+        }
+        
+        .progress-bar {
+            transition: width 1s ease-in-out;
         }
     </style>
 </head>
-<body class="relative min-h-screen bg-grid overflow-x-hidden">
+<body class="relative min-h-screen">
 
-    <!-- Ambient Background -->
+    <!-- Fondo de ambiente -->
     <div class="ambient-glow"></div>
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 glass-panel border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
+    <!-- Navegación Superior -->
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Logo Guardianes -->
             <div class="flex items-center gap-4">
-                <div class="w-1.5 h-1.5 bg-gold rounded-full animate-pulse shadow-[0_0_10px_#d4af37]"></div>
+                <div class="w-1.5 h-1.5 bg-gold rounded-full shadow-[0_0_8px_#d4af37] animate-pulse-slow"></div>
                 <div class="flex flex-col">
-                    <span class="text-2xl font-bold tracking-[0.2em] uppercase serif text-white leading-none">Pulso <span class="text-gold">Guerrero</span></span>
-                    <span class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-1">Inteligencia Estratégica</span>
+                    <span class="text-xl md:text-2xl font-bold tracking-[0.2em] uppercase font-serif text-white leading-none">Guardianes <span class="text-gold">Guerrero</span></span>
+                    <span class="text-[8px] md:text-[10px] font-mono tracking-[0.3em] text-gray-400 uppercase mt-1">Estudio de Inteligencia</span>
                 </div>
             </div>
-            <div class="hidden md:flex items-center gap-8">
-                <a href="#metodologia" class="text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors">Metodología</a>
-                <a href="#seguridad" class="text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors">Arquitectura</a>
-                <a href="#datos" class="text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors">Telemetría</a>
+            <!-- Integridad Seal -->
+            <div class="hidden sm:flex items-center gap-3 px-4 py-1.5 rounded border border-emerald/30 bg-emerald/5">
+                <svg class="w-4 h-4 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-emerald leading-tight">Integridad SHA-256</span>
+                    <span class="text-[8px] tracking-widest uppercase text-gray-400 leading-tight">Datos Inmutables</span>
+                </div>
             </div>
-            <a href="/" class="btn-solid-gold px-8 py-3 text-xs uppercase tracking-[0.2em] font-bold rounded-sm">
-                Acceder al Panel
-            </a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center pt-24 px-6">
-        <div class="max-w-5xl mx-auto text-center z-10">
-            <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-white/5 mb-8 backdrop-blur-sm">
-                <span class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_#22c55e]"></span>
-                <span class="text-xs tracking-[0.2em] uppercase text-gray-300">Sistema Activo • Cifrado AES-256</span>
-            </div>
-            
-            <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.1] mb-8 serif">
-                Monitor de Precisión <br>
-                <span class="italic font-light text-gray-400">Electoral</span> <span class="gold-gradient">2027</span>
-            </h1>
-            
-            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-                Estudio demoscópico avanzado del Estado de Guerrero. Implementamos métricas de prestigio e identificación de hardware para garantizar integridad de grado institucional.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="/" class="btn-solid-gold px-10 py-5 text-sm uppercase tracking-[0.2em] font-bold w-full sm:w-auto text-center rounded-sm">
-                    Iniciar Evaluación
-                </a>
-                <a href="#metodologia" class="btn-gold px-10 py-5 text-sm uppercase tracking-[0.2em] font-bold w-full sm:w-auto text-center rounded-sm">
-                    Ver Inteligencia
-                </a>
-            </div>
-            
-            <div class="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-white/10 pt-12">
-                <div>
-                    <div class="text-3xl font-bold text-white serif mb-1" id="stat-municipalities">85</div>
-                    <div class="text-[10px] tracking-[0.2em] uppercase text-gray-500">Municipios Analizados</div>
-                </div>
-                <div>
-                    <div class="text-3xl font-bold text-white serif mb-1" id="stat-districts">28</div>
-                    <div class="text-[10px] tracking-[0.2em] uppercase text-gray-500">Distritos Locales</div>
-                </div>
-                <div>
-                    <div class="text-3xl font-bold text-gold serif mb-1" id="stat-precision">99.9%</div>
-                    <div class="text-[10px] tracking-[0.2em] uppercase text-gray-500">Integridad de Data</div>
-                </div>
-                <div>
-                    <div class="text-3xl font-bold text-white serif mb-1">24/7</div>
-                    <div class="text-[10px] tracking-[0.2em] uppercase text-gray-500">Monitoreo Activo</div>
-                </div>
-            </div>
+    <!-- Header / Hero Section -->
+    <header class="relative pt-40 pb-12 px-6 text-center z-10 flex flex-col items-center">
+        <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-black/40 mb-8 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
+            <span class="w-2.5 h-2.5 bg-emerald rounded-full shadow-[0_0_12px_#10b981] animate-pulse"></span>
+            <span class="text-[11px] md:text-xs font-mono tracking-[0.2em] uppercase text-gray-300">Sistema Activo &bull; Cifrado AES-256</span>
         </div>
-    </section>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] mb-6 font-serif max-w-5xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+            EL MEJOR PERFIL PARA GUERRERO:<br>
+            <span class="text-gold italic font-medium">TÚ DECIDES EL RUMBO</span>
+        </h1>
+        
+        <div class="w-16 h-px bg-gold/50 mx-auto my-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;"></div>
 
-    <!-- Metodología Section (Cómo Funciona + Seguridad) -->
-    <section id="metodologia" class="py-32 relative">
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
-            <div class="flex flex-col md:flex-row gap-16 items-start">
-                <div class="md:w-1/3 sticky top-32">
-                    <span class="text-gold uppercase tracking-[0.3em] text-xs font-bold mb-4 block">01 // Protocolo</span>
-                    <h2 class="text-4xl md:text-5xl text-white mb-6 serif">Arquitectura <br><span class="italic text-gray-400">Invisible</span></h2>
-                    <p class="text-gray-400 font-light leading-relaxed mb-8">
-                        Nuestra infraestructura rechaza la fricción de encuestas analógicas. Operamos bajo un modelo de Verificación Criptográfica Silenciosa (VCS), analizando huellas digitales de hardware en milisegundos.
-                    </p>
-                    <a href="/" class="text-gold text-xs uppercase tracking-[0.2em] font-bold border-b border-gold pb-1 hover:text-white hover:border-white transition-colors">Participar en el Estudio →</a>
+        <p class="text-gray-400 text-base md:text-xl font-light max-w-3xl mx-auto opacity-0 animate-fade-in-up leading-relaxed" style="animation-delay: 0.4s;">
+            Exigimos certeza. Evalúa y posiciona a la persona ideal para proteger y guiar el estado. Resultados sólidos, definitivos y protegidos por nuestra <b>Malla de Poder (Battle Grid)</b>.
+        </p>
+    </header>
+
+    <!-- Contenedor Principal Formularios -->
+    <div id="voting-container">
+        <!-- Módulo Dinámico de Candidatas (Battle Grid) -->
+        <section class="py-12 relative z-10 px-6">
+            <div id="candidates-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
+                <!-- Renderizado por JS -->
+            </div>
+        </section>
+
+        <!-- Call To Action Sincronizado -->
+        <section class="py-16 relative z-20 px-6 text-center">
+            <div class="max-w-3xl mx-auto opacity-0 animate-fade-in-up" style="animation-delay: 0.8s;">
+                <h2 id="cta-heading" class="text-xl md:text-2xl font-serif text-gray-500 mb-8 transition-colors">Selecciona a una candidata para continuar</h2>
+                <button id="btn-submit-vote" disabled class="inline-flex items-center justify-center btn-center-action btn-disabled px-8 md:px-14 py-4 md:py-6 text-sm md:text-base tracking-[0.15em] font-bold rounded-sm w-full md:w-auto">
+                    <span id="btn-text">SELLAR MI PREDICCIÓN EN LA CAJA NEGRA</span>
+                    <svg id="btn-icon" class="w-5 h-5 ml-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </button>
+                <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
+                    <div class="inline-block w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-xs text-gold mt-3 font-mono uppercase tracking-widest">Asegurando firma criptográfica...</p>
                 </div>
+                <div id="error-message" class="hidden mt-4 text-red-500 font-mono tracking-widest text-xs uppercase p-3 border border-red-500/30 bg-red-500/10 rounded-sm"></div>
+                <p class="mt-6 text-[10px] text-gray-500 font-mono tracking-widest uppercase">
+                    Voto anónimo protegido por huella de hardware
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Panel de Validación (Oculto Inicialmente) -->
+    <div id="validation-panel" class="hidden pb-24 relative z-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-emerald/10 border border-emerald/30 rounded-sm p-6 mb-12 text-center animate-fade-in-up">
+                <div class="w-12 h-12 bg-emerald/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald/50">
+                    <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-xl md:text-2xl font-serif text-emerald mb-2">Tu decisión ha sido encriptada e inmutable en el registro nacional</h2>
+                <p class="text-gray-400 font-mono text-[10px] uppercase tracking-widest">Sello SHA-256 Confirmado / Telemetría Activa</p>
+            </div>
+
+            <div class="glass-nav rounded-sm p-6 md:p-8 border border-gold/20 shadow-2xl animate-fade-in-up" style="animation-delay: 0.2s;">
+                <h3 class="text-center font-serif text-xl md:text-2xl text-white mb-2">Estado Inmutable de la Elección</h3>
+                <p class="text-center text-gray-500 font-mono text-[10px] uppercase tracking-widest mb-10" id="live-trust-score">Calculando confianza promedio...</p>
                 
-                <div class="md:w-2/3 grid gap-8">
-                    <!-- Feature 1 -->
-                    <div class="glass-card p-10 rounded-sm">
-                        <div class="text-gold mb-6 font-bold font-mono text-sm opacity-50">SYS.01</div>
-                        <h3 class="text-2xl text-white mb-4 serif">Huella de Dispositivo (FP)</h3>
-                        <p class="text-gray-400 font-light leading-relaxed">
-                            A diferencia de sistemas que vulneran la identidad mediante números telefónicos, nuestro motor genera un identificador hash único basado en más de 70 parámetros de hardware y navegador. 100% anónimo, 100% infalsificable.
-                        </p>
-                    </div>
-                    
-                    <!-- Feature 2 -->
-                    <div class="glass-card p-10 rounded-sm">
-                        <div class="text-gold mb-6 font-bold font-mono text-sm opacity-50">SYS.02</div>
-                        <h3 class="text-2xl text-white mb-4 serif">Mitigación Anti-Bot</h3>
-                        <p class="text-gray-400 font-light leading-relaxed">
-                            Implementamos Rate Limiting heurístico a nivel backend. Cualquier anomalía de concurrencia o de IPs proxy/VPN de grado de centro de datos es interceptada y rechazada antes de tocar la base de datos central.
-                        </p>
-                    </div>
-                    
-                    <!-- Feature 3 -->
-                    <div class="glass-card p-10 rounded-sm">
-                        <div class="text-gold mb-6 font-bold font-mono text-sm opacity-50">SYS.03</div>
-                        <h3 class="text-2xl text-white mb-4 serif">Validación de Espectro Geográfico</h3>
-                        <p class="text-gray-400 font-light leading-relaxed">
-                            La plataforma abarca todo el territorio de Guerrero. Modelos jerárquicos permiten la medición simultánea en esferas de Gubernatura, representación Local y de Ayuntamiento, procesando encuestas asíncronas en un solo flujo.
-                        </p>
-                    </div>
+                <div id="results-bars" class="space-y-6">
+                    <!-- Barras dinámicas renderizadas por JS -->
+                    <div class="animate-pulse flex space-x-4"><div class="flex-1 space-y-4 py-1"><div class="h-4 bg-gray-700/50 rounded w-3/4"></div><div class="h-4 bg-gray-700/50 rounded"></div></div></div>
+                </div>
+
+                <div class="mt-10 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                    <span id="total-votes-count">0 Votos Verificados</span>
+                    <a href="/index.html" class="text-gold hover:text-white transition-colors">Volver a inicio →</a>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- FAQ / Narrativa Técnica -->
-    <section id="faq" class="py-32 bg-[#080808] border-y border-white/5">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-20">
-                <span class="text-gold uppercase tracking-[0.3em] text-xs font-bold mb-4 block">03 // FAQ</span>
-                <h2 class="text-4xl md:text-5xl text-white serif mb-6">Narrativa Técnica</h2>
-                <div class="w-12 h-px bg-gold mx-auto"></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="glass-card p-10 rounded-sm">
-                    <h3 class="text-2xl text-white mb-4 serif">¿Por qué la Caja Negra es invulnerable a bots?</h3>
-                    <p class="text-gray-400 font-light leading-relaxed">
-                        Porque cada predicción exige una <b>huella digital matemática única</b> (generada en el navegador con FingerprintJS y validada en backend).
-                        El servidor cruza esa huella con el contexto de la predicción para crear una identidad técnica persistente y, dentro de la ventana de 24 horas,
-                        evita reintentos del mismo dispositivo en el mismo municipio. A nivel de integridad, la evidencia queda sellada con cifrado SHA-256,
-                        lo que hace que los intentos automatizados no puedan replicar el “fingerprint” sin el mismo entorno técnico.
-                    </p>
-                </div>
-
-                <div class="glass-card p-10 rounded-sm">
-                    <h3 class="text-2xl text-white mb-4 serif">¿Qué pasa si intentas votar dos veces?</h3>
-                    <p class="text-gray-400 font-light leading-relaxed">
-                        Si el backend detecta que el mismo dispositivo (huella) intenta repetir la predicción antes de que concluya la ventana permitida,
-                        bloquea el reenvío y activa el mensaje de prestigio:
-                        <br><br>
-                        <b>“Tu predicción ya está sellada en la Caja Negra. Puedes actualizarla 24 horas antes del cierre”</b>.
-                        Así mantenemos integridad sin fricción por IP, pero sí con verificación por identidad técnica.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Telemetría / Resultados en vivo simplificados -->
-    <section id="datos" class="py-32 bg-[#080808] border-y border-white/5 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-20">
-                <span class="text-gold uppercase tracking-[0.3em] text-xs font-bold mb-4 block">02 // Telemetría</span>
-                <h2 class="text-4xl md:text-5xl text-white serif mb-6">Estado del Sistema</h2>
-                <div class="w-12 h-px bg-gold mx-auto"></div>
-            </div>
-            
-            <div class="glass-panel p-8 md:p-12 rounded-sm border border-gold/20 relative">
-                <!-- Decorative corners -->
-                <div class="absolute top-0 left-0 w-4 h-4 border-t border-l border-gold"></div>
-                <div class="absolute top-0 right-0 w-4 h-4 border-t border-r border-gold"></div>
-                <div class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-gold"></div>
-                <div class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-gold"></div>
-
-                <div class="flex items-center justify-between mb-12 border-b border-white/10 pb-6">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 border border-gold/30 rounded flex items-center justify-center bg-gold/5">
-                            <span class="w-2 h-2 bg-gold rounded-full animate-pulse"></span>
-                        </div>
-                        <div>
-                            <h3 class="text-white text-lg tracking-widest uppercase text-xs">Conexión Segura Establecida</h3>
-                            <p class="text-gray-500 text-[10px] tracking-[0.2em] uppercase font-mono mt-1" id="server-time">EST. 0ms</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-gold font-mono text-sm">ENCRYPTED // OK</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div>
-                        <div class="text-gray-500 text-[10px] tracking-[0.2em] uppercase mb-2">Respuestas Totales</div>
-                        <div class="text-4xl text-white serif" id="live-responses">--</div>
-                    </div>
-                    <div>
-                        <div class="text-gray-500 text-[10px] tracking-[0.2em] uppercase mb-2">Encuestas de Municipios</div>
-                        <div class="text-4xl text-white serif" id="live-surveys">--</div>
-                    </div>
-                    <div>
-                        <div class="text-gray-500 text-[10px] tracking-[0.2em] uppercase mb-2">Firmas Criptográficas (FP)</div>
-                        <div class="text-4xl text-white serif" id="live-signatures">--</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="py-12 border-t border-white/10 bg-black">
+    <!-- Footer Institucional -->
+    <footer class="py-10 border-t border-white/10 bg-black/60 backdrop-blur-lg relative z-20">
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="flex items-center gap-3">
-                <span class="text-lg font-bold tracking-[0.2em] uppercase serif text-gray-500">Pulso <span class="text-gray-600">Guerrero</span></span>
+                <span class="text-sm font-bold tracking-[0.2em] uppercase font-serif text-gray-400">Guardianes <span class="text-gray-600">Guerrero</span></span>
             </div>
-            
-            <div class="flex gap-8 text-[10px] tracking-[0.2em] uppercase text-gray-600 font-bold">
-                <a href="#metodologia" class="hover:text-gold transition-colors">Sistema</a>
-                <a href="/admin" class="hover:text-gold transition-colors">Admin Console</a>
-            </div>
-            
-            <div class="text-[10px] tracking-[0.2em] text-gray-700 uppercase">
-                &copy; 2027 Instituto de Inteligencia Estratégica
+            <div class="text-[10px] font-mono tracking-[0.2em] text-gray-500 uppercase flex items-center gap-2">
+                <svg class="w-3 h-3 text-emerald" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                Plataforma Blindada &copy; 2027
             </div>
         </div>
     </footer>
 
+    <!-- Lógica de Renderizado Dinámico -->
     <script>
-        // Update server time ticker
-        setInterval(() => {
-            const date = new Date();
-            const timeElement = document.getElementById('server-time');
-            if(timeElement) {
-                timeElement.textContent = `SYS.TIME // ${date.toISOString().split('T')[1].substring(0, 8)} UTC`;
-            }
-        }, 1000);
+        // Objeto central de configuración para fácil edición
+        const candidatas = [
+            { id: "1", nombre: "Karen Castrejón", partido: "PVEM", colorClase: "bg-pvem", colorHex: "#22c55e", imagen: "https://i.ibb.co/kVyCR0Wn/karen-castrejon.jpg" },
+            { id: "2", nombre: "Beatriz Mojica", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/Hfdw3DdZ/Beatriz.jpg" },
+            { id: "3", nombre: "Esthela Damián", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/RkX5Tb3V/esthela-damian.jpg" },
+            { id: "4", nombre: "Abelina López", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/G3cwx4Bv/abelina-lopez.jpg'" },
+            { id: "5", nombre: "Yesenia Galarza", partido: "PAN", colorClase: "bg-pan", colorHex: "#0284c7", imagen: "https://i.ibb.co/k26SCnxB/yesenia.jpg" },
+            { id: "6", nombre: "Indeciso", partido: "CIUDADANO", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/zTPzGm3x/indeciso.jpg" }
+        ];
 
-        // Fetch basic stats from API
-        async function loadTelemetria() {
+        let selectedCandidate = null;
+        let fpPromise;
+        
+        // Variables globales para sincronización dinámica con Admin Dashboard
+        let activeSurveyId = null;
+        let activeQuestionId = null;
+
+        async function syncWithActiveSurvey() {
             try {
-                const response = await fetch('/api/surveys/live-results');
-                if (response.ok) {
-                    const data = await response.json();
-                    if(data && data.globalStats) {
-                        document.getElementById('live-responses').textContent = data.globalStats.totalResponses.toLocaleString();
-                        document.getElementById('live-surveys').textContent = data.globalStats.activeSurveys;
-                        document.getElementById('live-signatures').textContent = data.globalStats.totalParticipants.toLocaleString();
+                // Buscar la encuesta activa nacional/estatal
+                const res = await fetch('/api/surveys/active');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.surveys && data.surveys.length > 0) {
+                        activeSurveyId = data.surveys[0].id;
+                        console.log(`[SYS] Sincronizado con Encuesta Activa ID: ${activeSurveyId}`);
+                        
+                        // Buscar el ID de la pregunta para insertar el voto correctamente sin fallos de llave foránea
+                        const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
+                        if (qRes.ok) {
+                            const qData = await qRes.json();
+                            if (qData.questions && qData.questions.length > 0) {
+                                // Buscar de preferencia la primera pregunta de opción múltiple, o fallback a la primera
+                                const validQuestion = qData.questions.find(q => q.questionType === 'single_choice') || qData.questions[0];
+                                activeQuestionId = validQuestion.id;
+                                console.log(`[SYS] Sincronizado con Pregunta ID: ${activeQuestionId}`);
+                            }
+                        }
                     }
                 }
-            } catch (error) {
-                console.log('API telemetría temporalmente offline');
-                // Fallbacks visuales de prestigio si no compila
-                document.getElementById('live-responses').textContent = "12,482";
-                document.getElementById('live-surveys').textContent = "85";
-                document.getElementById('live-signatures').textContent = "SECURE";
+            } catch (err) {
+                console.error("[ERROR] No se pudo sincronizar la telemetría:", err);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadTelemetria);
+        function initFingerprint() {
+            // Cargar FingerprintJS dinámicamente como módulo para evitar errores de undefined
+            fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
+                .then(FingerprintJS => FingerprintJS.load());
+        }
+
+        function selectCandidate(index) {
+            selectedCandidate = candidatas[index];
+            
+            // Actualizar UI Grids
+            document.querySelectorAll('.candidate-card').forEach((el, i) => {
+                if (i === index) {
+                    el.classList.add('selected-card');
+                } else {
+                    el.classList.remove('selected-card');
+                }
+            });
+
+            // Activar botón y texto
+            const btn = document.getElementById('btn-submit-vote');
+            const ctaHeading = document.getElementById('cta-heading');
+            const btnIcon = document.getElementById('btn-icon');
+            
+            btn.disabled = false;
+            btn.classList.remove('btn-disabled');
+            btnIcon.classList.remove('hidden');
+            ctaHeading.textContent = `Has seleccionado a ${selectedCandidate.nombre}`;
+            ctaHeading.classList.remove('text-gray-500');
+            ctaHeading.classList.add('text-gold');
+        }
+
+        // Función para renderizar las tarjetas
+        function renderBattleGrid() {
+            const gridContainer = document.getElementById('candidates-grid');
+            gridContainer.innerHTML = ''; // Limpiar
+
+            candidatas.forEach((candidata, index) => {
+                const delay = index * 0.15; // Efecto cascada
+                
+                const cardHTML = `
+                    <div class="candidate-card group cursor-pointer" style="animation: fadeInUp 0.8s ease-out ${delay + 0.6}s both;" onclick="selectCandidate(${index})">
+                        <img src="${candidata.imagen}" alt="Candidata ${candidata.nombre}" class="card-inner-img pointer-events-none">
+                        
+                        <div class="power-tag pointer-events-none">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}]">${candidata.partido}</span>
+                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${candidata.nombre}</h3>
+                                </div>
+                                <div class="black-box-container relative flex items-center justify-center">
+                                    <div class="black-box-icon">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <div class="black-box-tooltip font-mono pointer-events-auto">Perfil en Monitoreo SHA-256</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-gold/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    </div>
+                `;
+                gridContainer.innerHTML += cardHTML;
+            });
+        }
+
+        // Manejar el Voto
+        document.getElementById('btn-submit-vote').addEventListener('click', async () => {
+            if (!selectedCandidate) return;
+
+            const btn = document.getElementById('btn-submit-vote');
+            const spinner = document.getElementById('loading-spinner');
+            const errorBox = document.getElementById('error-message');
+            
+            btn.classList.add('hidden');
+            errorBox.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
+            try {
+                // 1. Obtener Fingerprint
+                const fp = await fpPromise;
+                const result = await fp.get();
+                const fingerprintId = result.visitorId;
+
+                // 2. Obtener Ubicación (opcional/tratar de forzar)
+                let lat = null, lng = null, provided = false;
+                try {
+                    const pos = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000 });
+                    });
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                    provided = true;
+                } catch(e) { /* Ignorar si no da GPS */ }
+
+                // 3. Ejecutar POST dinámico al backend
+                if (!activeSurveyId || !activeQuestionId) {
+                    throw new Error('No se detectó un módulo de escrutinio activo del dashboard administrador. Verifica que la encuesta esté publicada.');
+                }
+
+                // Se envía el nombre que matcheará con sr.response_value
+                const payload = {
+                    fingerprintId: fingerprintId,
+                    locationProvided: provided,
+                    latitude: lat,
+                    longitude: lng,
+                    responses: [
+                        { questionId: activeQuestionId, answer: selectedCandidate.nombre }
+                    ]
+                };
+
+                const res = await fetch(`/api/surveys/${activeSurveyId}/response`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Autenticación de dispositivo fallida. Intenta nuevamente.');
+                }
+
+                // 4. Éxito: Ocultar Grid y mostrar Validación Global
+                document.getElementById('voting-container').style.display = 'none';
+                const validationPanel = document.getElementById('validation-panel');
+                validationPanel.classList.remove('hidden');
+
+                // 5. Cargar Resultados en Vivo Globales
+                loadGlobalResults();
+
+            } catch (error) {
+                console.error(error);
+                spinner.classList.add('hidden');
+                btn.classList.remove('hidden');
+                btn.textContent = 'REINTENTAR SELLADO';
+                errorBox.textContent = error.message;
+                errorBox.classList.remove('hidden');
+            }
+        });
+
+        async function loadGlobalResults() {
+            try {
+                if (!activeSurveyId) return;
+                
+                // Conectar con el endpoint de resultados ligado dinámicamente
+                const res = await fetch(`/api/surveys/${activeSurveyId}/results`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderGlobalResults(data);
+                }
+            } catch (err) {
+                console.error("Error cargando resultados", err);
+            }
+        }
+
+        function renderGlobalResults(data) {
+            const container = document.getElementById('results-bars');
+            container.innerHTML = '';
+
+            const results = data.results || [];
+            document.getElementById('total-votes-count').textContent = `${data.total_respondents || 0} VOTOS CIFRADOS`;
+            
+            const conf = data.avg_confidence || 100;
+            document.getElementById('live-trust-score').innerHTML = `NIVEL DE CONFIANZA PROMEDIO: <span class="text-gold">${conf.toFixed(1)}%</span>`;
+
+            results.forEach(r => {
+                const pct = r.percentage || 0;
+                container.innerHTML += `
+                    <div class="mb-4">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs font-bold text-gray-300 uppercase">${r.label}</span>
+                            <span class="text-xs font-mono text-gold">${pct}%</span>
+                        </div>
+                        <div class="w-full bg-midnight rounded-sm h-3 border border-white/5 overflow-hidden">
+                            <div class="progress-bar bg-gradient-to-r from-gold-light to-gold h-full rounded-sm" style="width: 0%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Trigger animation
+            setTimeout(() => {
+                const bars = container.querySelectorAll('.progress-bar');
+                bars.forEach((bar, idx) => {
+                    bar.style.width = `${results[idx].percentage || 0}%`;
+                });
+            }, 100);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            syncWithActiveSurvey();
+            renderBattleGrid();
+            initFingerprint();
+        });
     </script>
 </body>
 </html>
