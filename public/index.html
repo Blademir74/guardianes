@@ -414,14 +414,16 @@
                     <!-- LIVE COUNTERS -->
                     <div class="flex-1 w-full mt-8 md:mt-0 grid grid-cols-2 gap-4 max-w-md">
                         <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                            <span id="votos-totales" class="text-4xl font-black text-white">---</span>
+                            <div class="skeleton-stat h-10 w-24 bg-white/10 rounded-md animate-pulse mb-1"></div>
+                            <span id="votos-totales" class="text-4xl font-black text-white hidden">0</span>
                             <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-2">Votos Procesados</span>
                             <div class="text-[10px] text-slate-400/80 mt-2 leading-tight text-center">
                                 Auditadas en tiempo real.
                             </div>
                         </div>
                         <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                            <span id="guardianes-activos" class="text-4xl font-black text-emerald-500">---</span>
+                            <div class="skeleton-stat h-10 w-20 bg-white/10 rounded-md animate-pulse mb-1"></div>
+                            <span id="guardianes-activos" class="text-4xl font-black text-emerald-500 hidden">0</span>
                             <span class="text-[9px] uppercase tracking-widest text-emerald-500/80 font-bold mt-2">Guardianes Activos</span>
                             <div class="text-[10px] text-slate-400/80 mt-2 leading-tight text-center">
                                 Conexiones activas.
@@ -526,6 +528,29 @@
             setInterval(updateHeroStats, 10000); // Polling silencioso cada 10s
         });
 
+        function animateCount(elem, target) {
+            // Setup target property to not reanimate if same
+            if (elem.dataset.target == target) return;
+            elem.dataset.target = target;
+            
+            let current = parseInt(elem.textContent.replace(/,/g, '')) || 0;
+            const duration = 1500;
+            const stepTime = 20;
+            const steps = duration / stepTime;
+            const inc = Math.max(1, (target - current) / steps);
+            
+            clearInterval(elem.animateTimer);
+            
+            elem.animateTimer = setInterval(() => {
+                current += inc;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(elem.animateTimer);
+                }
+                elem.textContent = Math.floor(current).toLocaleString();
+            }, stepTime);
+        }
+
         async function updateHeroStats() {
             try {
                 const res = await fetch(`${API_URL}/surveys/active`);
@@ -539,13 +564,15 @@
                     const baseActive = Math.floor(totalVotos * 0.08) + 24;
                     const randomFlux = Math.floor(Math.random() * 7) - 3;
                     
+                    document.querySelectorAll('.skeleton-stat').forEach(el => el.classList.add('hidden'));
+
                     document.querySelectorAll('[id="votos-totales"]').forEach(el => {
-                        el.textContent = totalVotos.toLocaleString();
                         el.classList.remove('hidden');
+                        animateCount(el, totalVotos);
                     });
                     document.querySelectorAll('[id="guardianes-activos"]').forEach(el => {
-                        el.textContent = Math.max(1, baseActive + randomFlux).toLocaleString();
                         el.classList.remove('hidden');
+                        animateCount(el, Math.max(1, baseActive + randomFlux));
                     });
                 }
             } catch(e) {}

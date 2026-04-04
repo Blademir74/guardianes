@@ -132,22 +132,34 @@
             transform: scale(1.1);
         }
 
-        .candidate-card.selected-card {
+        .candidate-card.selected {
             transform: rotateX(0deg) rotateY(0deg) scale(1.02) translateY(-4px);
-            border-color: #10b981;
+            border-color: #D4AF37;
             box-shadow: 
                 0 15px 30px rgba(0, 0, 0, 0.7),
-                0 0 20px rgba(16, 185, 129, 0.25),
-                0 0 10px rgba(16, 185, 129, 0.15) inset;
+                0 0 20px rgba(212, 175, 55, 0.25),
+                0 0 10px rgba(212, 175, 55, 0.15) inset;
         }
 
-        .candidate-card.selected-card::before {
-            background: linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0.8) 100%);
+        .candidate-card.selected::before {
+            background: linear-gradient(to bottom, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0.8) 100%);
         }
 
-        .candidate-card.selected-card .power-tag {
-            border-top: 1px solid rgba(16, 185, 129, 0.8);
-            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(10,30,20,0.9) 80%, transparent 100%);
+        .candidate-card.selected .power-tag {
+            border-top: 1px solid rgba(212, 175, 55, 0.8);
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(30,25,10,0.9) 80%, transparent 100%);
+        }
+
+        /* Enfoque Visual */
+        #candidates-grid.has-selection .candidate-card:not(.selected) {
+            opacity: 0.5;
+            filter: grayscale(80%);
+        }
+        
+        .candidate-card img {
+            height: 160px !important;
+            object-fit: cover !important;
+            object-position: top !important;
         }
 
         .power-tag {
@@ -186,7 +198,7 @@
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
-        .candidate-card.selected-card .selection-check {
+        .candidate-card.selected .selection-check {
             opacity: 1;
             transform: scale(1);
         }
@@ -287,7 +299,7 @@
             left: 0;
             right: 0;
             padding: 1rem 1.5rem;
-            background: linear-gradient(to top, rgba(3, 8, 20, 0.95) 60%, transparent);
+            background: linear-gradient(to top, #030814 60%, transparent);
             backdrop-filter: blur(8px);
             z-index: 50;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -332,28 +344,28 @@
                 </div>
             </div>
             <!-- Progression Step -->
-            <div class="flex items-center bg-white/5 rounded-full px-4 py-1 border border-white/10">
-                <span class="text-xs font-mono font-medium tracking-widest text-gold text-center">Paso 1 de 2: <span class="text-white">Elige tu Perfil</span></span>
+            <div class="flex items-center bg-midnight border border-gold/30 rounded-md px-3 py-1.5 shadow-[0_0_10px_rgba(212,175,55,0.15)]">
+                <span class="text-[10px] md:text-xs font-sans font-bold tracking-[0.1em] text-gold uppercase">Paso 1 de 2 <span class="mx-2 text-gray-500">|</span> <span class="text-white">Elige tu Perfil</span></span>
             </div>
         </div>
     </nav>
 
     <!-- Header / Hero Section -->
-    <header class="relative pt-24 pb-6 px-6 text-center z-10 flex flex-col items-center">
-        <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-black/40 mb-4 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
+    <header class="relative pt-24 pb-2 px-6 text-center z-10 flex flex-col items-center">
+        <div class="inline-flex items-center gap-3 px-5 py-1.5 rounded-full border border-white/10 bg-black/40 mb-3 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
             <span class="w-2.5 h-2.5 bg-emerald rounded-full shadow-[0_0_12px_#10b981] animate-pulse"></span>
             <span class="text-[11px] md:text-xs font-mono tracking-[0.2em] uppercase text-gray-300">Sistema Activo &bull; Cifrado AES-256</span>
         </div>
         
-        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] mb-6 font-serif max-w-5xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <h1 class="text-3xl md:text-5xl font-bold text-white leading-[1.1] mb-3 font-serif max-w-5xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
             EL MEJOR PERFIL PARA GUERRERO:<br>
             <span class="text-gold italic font-medium">TÚ DECIDES EL RUMBO</span>
         </h1>
         
-        <div class="w-16 h-px bg-gold/50 mx-auto my-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;"></div>
+        <div class="w-12 h-px bg-gold/50 mx-auto my-2 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;"></div>
 
-        <p class="text-gray-400 text-base md:text-xl font-light max-w-3xl mx-auto opacity-0 animate-fade-in-up leading-relaxed" style="animation-delay: 0.4s;">
-            Exigimos certeza. Evalúa y posiciona a la persona ideal para proteger y guiar el estado. Resultados sólidos, definitivos y protegidos por nuestra <b>Malla de Poder (Battle Grid)</b>.
+        <p class="text-gray-400 text-sm md:text-base font-light max-w-3xl mx-auto opacity-0 animate-fade-in-up leading-relaxed hidden md:block" style="animation-delay: 0.4s;">
+            Evalúa y posiciona a la persona ideal para proteger y guiar el estado. Resultados sólidos, definitivos y protegidos por nuestra <b>Malla de Poder</b>.
         </p>
     </header>
 
@@ -480,12 +492,15 @@
         function selectCandidate(index) {
             selectedCandidate = candidatas[index];
             
+            const gridContainer = document.getElementById('candidates-grid');
+            gridContainer.classList.add('has-selection');
+
             // Actualizar UI Grids
             document.querySelectorAll('.candidate-card').forEach((el, i) => {
                 if (i === index) {
-                    el.classList.add('selected-card');
+                    el.classList.add('selected');
                 } else {
-                    el.classList.remove('selected-card');
+                    el.classList.remove('selected');
                 }
             });
 
