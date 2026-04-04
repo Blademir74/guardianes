@@ -364,24 +364,7 @@
         }
     </style>
     <!-- FingerprintJS -->
-    <script>
-      let fpPromise;
-      window.onload = function() {
-        if (window.requestIdleCallback) {
-            requestIdleCallback(function () {
-                fpPromise = loadFingerprint();
-            })
-        } else {
-            setTimeout(function () {
-                fpPromise = loadFingerprint();
-            }, 500)
-        }
-      };
-      async function loadFingerprint() {
-          const fp = await import('https://openfpcdn.io/fingerprintjs/v4').then(FingerprintJS => FingerprintJS.load());
-          return fp;
-      }
-    </script>
+    <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
 </head>
 
 <body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -1207,11 +1190,32 @@
                     });
                 } catch (_) { /* ignore */ }
 
-                // Obtener Fingerprint VisitorID (Candado 1 en frontend)
-                const fp = await fpPromise;
-                const result = await fp.get();
+                // Validación de carga de seguridad
+                if (typeof FingerprintJS === 'undefined') {
+                    if (submitBtn) submitBtn.textContent = 'Iniciando Protocolos de Seguridad...';
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+
+                // Generar Backup ID (Degradación Elegante) si FingerprintJS falla
+                let visitorIdRaw;
+                try {
+                    if (typeof FingerprintJS !== 'undefined') {
+                        const fp = await FingerprintJS.load();
+                        const result = await fp.get();
+                        visitorIdRaw = result.visitorId;
+                    } else {
+                        throw new Error('Script Bloqueado');
+                    }
+                } catch (err) {
+                    console.warn('Usando degradación elegante (Fallback de Seguridad).');
+                    // Backup ID: IP (manejada backend) + UA + Res
+                    const ua = navigator.userAgent || 'unknown';
+                    const res = window.screen ? `${window.screen.width}x${window.screen.height}` : 'unknown_res';
+                    visitorIdRaw = `fb_${ua}_${res}`;
+                }
+
                 // Hasheado local previo a viajar por red: Nadie puede desanominizar.
-                const visitorId = await sha256(result.visitorId);
+                const visitorId = await sha256(visitorIdRaw);
 
                 // Geolocalización (con consentimiento)
                 const geo = await new Promise((resolve) => {

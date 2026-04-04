@@ -8,6 +8,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     
     <script>
         tailwind.config = {
@@ -389,7 +390,6 @@
         ];
 
         let selectedCandidate = null;
-        let fpPromise;
         
         // Variables globales para sincronización dinámica con Admin Dashboard
         let activeSurveyId = null;
@@ -423,11 +423,7 @@
             }
         }
 
-        function initFingerprint() {
-            // Cargar FingerprintJS dinámicamente como módulo para evitar errores de undefined
-            fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
-                .then(FingerprintJS => FingerprintJS.load());
-        }
+
 
         function selectCandidate(index) {
             selectedCandidate = candidatas[index];
@@ -516,11 +512,32 @@
             spinner.classList.remove('hidden');
 
             try {
-                // 1. Obtener Fingerprint
-                const fp = await fpPromise;
-                const result = await fp.get();
+                // Validación de carga de seguridad
+                if (typeof FingerprintJS === 'undefined') {
+                    const originalBtnText = btn.textContent;
+                    if (btn) btn.textContent = 'INICIANDO PROTOCOLOS DE SEGURIDAD...';
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+
+                // Obtener Fingerprint JS o utilizar Fallback Inquebrantable
+                let rawId;
+                try {
+                    if (typeof FingerprintJS !== 'undefined') {
+                        const fp = await FingerprintJS.load();
+                        const result = await fp.get();
+                        rawId = result.visitorId;
+                    } else {
+                        throw new Error('Script bloqueado por AdBlock/Network');
+                    }
+                } catch (e) {
+                    // Backup ID = IP + UA + RESOLUCION
+                    const ua = navigator.userAgent || 'unknown';
+                    const res = window.screen ? `${window.screen.width}x${window.screen.height}` : 'unknown';
+                    rawId = `fb_${ua}_${res}`;
+                }
+
                 // Hasheado local previo a viajar por red: Nadie puede desanominizar.
-                const fingerprintId = await sha256(result.visitorId);
+                const fingerprintId = await sha256(rawId);
 
                 // 2. Obtener Ubicación (opcional/tratar de forzar)
                 let lat = null, lng = null, provided = false;
@@ -632,7 +649,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             syncWithActiveSurvey();
             renderBattleGrid();
-            initFingerprint();
         });
     </script>
 </body>
