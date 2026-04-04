@@ -118,7 +118,7 @@
 
         .card-inner-img {
             width: 100%;
-            height: 480px;
+            height: 250px;
             object-fit: cover;
             object-position: top center;
             transition: transform 0.8s ease, filter 0.5s ease;
@@ -134,20 +134,20 @@
 
         .candidate-card.selected-card {
             transform: rotateX(0deg) rotateY(0deg) scale(1.04) translateY(-10px);
-            border-color: #d4af37;
+            border-color: #10b981;
             box-shadow: 
                 0 30px 60px rgba(0, 0, 0, 0.9),
-                0 0 40px rgba(212, 175, 55, 0.4),
-                0 0 20px rgba(212, 175, 55, 0.3) inset;
+                0 0 40px rgba(16, 185, 129, 0.4),
+                0 0 20px rgba(16, 185, 129, 0.3) inset;
         }
 
         .candidate-card.selected-card::before {
-            background: linear-gradient(to bottom, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0.8) 100%);
+            background: linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0.8) 100%);
         }
 
         .candidate-card.selected-card .power-tag {
-            border-top: 1px solid rgba(212, 175, 55, 0.8);
-            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(30,25,10,0.9) 80%, transparent 100%);
+            border-top: 1px solid rgba(16, 185, 129, 0.8);
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(10,30,20,0.9) 80%, transparent 100%);
         }
 
         .power-tag {
@@ -165,6 +165,30 @@
         .candidate-card:hover .power-tag {
             border-top: 1px solid rgba(212, 175, 55, 0.3);
             background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(10,10,10,0.9) 80%, transparent 100%);
+        }
+
+        .selection-check {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 30;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .candidate-card.selected-card .selection-check {
+            opacity: 1;
+            transform: scale(1);
         }
 
         .party-badge {
@@ -255,6 +279,30 @@
         .progress-bar {
             transition: width 1s ease-in-out;
         }
+
+        /* Sticky Bottom CTA Container */
+        .sticky-cta-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(to top, rgba(3, 8, 20, 0.95) 60%, transparent);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .sticky-cta-container.visible {
+            transform: translateY(0);
+        }
+
+        /* Ensures content doesn't get hidden behind the sticky CTA */
+        .voting-bottom-padding {
+            padding-bottom: 7rem;
+        }
     </style>
 </head>
 <body class="relative min-h-[100dvh]">
@@ -283,12 +331,16 @@
                     <span class="text-[8px] tracking-widest uppercase text-gray-400 leading-tight">Datos Inmutables</span>
                 </div>
             </div>
+            <!-- Progression Step -->
+            <div class="flex items-center bg-white/5 rounded-full px-4 py-1 border border-white/10">
+                <span class="text-xs font-mono font-medium tracking-widest text-gold text-center">Paso 1 de 2: <span class="text-white">Elige tu Perfil</span></span>
+            </div>
         </div>
     </nav>
 
     <!-- Header / Hero Section -->
-    <header class="relative pt-40 pb-12 px-6 text-center z-10 flex flex-col items-center">
-        <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-black/40 mb-8 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
+    <header class="relative pt-24 pb-6 px-6 text-center z-10 flex flex-col items-center">
+        <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-black/40 mb-4 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
             <span class="w-2.5 h-2.5 bg-emerald rounded-full shadow-[0_0_12px_#10b981] animate-pulse"></span>
             <span class="text-[11px] md:text-xs font-mono tracking-[0.2em] uppercase text-gray-300">Sistema Activo &bull; Cifrado AES-256</span>
         </div>
@@ -306,30 +358,30 @@
     </header>
 
     <!-- Contenedor Principal Formularios -->
-    <div id="voting-container">
+    <div id="voting-container" class="min-h-[100dvh]">
         <!-- Módulo Dinámico de Candidatas (Battle Grid) -->
-        <section class="py-12 relative z-10 px-6">
-            <div id="candidates-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
+        <section class="py-6 relative z-10 px-6 voting-bottom-padding">
+            <div id="candidates-grid" class="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
                 <!-- Renderizado por JS -->
             </div>
         </section>
 
-        <!-- Call To Action Sincronizado -->
-        <section class="py-16 relative z-20 px-6 text-center">
-            <div class="max-w-3xl mx-auto opacity-0 animate-fade-in-up" style="animation-delay: 0.8s;">
-                <h2 id="cta-heading" class="text-xl md:text-2xl font-serif text-gray-500 mb-8 transition-colors">Selecciona a una candidata para continuar</h2>
-                <button id="btn-submit-vote" disabled class="inline-flex items-center justify-center btn-center-action btn-disabled px-8 md:px-14 py-4 md:py-6 text-sm md:text-base tracking-[0.15em] font-bold rounded-sm w-full md:w-auto">
+        <!-- Call To Action Sincronizado (Sticky) -->
+        <section id="sticky-cta" class="sticky-cta-container flex flex-col items-center">
+            <div class="max-w-3xl mx-auto w-full flex flex-col items-center">
+                <h2 id="cta-heading" class="text-sm md:text-xl font-serif text-gray-500 mb-3 transition-colors hidden md:block">Selecciona a un perfil para continuar</h2>
+                <button id="btn-submit-vote" disabled class="inline-flex items-center justify-center btn-center-action btn-disabled px-8 md:px-14 py-4 md:py-5 text-sm md:text-base tracking-[0.15em] font-bold rounded-full w-full md:w-auto min-w-[300px]">
                     <span id="btn-text">SELLAR MI PREDICCIÓN EN LA CAJA NEGRA</span>
                     <svg id="btn-icon" class="w-5 h-5 ml-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </button>
-                <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
+                <div id="loading-spinner" class="hidden flex flex-col items-center py-2">
                     <div class="inline-block w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
                     <p class="text-xs text-gold mt-3 font-mono uppercase tracking-widest">Asegurando firma criptográfica...</p>
                 </div>
-                <div id="error-message" class="hidden mt-4 text-red-500 font-mono tracking-widest text-xs uppercase p-3 border border-red-500/30 bg-red-500/10 rounded-sm"></div>
-                <p class="mt-6 text-[10px] text-gray-500 font-mono tracking-widest uppercase">
+                <div id="error-message" class="hidden mt-2 text-red-500 font-mono tracking-widest text-xs uppercase p-3 border border-red-500/30 bg-red-500/10 rounded-sm"></div>
+                <p class="mt-3 text-[9px] text-gray-500 font-mono tracking-widest uppercase text-center hidden md:block">
                     Voto anónimo protegido por huella de hardware
                 </p>
             </div>
@@ -441,13 +493,17 @@
             const btn = document.getElementById('btn-submit-vote');
             const ctaHeading = document.getElementById('cta-heading');
             const btnIcon = document.getElementById('btn-icon');
+            const stickyCta = document.getElementById('sticky-cta');
             
             btn.disabled = false;
             btn.classList.remove('btn-disabled');
             btnIcon.classList.remove('hidden');
-            ctaHeading.innerHTML = `Has seleccionado a ${sanitizeHTML(selectedCandidate.nombreCorto)}`;
-            ctaHeading.classList.remove('text-gray-500');
-            ctaHeading.classList.add('text-gold');
+            stickyCta.classList.add('visible');
+            if (ctaHeading) {
+                ctaHeading.innerHTML = `Has seleccionado a ${sanitizeHTML(selectedCandidate.nombreCorto)}`;
+                ctaHeading.classList.remove('text-gray-500');
+                ctaHeading.classList.add('text-gold');
+            }
         }
 
         // Función para renderizar las tarjetas
@@ -459,24 +515,29 @@
                 const delay = index * 0.15; // Efecto cascada
                 
                 const cardHTML = `
-                    <div class="candidate-card group cursor-pointer" style="animation: fadeInUp 0.8s ease-out ${delay + 0.6}s both;" onclick="selectCandidate(${index})">
-                        <img src="${candidata.imagen}" alt="Candidata ${candidata.nombre}" class="card-inner-img pointer-events-none">
+                    <div class="candidate-card group cursor-pointer h-full flex flex-col" style="animation: fadeInUp 0.8s ease-out ${delay + 0.6}s both;" onclick="selectCandidate(${index})">
+                        <div class="selection-check">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="relative h-[250px] overflow-hidden">
+                            <img src="${candidata.imagen}" alt="Candidata ${candidata.nombre}" class="card-inner-img pointer-events-none absolute inset-0 w-full h-full">
+                        </div>
                         
-                        <div class="power-tag pointer-events-none">
+                        <div class="power-tag pointer-events-none p-3 md:p-5 mt-auto">
                             <div class="flex justify-between items-end">
                                 <div>
-                                    <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}]">${sanitizeHTML(candidata.partido)}</span>
-                                    <h3 class="text-2xl font-serif text-white font-bold leading-none mt-1 group-hover:text-gold transition-colors">${sanitizeHTML(candidata.nombreCorto)}</h3>
+                                    <span class="party-badge ${candidata.colorClase} shadow-[0_0_10px_${candidata.colorHex}] text-[8px] md:text-[10px] mb-1 px-1.5 py-0.5">${sanitizeHTML(candidata.partido)}</span>
+                                    <h3 class="text-base md:text-xl font-serif text-white font-bold leading-none mt-0.5 group-hover:text-gold transition-colors">${sanitizeHTML(candidata.nombreCorto)}</h3>
                                 </div>
-                                <div class="black-box-container relative flex items-center justify-center">
-                                    <div class="black-box-icon">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <div class="black-box-container relative hidden md:flex items-center justify-center">
+                                    <div class="black-box-icon w-5 h-5 md:w-6 md:h-6">
+                                        <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                     </div>
                                     <div class="black-box-tooltip font-mono pointer-events-auto">Perfil en Monitoreo SHA-256</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-gold/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     </div>
                 `;
                 gridContainer.innerHTML += cardHTML;
