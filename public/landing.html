@@ -8,6 +8,18 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- SEO & Social Meta Tags -->
+    <meta property="og:title" content="Guerrero 2027: La Urna de la Verdad 🗳️🚨">
+    <meta property="og:description" content="Sin registros. Sin nombres. Solo tu opinión protegida por integridad SHA-256. Participa en la auditoría ciudadana.">
+    <meta property="og:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
+    <meta property="og:url" content="https://pulsoguerrero.vercel.app/landing">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Guerrero 2027: La Urna de la Verdad 🗳️🚨">
+    <meta name="twitter:description" content="Participa en la auditoría ciudadana 100% anónima. Guerrero 2027.">
+    <meta name="twitter:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
+
     <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     
     <script>
@@ -351,22 +363,32 @@
     </nav>
 
     <!-- Header / Hero Section -->
-    <header class="relative pt-24 pb-2 px-6 text-center z-10 flex flex-col items-center">
-        <div class="inline-flex items-center gap-3 px-5 py-1.5 rounded-full border border-white/10 bg-black/40 mb-3 backdrop-blur-md animate-fade-in-up" style="animation-delay: 0.1s;">
-            <span class="w-2.5 h-2.5 bg-emerald rounded-full shadow-[0_0_12px_#10b981] animate-pulse"></span>
-            <span class="text-[11px] md:text-xs font-mono tracking-[0.2em] uppercase text-gray-300">Sistema Activo &bull; Cifrado AES-256</span>
+    <header class="relative pt-20 pb-4 px-6 text-center z-10 flex flex-col items-center max-h-[65vh] overflow-hidden">
+        <div class="flex flex-wrap justify-center gap-3 mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-emerald/30 bg-emerald/10 backdrop-blur-md">
+                <span class="w-2.5 h-2.5 bg-emerald rounded-full shadow-[0_0_12px_#10b981] animate-pulse"></span>
+                <span class="text-[10px] md:text-xs font-mono tracking-[0.1em] uppercase text-emerald font-bold">Sistema Auditable Activo</span>
+            </div>
+            <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-md">
+                <svg class="w-3.5 h-3.5 text-gold" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                <span class="text-[10px] md:text-xs font-mono tracking-[0.1em] uppercase text-gray-300">100% Anónimo</span>
+            </div>
         </div>
         
-        <h1 class="text-3xl md:text-5xl font-bold text-white leading-[1.1] mb-3 font-serif max-w-5xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <h1 class="text-2xl md:text-5xl font-extrabold text-white leading-tight mb-3 font-serif max-w-4xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
             EL MEJOR PERFIL PARA GUERRERO:<br>
-            <span class="text-gold italic font-medium">TÚ DECIDES EL RUMBO</span>
+            <span class="text-gold italic">TÚ DECIDES EL RUMBO</span>
         </h1>
         
-        <div class="w-12 h-px bg-gold/50 mx-auto my-2 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;"></div>
+        <div class="w-10 h-0.5 bg-gold/50 mx-auto mb-4 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;"></div>
 
-        <p class="text-gray-400 text-sm md:text-base font-light max-w-3xl mx-auto opacity-0 animate-fade-in-up leading-relaxed hidden md:block" style="animation-delay: 0.4s;">
-            Evalúa y posiciona a la persona ideal para proteger y guiar el estado. Resultados sólidos, definitivos y protegidos por nuestra <b>Malla de Poder</b>.
+        <p class="text-gray-300 text-sm md:text-lg font-medium max-w-3xl mx-auto opacity-0 animate-fade-in-up leading-snug mb-6" style="animation-delay: 0.4s;">
+            Sin registro. Sin nombre. Solo tu opinión. <br class="hidden md:block">¿Quién merece gobernar Guerrero en 2027?
         </p>
+
+        <a href="#candidates-grid" class="opacity-0 animate-fade-in-up inline-flex items-center justify-center bg-gold hover:bg-gold-light text-midnight font-black py-3 px-10 rounded-full shadow-lg shadow-gold/20 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-sm mb-2" style="animation-delay: 0.5s;">
+            ¡Votar Ahora!
+        </a>
     </header>
 
     <!-- Contenedor Principal Formularios -->
