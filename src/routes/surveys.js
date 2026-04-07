@@ -355,7 +355,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
   try {
     client = await db.connect();
     const surveyId = parseInt(req.params.id, 10);
-    const { responses, fingerprintId, latitude, longitude, locationProvided, promoterId, confidence } = req.body;
+    const { responses, fingerprintId, latitude, longitude, locationProvided, promoterId } = req.body;
 
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({ error: 'Debe enviar al menos una respuesta' });
@@ -533,7 +533,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
         response.questionId,
         userId,
         responseValue.toString(),
-        confidence || 100,
+        100,
         fingerprintId,
         clientIp,
         territorial.latitude,

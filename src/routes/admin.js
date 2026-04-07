@@ -191,7 +191,8 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
       }
     }
 
-    // 4. Protocolo Obligatorio: Slider de Confianza si no existe
+    // Protocolo Obligatorio (DESACTIVADO): Slider de Confianza ya no es mandatorio
+    /*
     const hasConfidence = (questions || []).some(q => {
       const t = String(q.type || q.questionType || '').toLowerCase();
       return t === 'confidence_scale' || t === 'confidencescale';
@@ -204,6 +205,7 @@ router.post('/surveys', authenticateAdmin, async (req, res) => {
         [surveyId]
       );
     }
+    */
 
     // Sincronizar candidatos (Legacy Support)
     await syncCandidatesFromSurveyPayload(client, { level, electionType: normalizedElectionType, municipalityId: muniId, questions });

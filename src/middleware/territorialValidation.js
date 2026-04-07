@@ -1,35 +1,14 @@
-// src/middleware/territorialValidation.js
-// Validación territorial sin datos personales:
-// - Si no hay GPS: NO_GPS
-// - Si hay GPS:
-//   - Gubernatura/Distrital (nivel estatal): IN_RANGE / OUT_OF_RANGE por límites de Guerrero
-//   - Municipal: IN_RANGE / OUT_OF_RANGE por radio desde el centro del municipio (si existe en DB)
-//   - Si faltan datos para validar: UNKNOWN
+const { isLocationInGuerrero, isLocationInMunicipality } = require('../services/pipHelper');
 
 function toNumberOrNull(v) {
   const n = typeof v === 'string' ? parseFloat(v) : v;
   return Number.isFinite(n) ? n : null;
 }
 
-function haversineKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const toRad = (x) => (x * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-// Bounding box aproximado del Estado de Guerrero (MX)
-// Lat: ~16.0 a ~18.6  | Lon: ~-102.6 a ~-98.0
-function isWithinGuerreroBBox(lat, lon) {
-  return lat >= 16.0 && lat <= 18.6 && lon >= -102.6 && lon <= -98.0;
-}
-
+/**
+ * Validates if the given coordinates are within the required territory.
+ * Uses surgical PiP (Point-in-Polygon) with official shapefiles.
+ */
 async function computeLocationStatus({ dbClient, survey, latitude, longitude }) {
   const lat = toNumberOrNull(latitude);
   const lon = toNumberOrNull(longitude);
@@ -38,7 +17,7 @@ async function computeLocationStatus({ dbClient, survey, latitude, longitude }) 
     return { locationStatus: 'NO_GPS', latitude: null, longitude: null };
   }
 
-  // Nivel estatal: gubernatura o sin municipio asociado
+  // Determine levels based on survey data
   const levelRaw = (survey?.level || '').toString().toLowerCase();
   const electionTypeRaw = (survey?.election_type || '').toString().toLowerCase();
   const isStateLevel =
@@ -47,46 +26,37 @@ async function computeLocationStatus({ dbClient, survey, latitude, longitude }) 
     levelRaw === 'estado' ||
     levelRaw.includes('distrit');
 
-  if (isStateLevel) {
-    return {
-      locationStatus: isWithinGuerreroBBox(lat, lon) ? 'IN_RANGE' : 'OUT_OF_RANGE',
-      latitude: lat,
-      longitude: lon
-    };
-  }
-
-  // Nivel municipal: validar por radio al centro del municipio (si hay coordenadas en tabla municipalities)
-  const municipalityId = survey?.municipality_id ? parseInt(survey.municipality_id, 10) : null;
-  if (!municipalityId) {
-    return { locationStatus: 'UNKNOWN', latitude: lat, longitude: lon };
-  }
-
   try {
-    const muniRes = await dbClient.query(
-      `SELECT latitude, longitude FROM municipalities WHERE id = $1 LIMIT 1`,
-      [municipalityId]
-    );
-    if (!muniRes.rows.length) {
-      return { locationStatus: 'UNKNOWN', latitude: lat, longitude: lon };
-    }
-    const mLat = toNumberOrNull(muniRes.rows[0].latitude);
-    const mLon = toNumberOrNull(muniRes.rows[0].longitude);
-    if (mLat === null || mLon === null) {
-      return { locationStatus: 'UNKNOWN', latitude: lat, longitude: lon };
+    if (isStateLevel) {
+      // Surgical PiP for Guerrero State
+      const inGuerrero = await isLocationInGuerrero(lat, lon);
+      return {
+        locationStatus: inGuerrero ? 'IN_RANGE' : 'OUT_OF_RANGE',
+        latitude: lat,
+        longitude: lon
+      };
     }
 
-    const DEFAULT_RADIUS_KM = 25; // radio práctico municipal (ajustable)
-    const distanceKm = haversineKm(lat, lon, mLat, mLon);
-    return {
-      locationStatus: distanceKm <= DEFAULT_RADIUS_KM ? 'IN_RANGE' : 'OUT_OF_RANGE',
-      latitude: lat,
-      longitude: lon
-    };
-  } catch (_) {
-    // Si el esquema no tiene lat/long, o falla la consulta, no bloquear el voto.
+    // Surgical PiP for Municipality
+    const municipalityId = survey?.municipality_id ? parseInt(survey.municipality_id, 10) : null;
+    if (municipalityId) {
+      const inMuni = await isLocationInMunicipality(lat, lon, municipalityId);
+      return {
+        locationStatus: inMuni ? 'IN_RANGE' : 'OUT_OF_RANGE',
+        latitude: lat,
+        longitude: lon
+      };
+    }
+
+    // Fallback if no municipalityId is present but not state level
+    return { locationStatus: 'UNKNOWN', latitude: lat, longitude: lon };
+  } catch (err) {
+    console.error('⚠️ Territorial Validation Error:', err.message);
+    // Fallback to unknown instead of failing the vote to maintain system availability
     return { locationStatus: 'UNKNOWN', latitude: lat, longitude: lon };
   }
 }
 
 module.exports = { computeLocationStatus };
+
 
