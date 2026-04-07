@@ -693,8 +693,8 @@
                     locationProvided: provided,
                     latitude: lat,
                     longitude: lng,
-                    promoterId: sessionStorage.getItem('grd_promoter_id') || null,
-                    confidence: 100,
+                    promoter_id: sessionStorage.getItem('grd_promoter_id') || null,
+                    confidence_level: 100,
                     responses: [
                         { questionId: activeQuestionId, answer: selectedCandidate.nombre }
                     ]

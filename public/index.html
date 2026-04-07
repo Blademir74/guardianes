@@ -960,21 +960,10 @@
                                 </div>
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                     ${candidates.map(c => {
-                                        // ── FILTRO CRÍTICO: No renderizar candidatos sin foto (Auditoría Prestige)
-                                        if (!c.img && !c.photo_url) return '';
-
-                                        // ── LÓGICA DE ETIQUETA INDÍGENA / PARTIDO ──
-                                        // Si el municipio es Eduardo Nery (ID 32), la etiqueta es 'Perfil Territorial'
-                                        // Si no tiene partido, se oculta la etiqueta para evitar 'IND' residual.
-                                        let partyLabel = (c.party || '').trim();
-                                        if (data.survey.municipality_id == 32 || data.survey.municipalityId == 32) {
-                                            partyLabel = 'Perfil Territorial';
-                                        } else if (partyLabel.toUpperCase() === 'IND' || !partyLabel) {
-                                            partyLabel = ''; // Ocultar si es IND o vacío
-                                        } else {
-                                            // Envolver en paréntesis si es un partido normal
-                                            partyLabel = `(${partyLabel})`;
-                                        }
+                                        // ── LÓGICA QUIRÚRGICA: Nombre Arriba / (Partido) Abajo ──
+                                        const candidateName = c.name;
+                                        const partyRaw = (c.party || '').trim();
+                                        const partyLabel = (partyRaw && partyRaw.toUpperCase() !== 'IND') ? `(${partyRaw})` : '';
 
                                         return `
                                         <div onclick="selectOption(${q.id}, '${c.id}', this)" 
@@ -983,21 +972,20 @@
                                              style="height: 280px;">
                                             <div class="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-900/10 opacity-0 group-hover:opacity-100 transition duration-300"></div>
                                             
-                                            <!-- Nombre arriba según requerimiento del Arq. -->
+                                            <!-- Nombre arriba -->
                                             <h5 class="text-[12px] font-black uppercase tracking-tight text-white mt-2 block" style="line-height: 1.2;">
-                                                ${c.name}
+                                                ${candidateName}
                                             </h5>
 
-                                            <!-- Contenedor de Imagen con Height Fijo 160px -->
-                                            <div class="relative w-full h-[160px] my-3 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-emerald-500 transition-colors shadow-xl">
-                                                <img src="${c.img || c.photo_url}" class="w-full h-full object-cover object-top" onerror="this.onerror=null; this.src='/img/placeholder_cand.jpg';">
+                                            <!-- Imagen con Altura Fija 160px -->
+                                            <div class="mx-auto w-full h-[160px] rounded-2xl overflow-hidden my-3 border-2 border-white/10 group-hover:border-gold transition-all duration-300 shadow-xl">
+                                                <img src="${c.img || c.photo_url}" class="w-full h-full object-cover object-top pointer-events-none transition-transform duration-700 group-hover:scale-110">
                                             </div>
 
-                                            <!-- Etiqueta de Partido / Perfil abajo en paréntesis -->
-                                            ${partyLabel ? `
-                                            <div class="mb-2">
-                                                <span class="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] italic">${partyLabel}</span>
-                                            </div>` : '<div class="mb-2"></div>'}
+                                            <!-- Partido entre paréntesis abajo -->
+                                            <div class="pb-1">
+                                                <span class="text-[10px] font-black text-gold uppercase tracking-widest italic">${partyLabel}</span>
+                                            </div>
                                             
                                             <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
                                         </div>
@@ -1314,8 +1302,8 @@
                         latitude: geo.latitude,
                         longitude: geo.longitude,
                         locationProvided: geo.locationProvided,
-                        promoterId: promoterId,
-                        confidence: 100
+                        promoter_id: promoterId,
+                        confidence_level: 100
                     })
                 });
 
