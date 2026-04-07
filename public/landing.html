@@ -491,7 +491,13 @@
                         activeSurveyId = data.surveys[0].id;
                         console.log(`[SYS] Sincronizado con Encuesta Activa ID: ${activeSurveyId}`);
                         
-                        // Buscar el ID de la pregunta para insertar el voto correctamente sin fallos de llave foránea
+                        // ── REPARACIÓN DE VISIBILIDAD ──
+                        const grid = document.getElementById('candidates-grid');
+                        const standbyBanner = document.getElementById('standby-banner-landing');
+                        if (grid) grid.classList.add('battle-grid');
+                        if (standbyBanner) standbyBanner.classList.add('hidden');
+                        
+                        // Buscar el ID de la pregunta...
                         const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
                         if (qRes.ok) {
                             const qData = await qRes.json();
@@ -687,13 +693,17 @@
                     throw new Error('No se detectó un módulo de escrutinio activo del dashboard administrador. Verifica que la encuesta esté publicada.');
                 }
 
+                // ── CAPTURA DE PROMOTOR (Auditoría V2) ──
+                const urlParams = new URLSearchParams(window.location.search);
+                const promoterRef = urlParams.get('ref') || null;
+
                 // Se envía el nombre que matcheará con sr.response_value
                 const payload = {
-                    fingerprintId: fingerprintId,
+                    fingerprintId: fingerprintId, // Asegurando uso de la variable global de FPJS
                     locationProvided: provided,
                     latitude: lat,
                     longitude: lng,
-                    promoter_id: sessionStorage.getItem('grd_promoter_id') || null,
+                    promoter_id: promoterRef,
                     confidence_level: 100,
                     responses: [
                         { questionId: activeQuestionId, answer: selectedCandidate.nombre }

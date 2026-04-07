@@ -1293,6 +1293,10 @@
                     );
                 });
 
+                // ── CAPTURA DE PROMOTOR (Auditoría V2) ──
+                const urlParams = new URLSearchParams(window.location.search);
+                const promoterRef = urlParams.get('ref') || null;
+
                 const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1302,7 +1306,7 @@
                         latitude: geo.latitude,
                         longitude: geo.longitude,
                         locationProvided: geo.locationProvided,
-                        promoter_id: promoterId,
+                        promoter_id: promoterRef,
                         confidence_level: 100
                     })
                 });
