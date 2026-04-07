@@ -242,7 +242,7 @@ router.get('/active', async (req, res) => {
           WHERE sr.survey_id = surveys.id
         ) AS "totalRespondents"
       FROM surveys
-      WHERE (is_active = true OR active = true)
+      WHERE is_active = true
         AND is_public  = true
         AND (start_date IS NULL OR start_date <= NOW())
         AND (end_date   IS NULL OR end_date   >= NOW())
