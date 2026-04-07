@@ -397,6 +397,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     // ══════════════════════════════════════════
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS fingerprint_id VARCHAR(255);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS phone_hash VARCHAR(255);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS location_status VARCHAR(32);`);
@@ -524,24 +525,31 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
         continue;
       }
 
-      await client.query(`
-        INSERT INTO survey_responses
-          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, latitude, longitude, location_status, promoter_id, is_territorial_verified, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11, $12, NOW())
-      `, [
-        surveyId,
-        response.questionId,
-        userId,
-        responseValue.toString(),
-        100,
-        fingerprintId,
-        clientIp,
-        territorial.latitude,
-        territorial.longitude,
-        territorial.locationStatus,
-        promoterId || null,
-        isTerritorialVerified
-      ]);
+      try {
+        await client.query(`
+          INSERT INTO survey_responses
+            (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, latitude, longitude, location_status, promoter_id, is_territorial_verified, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11, $12, NOW())
+        `, [
+          surveyId,
+          response.questionId,
+          userId,
+          responseValue.toString(),
+          100,
+          fingerprintId,
+          clientIp,
+          territorial.latitude,
+          territorial.longitude,
+          territorial.locationStatus,
+          promoterId || null,
+          isTerritorialVerified
+        ]);
+      } catch (insertErr) {
+        console.error('❌ Error fatal insertando respuesta:', insertErr.message, '\nDatos:', {
+          surveyId, qId: response.questionId, val: responseValue
+        });
+        throw insertErr; // Re-lanzar para disparar el ROLLBACK
+      }
 
       savedCount++;
     }

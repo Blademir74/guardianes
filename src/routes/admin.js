@@ -55,7 +55,7 @@ async function syncCandidatesFromSurveyPayload(client, payload) {
           if (!rawLabel) return;
           candidates.push({
             name: rawLabel,
-            party: opt.party || 'IND',
+            party: opt.party || '',
             photo_url: opt.photo || null
           });
         });

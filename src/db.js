@@ -31,9 +31,9 @@ function getPool() {
     connectionString,
     ssl: { rejectUnauthorized: false },   // obligatorio para Neon
     // Para Serverless Vercel se recomienda Max=2 por proceso y dejar al pgbouncer atajar
-    max: parseInt(process.env.DB_POOL_MAX || '2', 10), // máximo conexiones simultáneas
+    max: 2, // Hardened: Máximo 2 conexiones para evitar saturación de Neon
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000,
   });
 
   // Si el pool detecta un error en un cliente inactivo,

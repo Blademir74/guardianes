@@ -687,13 +687,13 @@
                 if (!data.surveys || data.surveys.length === 0) {
                     banner.classList.remove('hidden');
                     gridContainer.classList.add('hidden');
-                    // Ocultar sección de encuestas si no hay nada
-                    document.getElementById('survey-grid-container').classList.add('hidden');
                     return;
                 }
 
                 // SI HAY ENCUESTAS: Mostrar GRID, ocultar STAND-BY
                 banner.classList.add('hidden');
+                const standbyBanner = document.getElementById('standby-banner');
+                if (standbyBanner) standbyBanner.classList.add('hidden');
                 gridContainer.classList.remove('hidden');
 
                 grid.innerHTML = data.surveys.map(s => {
@@ -959,26 +959,49 @@
                                     <h4 class="text-2xl font-black uppercase tracking-tight text-white">${q.questionText}</h4>
                                 </div>
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                                    ${candidates.map(c => `
+                                    ${candidates.map(c => {
+                                        // ── FILTRO CRÍTICO: No renderizar candidatos sin foto (Auditoría Prestige)
+                                        if (!c.img && !c.photo_url) return '';
+
+                                        // ── LÓGICA DE ETIQUETA INDÍGENA / PARTIDO ──
+                                        // Si el municipio es Eduardo Nery (ID 32), la etiqueta es 'Perfil Territorial'
+                                        // Si no tiene partido, se oculta la etiqueta para evitar 'IND' residual.
+                                        let partyLabel = (c.party || '').trim();
+                                        if (survey.municipality_id == 32) {
+                                            partyLabel = 'Perfil Territorial';
+                                        } else if (partyLabel.toUpperCase() === 'IND' || !partyLabel) {
+                                            partyLabel = ''; // Ocultar si es IND o vacío
+                                        } else {
+                                            // Envolver en paréntesis si es un partido normal
+                                            partyLabel = `(${partyLabel})`;
+                                        }
+
+                                        return `
                                         <div onclick="selectOption(${q.id}, '${c.id}', this)" 
                                              data-question="${q.id}" 
-                                             class="option-card candidate-card bg-[#1E293B]/40 p-5 rounded-[2rem] text-center group transition-all cursor-pointer hover:scale-[1.02] active:scale-95 border border-white/5 hover:border-emerald-500/50 backdrop-blur-sm relative overflow-hidden">
+                                             class="option-card candidate-card bg-[#1E293B]/40 p-5 rounded-[2rem] text-center group transition-all cursor-pointer hover:scale-[1.02] active:scale-95 border border-white/5 hover:border-emerald-500/50 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
+                                             style="height: 280px;">
                                             <div class="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-900/10 opacity-0 group-hover:opacity-100 transition duration-300"></div>
-                                            <div class="relative w-20 h-20 md:w-24 md:h-24 mx-auto mb-5 rounded-full p-1 border-2 border-white/10 group-hover:border-emerald-500 transition-colors shadow-xl">
-                                                <div class="w-full h-full rounded-full overflow-hidden bg-[#0A0F1C]">
-                                                    ${c.img ?
-                                `<img src="${c.img}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-3xl font-black text-slate-700 bg-slate-800&quot;>${c.name.charAt(0)}</div>'">` :
-                                `<div class="w-full h-full flex items-center justify-center text-3xl font-black text-slate-700 bg-slate-800">${c.name.charAt(0)}</div>`
-                            }
-                                                </div>
+                                            
+                                            <!-- Nombre arriba según requerimiento del Arq. -->
+                                            <h5 class="text-[12px] font-black uppercase tracking-tight text-white mt-2 block" style="line-height: 1.2;">
+                                                ${c.name}
+                                            </h5>
+
+                                            <!-- Contenedor de Imagen con Height Fijo 160px -->
+                                            <div class="relative w-full h-[160px] my-3 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-emerald-500 transition-colors shadow-xl">
+                                                <img src="${c.img || c.photo_url}" class="w-full h-full object-cover object-top" onerror="this.onerror=null; this.src='/img/placeholder_cand.jpg';">
                                             </div>
-                                            <h5 class="text-[11px] md:text-xs font-black uppercase tracking-tight text-white mb-3" style="min-height: 2.5em; line-height: 1.2;">${c.name}</h5>
-                                            <div class="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                                <span class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">${c.party}</span>
-                                            </div>
+
+                                            <!-- Etiqueta de Partido / Perfil abajo en paréntesis -->
+                                            ${partyLabel ? `
+                                            <div class="mb-2">
+                                                <span class="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] italic">${partyLabel}</span>
+                                            </div>` : '<div class="mb-2"></div>'}
+                                            
                                             <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
                                         </div>
-                                    `).join('')}
+                                    `;}).join('')}
                                 </div>
                             </div>
                         `;
