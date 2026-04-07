@@ -224,6 +224,31 @@
       </div>
     </div>
 
+    <!-- ── STRUCTURES MONITOR VIEW ── -->
+    <div id="view-structures" class="admin-view">
+      <header class="flex justify-between items-center mb-16">
+        <div>
+          <h2 class="text-5xl font-black tracking-tighter uppercase italic">Monitor de <span class="text-amber-500">Estructuras</span></h2>
+          <p class="text-slate-500 text-[10px] font-black mt-3 uppercase tracking-[0.4em]">Seguimiento de Líderes y Secciones (Geofencing)</p>
+        </div>
+      </header>
+      <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl border-white/5">
+        <table class="w-full text-left">
+          <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500 tracking-[0.3em]">
+            <tr>
+              <th class="px-10 py-8">Líder (promoter_id)</th>
+              <th class="px-10 py-8">Sección Electoral</th>
+              <th class="px-10 py-8 text-center">Votos Totales</th>
+              <th class="px-10 py-8 text-right">GPS Verificado</th>
+            </tr>
+          </thead>
+          <tbody id="monitor-estructuras" class="divide-y divide-white/5 italic">
+            <tr><td colspan="4" class="p-20 text-center opacity-20 uppercase font-black italic tracking-widest">Esperando despliegue de estructuras territoriales...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div><!-- /#admin-portal -->
 </main>
 
@@ -863,23 +888,31 @@ async function loadStructures() {
       headers: { Authorization: `Bearer ${adminToken}` }
     });
     const data = await res.json();
-    const tbody = document.getElementById('structures-table-body');
-    if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center opacity-20 uppercase font-black italic">SIN DATOS DE LÍDERES</td></tr>`;
+    const tbody = document.getElementById('monitor-estructuras');
+    
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center opacity-40 uppercase font-black italic tracking-widest">Esperando despliegue de estructuras territoriales...</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.map(s => `
-      <tr class="hover:bg-amber-600/[0.03] transition-all">
-        <td class="px-10 py-8 font-black text-amber-500 underline">${s.promoter_id}</td>
-        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">SECCIÓN ${s.seccion || 'N/A'}</td>
-        <td class="px-10 py-8 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_votes || 0}</td>
-        <td class="px-10 py-8 text-right font-black text-2xl tracking-tighter italic text-emerald-400">
-          ${s.validated_gps_votes || 0}
-          <span class="text-[9px] opacity-40 ml-1">VOT.</span>
-        </td>
-      </tr>`).join('');
+
+    tbody.innerHTML = data.map(s => {
+      const promoterLabel = s.promoter_id ? `<span class="text-amber-500 underline">${s.promoter_id}</span>` : `<span class="text-slate-500 italic opacity-50">Voto Orgánico</span>`;
+      
+      return `
+        <tr class="hover:bg-amber-600/[0.03] transition-all">
+          <td class="px-10 py-8 font-black">${promoterLabel}</td>
+          <td class="px-10 py-8 font-black uppercase tracking-tight text-white">SECCIÓN ${s.seccion || 'N/A'}</td>
+          <td class="px-10 py-8 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_votes || 0}</td>
+          <td class="px-10 py-8 text-right font-black text-2xl tracking-tighter italic text-emerald-400">
+            ${s.validated_gps_votes || 0}
+            <span class="text-[9px] opacity-40 ml-1">VOT.</span>
+          </td>
+        </tr>`;
+    }).join('');
   } catch (e) {
     console.error('Error cargando estructuras', e);
+    const tbody = document.getElementById('monitor-estructuras');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center text-red-500 uppercase font-black italic">Error de Protocolo de Red</td></tr>`;
   }
 }
 

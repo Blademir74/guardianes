@@ -502,6 +502,36 @@
                                 console.log(`[SYS] Sincronizado con Pregunta ID: ${activeQuestionId}`);
                             }
                         }
+                    } else {
+                        // REGRASIÓN FIX: Lógica de Stand-by en Landing
+                        console.log('[SYS] No hay encuestas activas. Activando modo Stand-by.');
+                        
+                        // 1. Ocultar Botón "Votar Ahora" en el Hero
+                        const heroBtn = document.querySelector('header a[href="#candidates-grid"]');
+                        if (heroBtn) heroBtn.classList.add('hidden');
+
+                        // 2. Ocultar Grid de Candidatas y mostrar Banner
+                        const grid = document.getElementById('candidates-grid');
+                        if (grid) {
+                            grid.classList.remove('battle-grid');
+                            grid.innerHTML = `
+                                <div id="standby-banner-landing" class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500 shadow-2xl shadow-gold/20">
+                                   <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
+                                       <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                   </div>
+                                   <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
+                                   <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar se encuentra procesando datos. Mantente atento a la próxima auditoría ciudadana.</p>
+                                   <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+                                       <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
+                                       <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Sistema en Auditoría</span>
+                                   </div>
+                                </div>
+                            `;
+                        }
+
+                        // 3. Ocultar Sticky CTA si existe
+                        const stickyCta = document.getElementById('sticky-cta');
+                        if (stickyCta) stickyCta.classList.add('hidden');
                     }
                 }
             } catch (err) {

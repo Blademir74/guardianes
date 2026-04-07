@@ -724,21 +724,26 @@
                 const grid = document.getElementById('surveys-grid');
 
                 if (!data.surveys || data.surveys.length === 0) {
+                    // Diseño Prestige: Fondo Azul Medianoche (#001a33), bordes en Dorado (#D4AF37)
                     grid.innerHTML = `
-                        <div id="standby-banner" class="col-span-full border-2 border-dashed border-[#D97706] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500">
-                           <div class="w-20 h-20 bg-[#D97706]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                               <svg class="w-10 h-10 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div id="standby-banner" class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500 shadow-2xl shadow-gold/20">
+                           <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
+                               <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                            </div>
-                           <h3 class="text-2xl md:text-4xl font-black text-prestige-gold uppercase tracking-tighter mb-4">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
-                           <p class="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">El radar se encuentra procesando datos. Mantente atento a la próxima auditoría ciudadana.</p>
-                           <div class="mt-8 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-[#D97706]/5 border border-[#D97706]/20">
-                               <span class="w-2 h-2 bg-[#D97706] rounded-full animate-pulse"></span>
-                               <span class="text-[10px] font-black tracking-widest text-[#D97706] uppercase italic">Estado: Stand-by</span>
+                           <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
+                           <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar se encuentra procesando datos. Mantente atento a la próxima auditoría ciudadana.</p>
+                           <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+                               <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
+                               <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Stand-by de Auditoría</span>
                            </div>
                         </div>
                     `;
-                    // Ocultar sección de votación pero mantener el grid para el banner
-                    document.querySelector('#surveys-grid-container h3').classList.add('hidden');
+                    // Ocultar remanentes
+                    const gridContainer = document.getElementById('surveys-grid-container');
+                    if (gridContainer) {
+                        const heading = gridContainer.querySelector('h3');
+                        if (heading) heading.classList.add('hidden');
+                    }
                     return;
                 }
 
