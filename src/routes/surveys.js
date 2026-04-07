@@ -393,22 +393,26 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
     // ══════════════════════════════════════════
     // AUTO-HEAL: Garantizar columnas de integridad existen
-    // Esto evita el error 500 si la migración manual no se ejecutó en Neon
     // ══════════════════════════════════════════
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS fingerprint_id VARCHAR(255);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS phone_hash VARCHAR(255);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS location_status VARCHAR(32);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS promoter_id VARCHAR(50);`);
-    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS is_territorial_verified BOOLEAN DEFAULT FALSE;`);
-    // Índice único para anti-doble-voto (safe: CREATE IF NOT EXISTS)
-    await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_survey_fingerprint
-      ON survey_responses(survey_id, fingerprint_id)
-      WHERE fingerprint_id IS NOT NULL;
-    `);
+    try {
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS fingerprint_id VARCHAR(255);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS phone_hash VARCHAR(255);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS location_status VARCHAR(32);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS promoter_id VARCHAR(50);`);
+        await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS is_territorial_verified BOOLEAN DEFAULT FALSE;`);
+        
+        // Índice único para anti-doble-voto (safe: CREATE IF NOT EXISTS)
+        await client.query(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_survey_fingerprint
+          ON survey_responses(survey_id, fingerprint_id)
+          WHERE fingerprint_id IS NOT NULL;
+        `);
+    } catch (schemaErr) {
+        console.warn('⚠️  Auto-heal schema warning (probablemente ya existe):', schemaErr.message);
+    }
 
     // ══════════════════════════════════════════
     // TRIPLE CANDADO DE INTEGRIDAD

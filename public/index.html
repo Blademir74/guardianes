@@ -967,7 +967,7 @@
                                         // Si el municipio es Eduardo Nery (ID 32), la etiqueta es 'Perfil Territorial'
                                         // Si no tiene partido, se oculta la etiqueta para evitar 'IND' residual.
                                         let partyLabel = (c.party || '').trim();
-                                        if (survey.municipality_id == 32) {
+                                        if (data.survey.municipality_id == 32 || data.survey.municipalityId == 32) {
                                             partyLabel = 'Perfil Territorial';
                                         } else if (partyLabel.toUpperCase() === 'IND' || !partyLabel) {
                                             partyLabel = ''; // Ocultar si es IND o vacío
