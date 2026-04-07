@@ -355,7 +355,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
   try {
     client = await db.connect();
     const surveyId = parseInt(req.params.id, 10);
-    const { responses, fingerprintId, latitude, longitude, locationProvided } = req.body;
+    const { responses, fingerprintId, latitude, longitude, locationProvided, promoterId, confidence } = req.body;
 
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({ error: 'Debe enviar al menos una respuesta' });
@@ -400,6 +400,8 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);`);
     await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS location_status VARCHAR(32);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS promoter_id VARCHAR(50);`);
+    await client.query(`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS is_territorial_verified BOOLEAN DEFAULT FALSE;`);
     // Índice único para anti-doble-voto (safe: CREATE IF NOT EXISTS)
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_survey_fingerprint
@@ -475,6 +477,26 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
       longitude: locationProvided ? longitude : null
     });
 
+    // --- VERIFICACIÓN TERRITORIAL DE ESTRUCTURAS (PROMOTORES) ---
+    let isTerritorialVerified = false;
+    if (territorial.locationStatus === 'IN_RANGE' && promoterId) {
+      // Intentar validar contra la tabla de promotores (Estructuras)
+      try {
+        const promoterCheck = await client.query(
+          `SELECT seccion FROM promoters WHERE promoter_id = $1 LIMIT 1`,
+          [promoterId]
+        );
+        if (promoterCheck.rows.length > 0) {
+          // El líder existe. 
+          // NOTA: Para un Geofencing real necesitamos las coordenadas por sección.
+          // Por ahora, si está IN_RANGE en Guerrero y el líder es válido, marcamos verificación.
+          isTerritorialVerified = true; 
+        }
+      } catch (err) {
+        console.error('⚠️ Error validando promotor:', err.message);
+      }
+    }
+
     // AUDITORÍA DE INTEGRIDAD: Verificación dentro de la transacción con bloqueo (Locking)
     // Evita Race Conditions bajo carga masiva (50,000 usuarios)
     const duplicateCheck = await client.query(
@@ -504,19 +526,21 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
       await client.query(`
         INSERT INTO survey_responses
-          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, latitude, longitude, location_status, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, NOW())
+          (survey_id, question_id, user_id, response_value, confidence, fingerprint_id, ip_address, phone_hash, latitude, longitude, location_status, promoter_id, is_territorial_verified, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11, $12, NOW())
       `, [
         surveyId,
         response.questionId,
         userId,
         responseValue.toString(),
-        100,
+        confidence || 100,
         fingerprintId,
         clientIp,
         territorial.latitude,
         territorial.longitude,
-        territorial.locationStatus
+        territorial.locationStatus,
+        promoterId || null,
+        isTerritorialVerified
       ]);
 
       savedCount++;
@@ -599,7 +623,7 @@ router.get('/:id/results', async (req, res) => {
         c.name AS label,
         c.party,
         COUNT(sr.id)::int AS vote_count,
-        AVG(sr.confidence)::float AS avg_confidence
+        AVG(sr.confidence) FILTER (WHERE sr.confidence >= 50)::float AS avg_confidence
       FROM candidates c
       LEFT JOIN survey_responses sr ON (
         sr.survey_id = $1

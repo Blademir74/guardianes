@@ -547,4 +547,89 @@ router.get('/surveys/:id/export', authenticateAdmin, async (req, res) => {
     });
   }
 });
+
+// ========================================
+// MONITOR DE ESTRUCTURAS (LÍDERES)
+// ========================================
+router.get('/structure-monitor', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        p.promoter_id,
+        p.seccion,
+        p.name as leader_name,
+        COUNT(sr.id) as total_votes,
+        COUNT(sr.id) FILTER (WHERE sr.is_territorial_verified = true) as validated_gps_votes
+      FROM promoters p
+      LEFT JOIN survey_responses sr ON sr.promoter_id = p.promoter_id
+      GROUP BY p.promoter_id, p.seccion, p.name
+      ORDER BY total_votes DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('❌ Error Monitor de Estructuras:', error.message);
+    res.status(500).json({ error: 'Error obteniendo monitor de estructuras' });
+  }
+});
+
+// ========================================
+// EXPORTAR CSV MASCARADO (INTELIGENCIA)
+// ========================================
+router.get('/surveys/:id/export-masked', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 1. Obtener datos con Identificadores Mascarados (SHA256 parcial)
+    const result = await query(`
+      SELECT 
+        ENCODE(DIGEST(sr.fingerprint_id, 'sha256'), 'hex') as masked_device_id,
+        sr.ip_address,
+        sr.created_at,
+        sr.latitude,
+        sr.longitude,
+        sr.location_status,
+        sr.promoter_id,
+        sr.is_territorial_verified,
+        sq.question_text,
+        sr.response_value
+      FROM survey_responses sr
+      JOIN survey_questions sq ON sq.id = sr.question_id
+      WHERE sr.survey_id = $1
+      ORDER BY sr.created_at DESC
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No hay respuestas para exportar' });
+    }
+
+    // 2. Generar CSV (Simple y Mascarado)
+    const headers = ['DeviceID_Mask', 'Fecha', 'Latitud', 'Longitud', 'Status_GPS', 'Promotor_ID', 'Verificado_Territorial', 'Pregunta', 'Respuesta'];
+    const csvRows = [headers.join(',')];
+
+    result.rows.forEach(row => {
+      const csvRow = [
+        row.masked_device_id.substring(0, 10) + '...',
+        new Date(row.created_at).toISOString(),
+        row.latitude || '',
+        row.longitude || '',
+        row.location_status || '',
+        row.promoter_id || '',
+        row.is_territorial_verified ? 'SÍ' : 'NO',
+        `"${row.question_text.replace(/"/g, '""')}"`,
+        `"${row.response_value.replace(/"/g, '""')}"`
+      ];
+      csvRows.push(csvRow.join(','));
+    });
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="guardianes_masked_export_${id}.csv"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('❌ Error Export Mascarado:', error);
+    res.status(500).json({ error: 'Error generando exportación mascarada' });
+  }
+});
+
 module.exports = router;

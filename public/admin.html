@@ -57,6 +57,9 @@
     <button onclick="switchView('users')" class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
       <i data-lucide="users" class="w-5 h-5"></i> Registro Civil
     </button>
+    <button onclick="switchView('structures')" class="nav-item flex items-center gap-4 p-5 rounded-[1.25rem] font-black text-[18px] uppercase tracking-widest hover:bg-white/5 transition text-left opacity-40">
+      <i data-lucide="shrub" class="w-5 h-5"></i> Monitor de Estructuras
+    </button>
   </nav>
 
   <div class="mt-auto pt-10 border-t border-white/5">
@@ -519,6 +522,10 @@ function renderSurveysTable(surveys) {
               class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-amber-600 hover:text-amber-500 transition shadow-inner shadow-black/20">
               Exportar CSV
             </button>
+            <button onclick="exportMaskedCSV(${s.id})"
+              class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg hover:border-emerald-600 hover:text-emerald-500 transition shadow-inner shadow-black/20">
+              Exportar Mascarado
+            </button>
             <button onclick="toggleStatus(${s.id}, ${s.is_active})"
               class="text-[9px] font-black uppercase tracking-[0.2em] border border-white/10 px-3 py-2 rounded-lg ${s.is_active ? 'hover:border-amber-600 hover:text-amber-500' : 'hover:border-emerald-600 hover:text-emerald-500'} transition shadow-inner shadow-black/20">
               ${s.is_active ? 'Pausar' : 'Activar'}
@@ -751,6 +758,36 @@ async function loadMunicipalities() {
   }
 }
 
+// ── Monitor de Estructuras ───────────────────────────────────
+async function loadStructures() {
+  try {
+    const res = await fetch(`${API_URL}/admin/structure-monitor`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    const tbody = document.getElementById('structures-table-body');
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center opacity-20 uppercase font-black italic">SIN DATOS DE LÍDERES</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(s => `
+      <tr class="hover:bg-amber-600/[0.03] transition-all">
+        <td class="px-10 py-8 font-black text-amber-500 underline">${s.promoter_id}</td>
+        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">SECCIÓN ${s.seccion || 'N/A'}</td>
+        <td class="px-10 py-8 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_votes || 0}</td>
+        <td class="px-10 py-8 text-right font-black text-2xl tracking-tighter italic text-emerald-400">
+          ${s.validated_gps_votes || 0}
+          <span class="text-[9px] opacity-40 ml-1">VOT.</span>
+        </td>
+      </tr>`).join('');
+  } catch (e) { console.error('Error cargando estructuras', e); }
+}
+
+async function exportMaskedCSV(id) {
+  window.open(`${API_URL}/admin/surveys/${id}/export-masked?token=${adminToken}`, '_blank');
+  showToast('Exportación mascarada iniciada ✓', 'success');
+}
+
 async function createSurvey() {
   const title = document.getElementById('s-title').value;
   if (!title) { showToast('Operación requiere nombre descriptivo', 'error'); return; }
@@ -813,10 +850,42 @@ function switchView(viewId) {
   const activeBtn = document.querySelector(`[onclick="switchView('${viewId}')"]`);
   if (activeBtn) { activeBtn.classList.add('active'); activeBtn.classList.remove('opacity-40'); }
 
-  if (viewId === 'dashboard') loadStats();
-  if (viewId === 'surveys')   loadSurveys();
-  if (viewId === 'incidents') loadIncidents();
-  if (viewId === 'users')     loadUsers();
+  if (viewId === 'dashboard')  loadStats();
+  if (viewId === 'surveys')    loadSurveys();
+  if (viewId === 'incidents')  loadIncidents();
+  if (viewId === 'users')      loadUsers();
+  if (viewId === 'structures') loadStructures();
+}
+
+async function loadStructures() {
+  try {
+    const res = await fetch(`${API_URL}/admin/structure-monitor`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    const tbody = document.getElementById('structures-table-body');
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center opacity-20 uppercase font-black italic">SIN DATOS DE LÍDERES</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(s => `
+      <tr class="hover:bg-amber-600/[0.03] transition-all">
+        <td class="px-10 py-8 font-black text-amber-500 underline">${s.promoter_id}</td>
+        <td class="px-10 py-8 font-black uppercase tracking-tight text-white">SECCIÓN ${s.seccion || 'N/A'}</td>
+        <td class="px-10 py-8 text-center font-black text-2xl tracking-tighter italic opacity-80">${s.total_votes || 0}</td>
+        <td class="px-10 py-8 text-right font-black text-2xl tracking-tighter italic text-emerald-400">
+          ${s.validated_gps_votes || 0}
+          <span class="text-[9px] opacity-40 ml-1">VOT.</span>
+        </td>
+      </tr>`).join('');
+  } catch (e) {
+    console.error('Error cargando estructuras', e);
+  }
+}
+
+async function exportMaskedCSV(id) {
+  window.open(`${API_URL}/admin/surveys/${id}/export-masked?token=${adminToken}`, '_blank');
+  showToast('Exportación mascarada iniciada ✓', 'success');
 }
 
 // ══════════════════════════════════════════════════════════════
