@@ -526,7 +526,26 @@
                 padding: 2px 8px;
             }
         }
-
+@media (max-width: 640px) {
+    .profile-card {
+        padding: 0.75rem 0.5rem !important;
+        min-height: 170px !important;
+    }
+    .profile-card .avatar-ring {
+        width: 4rem !important;
+        height: 4rem !important;
+    }
+    .profile-card .profile-name {
+        font-size: 0.7rem !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    .profile-card .party-pill {
+        font-size: 0.5rem !important;
+        padding: 2px 6px !important;
+    }
+}
     </style>
 </head>
 
@@ -1138,26 +1157,27 @@
                                     <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 flex items-center justify-center font-black text-xl">${qIdx + 1}</div>
                                     <h4 class="text-2xl font-black uppercase tracking-tight text-white">${q.questionText}</h4>
                                 </div>
-                                <div class="candidate-grid-prestige" data-grid-question="${q.id}">
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    const partyRaw = (c.party || '').trim().toUpperCase()
-        .replace(/^INDEPENDIENTE$/, 'IND.')
-        .replace(/^IND$/, 'IND.');
-    const partyDisplay = partyRaw || 'IND.';
-
+    let partyRaw = (c.party || '').trim().toUpperCase();
+if (partyRaw.includes('INDEPENDIENTE') || partyRaw === 'IND') {
+    partyRaw = 'IND.';
+}
+const partyDisplay = partyRaw || 'IND.';
     // ── COLOR INSTITUCIONAL POR PARTIDO ──
     const PARTY_COLORS = {
-        'MORENA': '#8B0000',
-        'PAN':    '#1E40AF',
-        'PRI':    '#DC2626',
-        'PVEM':   '#15803D',
-        'PT':     '#B91C1C',
-        'MC':     '#EA580C',
-        'PRD':    '#CA8A04',
-        'CIUDADANO': '#475569',
-        'IND.':   '#334155'
-    };
+    'MORENA': '#8B0000',
+    'PAN':    '#1E40AF',
+    'PRI':    '#DC2626',
+    'PVEM':   '#15803D',
+    'PT':     '#B91C1C',
+    'MC':     '#EA580C',
+    'PRD':    '#CA8A04',
+    'CIUDADANO': '#475569',
+    'IND.':   '#64748B',   // ← Gris para independientes
+    'INDEPENDIENTE': '#64748B'
+};
     const badgeColor = PARTY_COLORS[partyRaw] || PARTY_COLORS['IND.'];
 
     // ── FOTO ──
