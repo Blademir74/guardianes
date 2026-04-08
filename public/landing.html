@@ -482,68 +482,84 @@
         let activeQuestionId = null;
 
         async function syncWithActiveSurvey() {
+    try {
+        const res = await fetch('/api/surveys/active');
+        if (!res.ok) {
+            // Fetch falló: mostrar grid de todas formas, sin stand-by
+            console.warn('[SYS] Endpoint surveys/active no respondió. Mostrando grid local.');
+            return;
+        }
+
+        const data = await res.json();
+
+        if (data && data.surveys && data.surveys.length > 0) {
+            activeSurveyId = data.surveys[0].id;
+            console.log(`[SYS] Encuesta activa ID: ${activeSurveyId}`);
+
+            // Grid ya renderizado por renderBattleGrid() — no tocar innerHTML
+            const grid = document.getElementById('candidates-grid');
+            if (grid) grid.classList.add('battle-grid');
+
+            // Ocultar stand-by si existe de una carga anterior
+            const standbyBanner = document.getElementById('standby-banner-landing');
+            if (standbyBanner) standbyBanner.classList.add('hidden');
+
+            // Capturar ID de pregunta
             try {
-                // Buscar la encuesta activa nacional/estatal
-                const res = await fetch('/api/surveys/active');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.surveys && data.surveys.length > 0) {
-                        activeSurveyId = data.surveys[0].id;
-                        console.log(`[SYS] Sincronizado con Encuesta Activa ID: ${activeSurveyId}`);
-                        
-                        // ── REPARACIÓN DE VISIBILIDAD ──
-                        const grid = document.getElementById('candidates-grid');
-                        const standbyBanner = document.getElementById('standby-banner-landing');
-                        if (grid) grid.classList.add('battle-grid');
-                        if (standbyBanner) standbyBanner.classList.add('hidden');
-                        
-                        // Buscar el ID de la pregunta...
-                        const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
-                        if (qRes.ok) {
-                            const qData = await qRes.json();
-                            if (qData.questions && qData.questions.length > 0) {
-                                // Buscar de preferencia la primera pregunta de opción múltiple, o fallback a la primera
-                                const validQuestion = qData.questions.find(q => q.questionType === 'single_choice') || qData.questions[0];
-                                activeQuestionId = validQuestion.id;
-                                console.log(`[SYS] Sincronizado con Pregunta ID: ${activeQuestionId}`);
-                            }
-                        }
-                    } else {
-                        // REGRASIÓN FIX: Lógica de Stand-by en Landing
-                        console.log('[SYS] No hay encuestas activas. Activando modo Stand-by.');
-                        
-                        // 1. Ocultar Botón "Votar Ahora" en el Hero
-                        const heroBtn = document.querySelector('header a[href="#candidates-grid"]');
-                        if (heroBtn) heroBtn.classList.add('hidden');
-
-                        // 2. Ocultar Grid de Candidatas y mostrar Banner
-                        const grid = document.getElementById('candidates-grid');
-                        if (grid) {
-                            grid.classList.remove('battle-grid');
-                            grid.innerHTML = `
-                                <div id="standby-banner-landing" class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500 shadow-2xl shadow-gold/20">
-                                   <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
-                                       <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                   </div>
-                                   <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
-                                   <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar se encuentra procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
-                                   <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                                       <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
-                                       <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Sistema en Auditoría</span>
-                                   </div>
-                                </div>
-                            `;
-                        }
-
-                        // 3. Ocultar Sticky CTA si existe
-                        const stickyCta = document.getElementById('sticky-cta');
-                        if (stickyCta) stickyCta.classList.add('hidden');
+                const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
+                if (qRes.ok) {
+                    const qData = await qRes.json();
+                    if (qData.questions && qData.questions.length > 0) {
+                        const validQuestion = qData.questions.find(q => q.questionType === 'single_choice') 
+                            || qData.questions[0];
+                        activeQuestionId = validQuestion.id;
+                        console.log(`[SYS] Pregunta activa ID: ${activeQuestionId}`);
                     }
                 }
-            } catch (err) {
-                console.error("[ERROR] No se pudo sincronizar la telemetría:", err);
+            } catch (e) {
+                console.warn('[SYS] No se pudo obtener pregunta activa:', e.message);
             }
+
+        } else {
+            // Confirmado: no hay encuestas activas — activar stand-by
+            console.log('[SYS] Sin encuestas activas. Activando stand-by.');
+
+            const heroBtn = document.querySelector('header a[href="#candidates-grid"]');
+            if (heroBtn) heroBtn.classList.add('hidden');
+
+            const grid = document.getElementById('candidates-grid');
+            if (grid) {
+                grid.classList.remove('battle-grid');
+                grid.innerHTML = `
+                    <div id="standby-banner-landing" class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500 shadow-2xl shadow-gold/20">
+                       <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
+                           <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                       </div>
+                       <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
+                       <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar está procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
+                       <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+                           <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
+                           <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Sistema en Auditoría</span>
+                       </div>
+                    </div>
+                `;
+            }
+
+            const stickyCta = document.getElementById('sticky-cta');
+            if (stickyCta) stickyCta.classList.add('hidden');
         }
+
+    } catch (err) {
+        // Error de red: dejar el grid visible, no activar stand-by
+        console.error('[ERROR] Falla de sincronización:', err.message);
+    }
+}
+
+// Inicialización — renderBattleGrid() siempre primero
+document.addEventListener('DOMContentLoaded', () => {
+    renderBattleGrid();       // Grid local inmediato, sin esperar red
+    syncWithActiveSurvey();   // Sincronización async después
+});
 
 
 
@@ -578,48 +594,49 @@
                 ctaHeading.classList.add('text-gold');
             }
         }
+function renderBattleGrid() {
+    const gridContainer = document.getElementById('candidates-grid');
+    if (!gridContainer) return;
 
-        // Función para renderizar las tarjetas
-        function renderBattleGrid() {
-            // ── QUIRÚRGICO: No eliminar candidatos sin foto (Auditoría V2)
-            const activeCandidatas = candidatas; 
+    // Limpiar solo si no hay ya tarjetas renderizadas
+    if (gridContainer.querySelector('.candidate-card')) return;
 
-            activeCandidatas.forEach((candidata, index) => {
-                const delay = index * 0.15; // Efecto cascada
+    candidatas.forEach((candidata, index) => {
+        const delay = index * 0.15;
 
-                // ── LÓGICA DE ETIQUETA INDÍGENA / PARTIDO ──
-                let partyLabel = (candidata.partido || '').trim();
-                // Si el municipio es Eduardo Nery (ID 32)
-                const isEduardoNery = window.location.href.includes('32') || candidata.municipality_id == 32;
+        let partyLabel = (candidata.partido || '').trim();
+        const isEduardoNery = window.location.href.includes('32') || candidata.municipality_id == 32;
 
-                if (isEduardoNery) {
-                    partyLabel = 'Perfil Territorial';
-                } else if (!partyLabel || partyLabel.toUpperCase() === 'IND') {
-                    partyLabel = '';
-                } else {
-                    partyLabel = `(${partyLabel})`;
-                }
-
-                const cardHTML = `
-                    <div class="candidate-card group cursor-pointer relative rounded-[2rem] overflow-hidden border border-white/5 bg-[#1E293B]/40" 
-                         style="animation: fadeInUp 0.8s ease-out ${delay + 0.6}s both; height: 280px;" 
-                         onclick="selectCandidate(${index})">
-                        <div class="p-4 flex flex-col items-center justify-between h-full">
-                            <h3 class="text-[12px] md:text-sm font-black text-white uppercase tracking-tighter text-center leading-tight">
-                                ${sanitizeHTML(candidata.nombreCorto || candidata.nombre)}
-                            </h3>
-                            <div class="w-full h-[160px] rounded-2xl overflow-hidden my-2 border-2 border-white/10 group-hover:border-gold transition-all duration-300">
-                                <img src="${candidata.imagen || '/img/placeholder_cand.jpg'}" class="w-full h-full object-cover object-top pointer-events-none transition-transform duration-700 group-hover:scale-110" onerror="this.src='/img/placeholder_cand.jpg';">
-                            </div>
-                            <div class="pb-1">
-                                <span class="text-[9px] font-black text-gold uppercase tracking-[0.2em] italic">${partyLabel}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                gridContainer.innerHTML += cardHTML;
-            });
+        if (isEduardoNery) {
+            partyLabel = 'Perfil Territorial';
+        } else if (!partyLabel || partyLabel.toUpperCase() === 'IND') {
+            partyLabel = '';
+        } else {
+            partyLabel = `(${partyLabel})`;
         }
+
+        const cardHTML = `
+            <div class="candidate-card group cursor-pointer relative rounded-[2rem] overflow-hidden border border-white/5 bg-[#1E293B]/40" 
+                 style="animation: fadeInUp 0.8s ease-out ${delay + 0.6}s both; height: 280px;" 
+                 onclick="selectCandidate(${index})">
+                <div class="p-4 flex flex-col items-center justify-between h-full">
+                    <h3 class="text-[12px] md:text-sm font-black text-white uppercase tracking-tighter text-center leading-tight">
+                        ${sanitizeHTML(candidata.nombreCorto || candidata.nombre)}
+                    </h3>
+                    <div class="w-full h-[160px] rounded-2xl overflow-hidden my-2 border-2 border-white/10 group-hover:border-gold transition-all duration-300">
+                        <img src="${candidata.imagen || '/img/placeholder_cand.jpg'}" 
+                             class="w-full h-full object-cover object-top pointer-events-none transition-transform duration-700 group-hover:scale-110" 
+                             onerror="this.src='/img/placeholder_cand.jpg';">
+                    </div>
+                    <div class="pb-1">
+                        <span class="text-[9px] font-black text-gold uppercase tracking-[0.2em] italic">${partyLabel}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        gridContainer.innerHTML += cardHTML;
+    });
+}
 
         // Utilidad de Sanitización XSS
         function sanitizeHTML(str) {
