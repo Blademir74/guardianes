@@ -1,4 +1,10 @@
-const shapefile = require('shapefile');
+let shapefile;
+try {
+    shapefile = require('shapefile');
+} catch (e) {
+    console.warn('[PIP] Módulo shapefile no disponible. Geofencing desactivado.');
+    shapefile = null;
+}
 const path = require('path');
 
 let entityGeoJSON = null;
@@ -21,25 +27,36 @@ function pointInPolygon(point, vs) {
 async function loadShapefiles() {
     if (entityGeoJSON && municipalityGeoJSON) return;
 
+    // Si shapefile no está disponible en este entorno, salir sin error
+    if (!shapefile) {
+        console.warn('[PIP] loadShapefiles() omitido: módulo shapefile no disponible.');
+        return;
+    }
+
     try {
         const entityPath = path.join(__dirname, '../../shaphefile Guerrero/ENTIDAD.shp');
         const muniPath = path.join(__dirname, '../../shaphefile Guerrero/MUNICIPIO.shp');
 
-        // Load Entity (Guerrero Estado)
         entityGeoJSON = await shapefile.read(entityPath);
-        
-        // Load Municipalities
         municipalityGeoJSON = await shapefile.read(muniPath);
 
         console.log('✅ Shapefiles loaded successfully for PiP Validation');
     } catch (err) {
         console.error('❌ Error loading shapefiles:', err);
+        // Dejar ambos en null para que los fallbacks de abajo apliquen
+        entityGeoJSON = null;
+        municipalityGeoJSON = null;
     }
 }
 
 async function isLocationInGuerrero(lat, lng) {
+    // Si no hay coords, aprobar directamente
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return true;
+
     await loadShapefiles();
-    if (!entityGeoJSON) return true; // Fallback if failed
+
+    // Fallback: si el módulo no cargó o los shapefiles fallaron, aprobar
+    if (!entityGeoJSON) return true;
 
     for (const feature of entityGeoJSON.features) {
         const coords = feature.geometry.coordinates;
@@ -55,16 +72,18 @@ async function isLocationInGuerrero(lat, lng) {
 }
 
 async function isLocationInMunicipality(lat, lng, muniId) {
-    await loadShapefiles();
-    if (!municipalityGeoJSON) return true; // Fallback if failed
+    // Si no hay coords, aprobar directamente
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return true;
 
-    // Find the feature for the given municipalityId
-    // Note: The property name for muni ID depends on the shapefile. 
-    // In Mexico's INE shapefiles, it's often 'CLAVE_MUNI' or 'MUNICIPIO'
+    await loadShapefiles();
+
+    // Fallback: si el módulo no cargó o los shapefiles fallaron, aprobar
+    if (!municipalityGeoJSON) return true;
+
     for (const feature of municipalityGeoJSON.features) {
         const props = feature.properties;
         const featureMuniId = parseInt(props.MUNICIPIO || props.CLAVE_MUNI || props.ID || props.id, 10);
-        
+
         if (featureMuniId === parseInt(muniId, 10)) {
             const coords = feature.geometry.coordinates;
             if (feature.geometry.type === 'Polygon') {
