@@ -97,135 +97,170 @@
             perspective: 1200px;
         }
 
-        .candidate-card {
-            background: linear-gradient(160deg, rgba(20, 30, 50, 0.4) 0%, rgba(5, 10, 20, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 4px;
-            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-            transform-style: preserve-3d;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-            /* Ángulo moderno base */
-            transform: rotateX(8deg) rotateY(0deg) scale(0.97);
-            overflow: hidden;
-            position: relative;
-        }
+        /* ═══════════════════════════════════════
+   TARJETAS CANDIDATOS — ESTÁNDAR DE ORO
+   ═══════════════════════════════════════ */
 
-        .candidate-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.9) 100%);
-            z-index: 10;
-            pointer-events: none;
-        }
+#candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0;
+}
 
-        .candidate-card:hover {
-            transform: rotateX(0deg) rotateY(0deg) scale(1.02) translateY(-8px);
-            border-color: rgba(212, 175, 55, 0.6);
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.8),
-                0 0 30px rgba(212, 175, 55, 0.15),
-                0 0 15px rgba(212, 175, 55, 0.2) inset;
-        }
+@media (min-width: 768px) {
+    #candidates-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+}
 
-        .card-inner-img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-            object-position: top center;
-            transition: transform 0.8s ease, filter 0.5s ease;
-            filter: contrast(115%) sepia(20%) grayscale(25%) brightness(0.85);
-            transform: scale(1.02);
-            z-index: 1;
-        }
+.candidate-card {
+    position: relative;
+    height: 260px;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    background: #001a33;
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+    transform: scale(0.98);
+}
 
-        .candidate-card:hover .card-inner-img, .candidate-card.selected-card .card-inner-img {
-            filter: contrast(125%) sepia(0%) grayscale(0%) brightness(1.05);
-            transform: scale(1.1);
-        }
+/* FOTO: cubre toda la tarjeta */
+.candidate-card img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: top center !important;
+    transition: transform 0.5s ease !important;
+    z-index: 1 !important;
+    filter: none !important;
+}
 
-        .candidate-card.selected {
-            transform: rotateX(0deg) rotateY(0deg) scale(1.02) translateY(-4px);
-            border-color: #D4AF37;
-            box-shadow: 
-                0 15px 30px rgba(0, 0, 0, 0.7),
-                0 0 20px rgba(212, 175, 55, 0.25),
-                0 0 10px rgba(212, 175, 55, 0.15) inset;
-        }
+/* Gradiente inferior para legibilidad del nombre */
+.candidate-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(0, 0, 0, 0.55) 35%,
+        transparent 65%
+    );
+    z-index: 2;
+    pointer-events: none;
+    transition: background 0.3s ease;
+}
 
-        .candidate-card.selected::before {
-            background: linear-gradient(to bottom, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0.8) 100%);
-        }
+/* Hover */
+.candidate-card:hover {
+    transform: scale(1.02) translateY(-4px);
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.7), 0 0 20px rgba(212,175,55,0.12);
+}
 
-        .candidate-card.selected .power-tag {
-            border-top: 1px solid rgba(212, 175, 55, 0.8);
-            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(30,25,10,0.9) 80%, transparent 100%);
-        }
+.candidate-card:hover img {
+    transform: scale(1.07) !important;
+}
 
-        /* Enfoque Visual */
-        #candidates-grid.has-selection .candidate-card:not(.selected) {
-            opacity: 0.5;
-            filter: grayscale(80%);
-        }
-        
-        .candidate-card img {
-            height: 160px !important;
-            object-fit: cover !important;
-            object-position: top !important;
-        }
+/* SELECCIONADO */
+.candidate-card.selected {
+    transform: scale(1.02) translateY(-4px);
+    border-color: #D4AF37 !important;
+    box-shadow:
+        0 0 0 2px #D4AF37,
+        0 12px 32px rgba(0,0,0,0.8),
+        0 0 28px rgba(212,175,55,0.3);
+}
 
-        .power-tag {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            z-index: 20;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
-            border-top: 1px solid rgba(212, 175, 55, 0.0);
-            transition: all 0.3s ease;
-        }
+.candidate-card.selected::before {
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.97) 0%,
+        rgba(20, 15, 0, 0.6) 40%,
+        rgba(212, 175, 55, 0.08) 100%
+    );
+}
 
-        .candidate-card:hover .power-tag {
-            border-top: 1px solid rgba(212, 175, 55, 0.3);
-            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(10,10,10,0.9) 80%, transparent 100%);
-        }
+.candidate-card.selected img {
+    filter: brightness(1.05) contrast(1.05) !important;
+}
 
-        .selection-check {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            width: 2rem;
-            height: 2rem;
-            background: #10b981;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 30;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-        }
+/* Nombre dorado al seleccionar */
+.candidate-card.selected .card-name {
+    color: #D4AF37 !important;
+}
 
-        .candidate-card.selected .selection-check {
-            opacity: 1;
-            transform: scale(1);
-        }
+/* ENFOQUE: atenuar no seleccionados */
+#candidates-grid.has-selection .candidate-card:not(.selected) {
+    opacity: 0.45;
+    filter: grayscale(70%);
+    transform: scale(0.96);
+}
 
-        .party-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            color: #fff;
-            border-radius: 2px;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
+/* BADGE DE PARTIDO — esquina superior izquierda */
+.party-badge-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 4;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* CHECKMARK — esquina superior derecha */
+.card-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 4;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #10B981;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(16,185,129,0.6);
+}
+
+.candidate-card.selected .card-check {
+    display: flex;
+}
+
+/* NOMBRE — sobre gradiente inferior */
+.power-tag {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 12px 12px;
+    z-index: 3;
+}
+
+.card-name {
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.2;
+    text-shadow: 0 1px 6px rgba(0,0,0,1);
+    transition: color 0.3s ease;
+}
 
         /* Black Box Icon (Auditoría) */
         .black-box-icon {
@@ -601,56 +636,48 @@ function selectCandidate(index) {
     if (gridContainer.querySelector('.candidate-card')) return;
 
     const PARTY_COLORS = {
-        'MORENA': '#8B0000', 'PAN': '#1E40AF', 'PRI': '#DC2626',
-        'PVEM': '#15803D', 'PT': '#B91C1C', 'MC': '#EA580C',
-        'PRD': '#92400E', 'CIUDADANO': '#475569', 'IND.': '#334155'
+        'MORENA':'#8B0000','PAN':'#1E40AF','PRI':'#DC2626',
+        'PVEM':'#15803D','PT':'#B91C1C','MC':'#EA580C',
+        'PRD':'#92400E','CIUDADANO':'#475569','IND.':'#334155'
     };
 
     candidatas.forEach((candidata, index) => {
-        const delay = index * 0.12;
+        const delay = index * 0.1;
         const partyRaw = (candidata.partido || '').trim().toUpperCase();
-        const isEduardoNery = window.location.href.includes('32') || candidata.municipality_id == 32;
-        let partyDisplay = isEduardoNery ? 'TERRITORIAL'
+        const isEduardoNery = window.location.href.includes('32');
+        const partyDisplay = isEduardoNery ? 'TERRITORIAL'
             : (!partyRaw || partyRaw === 'IND') ? 'IND.'
             : partyRaw;
-        const badgeColor = PARTY_COLORS[partyDisplay] || PARTY_COLORS['IND.'];
+        const badgeColor = PARTY_COLORS[partyDisplay] || '#334155';
         const photoSrc = candidata.imagen || '/img/placeholder_cand.jpg';
         const nombre = sanitizeHTML(candidata.nombreCorto || candidata.nombre);
 
         gridContainer.innerHTML += `
-            <div class="candidate-card group cursor-pointer relative overflow-hidden rounded-[1.5rem] border-2 border-white/5 hover:border-gold/60 transition-all duration-300"
-                 style="height: 280px; background: #0A0E1A; animation: fadeInUp 0.7s ease-out ${delay + 0.4}s both;"
+            <div class="candidate-card"
+                 style="animation: fadeInUp 0.6s ease-out ${delay + 0.3}s both;"
                  onclick="selectCandidate(${index})">
 
                 <img src="${photoSrc}"
                      onerror="this.src='/img/placeholder_cand.jpg';"
-                     class="absolute inset-0 w-full h-full object-cover object-top pointer-events-none transition-transform duration-500 group-hover:scale-110"
-                     style="z-index:1;">
+                     alt="${nombre}">
 
-                <div class="absolute inset-0"
-                     style="background: linear-gradient(to top, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.4) 45%, transparent 100%); z-index:2;"></div>
+                <span class="party-badge-tag" style="background-color:${badgeColor};">
+                    ${partyDisplay}
+                </span>
 
-                <div class="absolute top-2 left-2" style="z-index:3;">
-                    <span class="text-[9px] font-black tracking-widest uppercase px-2 py-[3px] rounded-md text-white shadow-lg"
-                          style="background-color:${badgeColor};">${partyDisplay}</span>
-                </div>
-
-                <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-gold items-center justify-center check-mark"
-                     style="z-index:3; display:none;">
-                    <svg class="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                <div class="card-check">
+                    <svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
 
-                <div class="absolute bottom-0 left-0 right-0 p-3" style="z-index:3;">
-                    <h5 class="text-[12px] font-black uppercase tracking-tight text-white leading-tight"
-                        style="text-shadow: 0 1px 6px rgba(0,0,0,0.9);">${nombre}</h5>
+                <div class="power-tag">
+                    <span class="card-name">${nombre}</span>
                 </div>
             </div>
         `;
     });
 }
-
         // Utilidad de Sanitización XSS
         function sanitizeHTML(str) {
             const temp = document.createElement('div');
