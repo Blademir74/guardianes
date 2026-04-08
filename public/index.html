@@ -87,74 +87,6 @@
             font-size: 0.75rem;
             letter-spacing: 0.1em;
         }
-/* ═══ FIX DEFINITIVO TARJETAS INDEX ═══ */
-#survey-modal .candidate-card {
-    position: relative !important;
-    height: 260px !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border-radius: 1.25rem !important;
-    background: #001a33 !important;
-    border: 2px solid rgba(255,255,255,0.06) !important;
-    display: block !important;
-}
-
-#survey-modal .candidate-card img {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: top !important;
-    z-index: 1 !important;
-    transition: transform 0.5s ease !important;
-}
-
-#survey-modal .candidate-card:hover img {
-    transform: scale(1.07) !important;
-}
-
-#survey-modal .candidate-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 40%, transparent 70%);
-    z-index: 2;
-    pointer-events: none;
-}
-
-#survey-modal .candidate-card h5 {
-    position: absolute !important;
-    bottom: 8px !important;
-    left: 10px !important;
-    right: 10px !important;
-    z-index: 4 !important;
-    font-size: 11px !important;
-    font-weight: 900 !important;
-    text-transform: uppercase !important;
-    color: #ffffff !important;
-    text-shadow: 0 1px 6px rgba(0,0,0,1) !important;
-    margin: 0 !important;
-    height: auto !important;
-    line-height: 1.2 !important;
-}
-
-#survey-modal .candidate-card.selected h5 {
-    color: #D4AF37 !important;
-}
-
-#survey-modal .candidate-card .party-badge-tag {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 4;
-}
-
-#survey-modal #candidates-grid.has-selection .candidate-card:not(.selected),
-.grid .candidate-card:not(.ring-4) {
-    opacity: 0.45 !important;
-    filter: grayscale(70%) !important;
-}
 
         @keyframes slideIn {
             from {
@@ -1115,28 +1047,19 @@
         let surveyResponses = {};
 
         function selectOption(qId, val, el) {
-    document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
-        c.classList.remove('ring-4', 'ring-emerald-500', 'border-emerald-400/60');
-        c.style.borderColor = '';
-        const check = c.querySelector('.check-icon');
-        if (check) check.classList.add('hidden');
-        const radio = c.querySelector('input[type="radio"]');
-        if (radio) radio.checked = false;
-    });
+            document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
+                c.classList.remove('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
+                const radio = c.querySelector('input[type="radio"]');
+                if (radio) radio.checked = false;
+            });
 
-    el.classList.add('ring-4', 'ring-emerald-500');
-    el.style.borderColor = '#34D399';
-    const check = el.querySelector('.check-icon');
-    if (check) {
-        check.classList.remove('hidden');
-        check.classList.add('flex');
-    }
-    const radio = el.querySelector('input[type="radio"]');
-    if (radio) radio.checked = true;
+            el.classList.add('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
 
-    surveyResponses[qId] = val;
-    showToast('Candidato Seleccionado');
-}
+            surveyResponses[qId] = val;
+            showToast('Candidato Seleccionado');
+        }
 
         // ====== RESULTADOS EN VIVO ======
         let chartInstance = null;
