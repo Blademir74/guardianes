@@ -959,7 +959,7 @@
                                     <h4 class="text-2xl font-black uppercase tracking-tight text-white">${q.questionText}</h4>
                                 </div>
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                                ${candidates.map(c => {
+                            ${candidates.map(c => {
     // ── PARTIDO: normalizar, nunca mostrar IND crudo ──
     const partyRaw = (c.party || '').trim().toUpperCase()
         .replace(/^INDEPENDIENTE$/, 'IND.')

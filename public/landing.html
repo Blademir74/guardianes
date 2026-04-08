@@ -27,8 +27,8 @@
             theme: {
                 extend: {
                     colors: {
-                        midnight: '#030814',
-                        'midnight-light': '#0a1428',
+                        midnight: '#001a33',
+                        'midnight-light': '#002244',
                         gold: '#d4af37',
                         'gold-light': '#fcd34d',
                         emerald: '#10b981',
@@ -66,7 +66,7 @@
 
     <style>
         body { 
-            background-color: #030814; 
+            background-color: #001a33; 
             color: #d1d5db; 
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
@@ -87,7 +87,7 @@
         }
 
         .glass-nav {
-            background: rgba(3, 8, 20, 0.85);
+            background: rgba(0, 26, 51, 0.85);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(212, 175, 55, 0.15);
         }
@@ -117,7 +117,7 @@
 
 .candidate-card {
     position: relative;
-    height: 260px;
+    height: 240px;
     border-radius: 1.25rem;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.06);
@@ -125,7 +125,9 @@
     cursor: pointer;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
                 border-color 0.3s ease,
-                box-shadow 0.3s ease;
+                box-shadow 0.3s ease,
+                opacity 0.4s ease,
+                filter 0.4s ease;
     transform: scale(0.98);
 }
 
@@ -238,6 +240,13 @@
 
 .candidate-card.selected .card-check {
     display: flex;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 /* NOMBRE — sobre gradiente inferior */
@@ -252,7 +261,7 @@
 
 .card-name {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: -0.02em;
@@ -346,7 +355,7 @@
             left: 0;
             right: 0;
             padding: 1rem 1.5rem;
-            background: linear-gradient(to top, #030814 60%, transparent);
+            background: linear-gradient(to top, #001a33 60%, transparent);
             backdrop-filter: blur(8px);
             z-index: 50;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -361,6 +370,20 @@
         /* Ensures content doesn't get hidden behind the sticky CTA */
         .voting-bottom-padding {
             padding-bottom: 7rem;
+        }
+
+        /* ═══ MOBILE OPTIMIZATIONS ═══ */
+        @media (max-width: 640px) {
+            .candidate-card {
+                height: 210px;
+            }
+            .card-name {
+                font-size: 11px;
+            }
+            .party-badge-tag {
+                font-size: 8px;
+                padding: 2px 6px;
+            }
         }
     </style>
 </head>
@@ -430,7 +453,7 @@
     <div id="voting-container" class="min-h-[100dvh]">
         <!-- Módulo Dinámico de Candidatas (Battle Grid) -->
         <section class="py-4 relative z-10 px-4 md:px-6 voting-bottom-padding">
-            <div id="candidates-grid" class="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6 battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
+            <div id="candidates-grid" class="max-w-6xl mx-auto battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
                 <!-- Renderizado por JS -->
             </div>
         </section>
@@ -602,14 +625,12 @@ function selectCandidate(index) {
     gridContainer.classList.add('has-selection');
 
     document.querySelectorAll('.candidate-card').forEach((el, i) => {
-        const check = el.querySelector('.check-mark');
+        const check = el.querySelector('.card-check');
         if (i === index) {
             el.classList.add('selected');
-            el.style.borderColor = '#D4AF37';
             if (check) check.style.display = 'flex';
         } else {
             el.classList.remove('selected');
-            el.style.borderColor = '';
             if (check) check.style.display = 'none';
         }
     });
@@ -850,11 +871,7 @@ function selectCandidate(index) {
             }, 100);
         }
 
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            syncWithActiveSurvey();
-            renderBattleGrid();
-        });
+        // (Handler DOMContentLoaded unificado arriba)
     </script>
 </body>
 </html>
