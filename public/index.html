@@ -959,43 +959,73 @@
                                     <h4 class="text-2xl font-black uppercase tracking-tight text-white">${q.questionText}</h4>
                                 </div>
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                                    ${candidates.map(c => {
-    const partyRaw = (c.party || '').trim().toUpperCase();
-    const partyDisplay = (!partyRaw || partyRaw === 'IND') ? 'IND.' : partyRaw;
-    const partyColor = CANDIDATE_COLORS[partyRaw] || CANDIDATE_COLORS['INDEPENDIENTE'];
+                                ${candidates.map(c => {
+    // ── PARTIDO: normalizar, nunca mostrar IND crudo ──
+    const partyRaw = (c.party || '').trim().toUpperCase()
+        .replace(/^INDEPENDIENTE$/, 'IND.')
+        .replace(/^IND$/, 'IND.');
+    const partyDisplay = partyRaw || 'IND.';
+
+    // ── COLOR INSTITUCIONAL POR PARTIDO ──
+    const PARTY_COLORS = {
+        'MORENA': '#8B0000',
+        'PAN':    '#1E40AF',
+        'PRI':    '#DC2626',
+        'PVEM':   '#15803D',
+        'PT':     '#B91C1C',
+        'MC':     '#EA580C',
+        'PRD':    '#CA8A04',
+        'CIUDADANO': '#475569',
+        'IND.':   '#334155'
+    };
+    const badgeColor = PARTY_COLORS[partyRaw] || PARTY_COLORS['IND.'];
+
+    // ── FOTO: prioridad img > photo_url > placeholder ──
+    const photoSrc = c.img || c.photo_url || '/img/placeholder_cand.jpg';
 
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
-         class="option-card candidate-card group transition-all cursor-pointer hover:scale-[1.02] active:scale-95 border border-white/5 hover:border-emerald-500/50 relative overflow-hidden rounded-[2rem]"
+         class="option-card candidate-card group cursor-pointer relative overflow-hidden rounded-[1.5rem] border-2 border-white/5 hover:border-emerald-400/60 transition-all duration-300 hover:scale-[1.03] active:scale-95"
          style="height: 280px; background: #0F172A;">
 
-        <!-- Foto ocupa toda la tarjeta -->
-        <img src="${c.img || c.photo_url || '/img/placeholder_cand.jpg'}"
+        <!-- Foto cubre toda la tarjeta -->
+        <img src="${photoSrc}"
              onerror="this.src='/img/placeholder_cand.jpg';"
-             class="absolute inset-0 w-full h-full object-cover object-top pointer-events-none transition-transform duration-700 group-hover:scale-110">
+             class="absolute inset-0 w-full h-full object-cover object-top pointer-events-none transition-transform duration-500 group-hover:scale-110"
+             style="z-index: 1;">
 
-        <!-- Gradiente inferior para legibilidad -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+        <!-- Gradiente inferior -->
+        <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 45%, transparent 100%); z-index: 2;"></div>
 
-        <!-- Badge de partido — esquina superior izquierda -->
-        <div class="absolute top-3 left-3 z-10">
-            <span class="text-[9px] font-black tracking-widest uppercase px-2 py-1 rounded-md text-white"
-                  style="background-color: ${partyColor}; opacity: 0.92;">
+        <!-- Badge partido — esquina superior izquierda -->
+        <div class="absolute top-2 left-2" style="z-index: 3;">
+            <span class="text-[9px] font-black tracking-widest uppercase px-2 py-1 rounded-md text-white shadow-lg"
+                  style="background-color: ${badgeColor};">
                 ${partyDisplay}
             </span>
         </div>
 
-        <!-- Nombre sobre gradiente — parte inferior -->
-        <div class="absolute bottom-0 left-0 right-0 z-10 p-3">
-            <h5 class="text-[11px] font-black uppercase tracking-tight text-white leading-tight text-center">
+        <!-- Checkmark selección — esquina superior derecha -->
+        <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 items-center justify-center hidden check-icon" style="z-index: 3;">
+            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+
+        <!-- Nombre sobre gradiente inferior -->
+        <div class="absolute bottom-0 left-0 right-0 p-3" style="z-index: 3;">
+            <h5 class="text-[12px] font-black uppercase tracking-tight text-white leading-tight text-left"
+                style="text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                 ${c.name}
             </h5>
         </div>
 
         <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
     </div>
-`;}).join('')}
+    `;
+}).join('')}
+
                                 </div>
                             </div>
                         `;
@@ -1017,19 +1047,28 @@
         let surveyResponses = {};
 
         function selectOption(qId, val, el) {
-            document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
-                c.classList.remove('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
-                const radio = c.querySelector('input[type="radio"]');
-                if (radio) radio.checked = false;
-            });
+    document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
+        c.classList.remove('ring-4', 'ring-emerald-500', 'border-emerald-400/60');
+        c.style.borderColor = '';
+        const check = c.querySelector('.check-icon');
+        if (check) check.classList.add('hidden');
+        const radio = c.querySelector('input[type="radio"]');
+        if (radio) radio.checked = false;
+    });
 
-            el.classList.add('ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
-            const radio = el.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+    el.classList.add('ring-4', 'ring-emerald-500');
+    el.style.borderColor = '#34D399';
+    const check = el.querySelector('.check-icon');
+    if (check) {
+        check.classList.remove('hidden');
+        check.classList.add('flex');
+    }
+    const radio = el.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
 
-            surveyResponses[qId] = val;
-            showToast('Candidato Seleccionado');
-        }
+    surveyResponses[qId] = val;
+    showToast('Candidato Seleccionado');
+}
 
         // ====== RESULTADOS EN VIVO ======
         let chartInstance = null;
