@@ -1160,11 +1160,11 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    let partyRaw = (c.party || '').trim().toUpperCase();
-if (partyRaw.includes('INDEPENDIENTE') || partyRaw === 'IND') {
+   let partyRaw = (c.party || '').trim().toUpperCase();
+if (partyRaw === 'INDEPENDIENTE' || partyRaw === 'IND') {
     partyRaw = 'IND.';
 }
-const partyDisplay = partyRaw || 'IND.';
+const partyDisplay = partyRaw === 'IND.' ? 'IND.' : (c.party || 'IND.');
     // ── COLOR INSTITUCIONAL POR PARTIDO ──
     const PARTY_COLORS = {
     'MORENA': '#8B0000',
