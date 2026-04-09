@@ -305,7 +305,18 @@ router.get('/:id/questions', async (req, res) => {
     if (hasSingleChoice) {
       if (survey.election_type === 'gubernatura') {
         const cands = await db.query(`
-          SELECT id, BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(IND\\.?\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, party,
+          SELECT id, 
+                 BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(.*\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, 
+                 CASE 
+                    WHEN name ILIKE '%(PRI)%' THEN 'PRI'
+                    WHEN name ILIKE '%(MORENA)%' THEN 'MORENA'
+                    WHEN name ILIKE '%(PAN)%' THEN 'PAN'
+                    WHEN name ILIKE '%(PRD)%' THEN 'PRD'
+                    WHEN name ILIKE '%(PT)%' THEN 'PT'
+                    WHEN name ILIKE '%(PVEM)%' THEN 'PVEM'
+                    WHEN name ILIKE '%(MC)%' THEN 'MC'
+                    ELSE party 
+                 END as party,
                  COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
           FROM candidates
           WHERE municipality_id IS NULL
@@ -314,7 +325,18 @@ router.get('/:id/questions', async (req, res) => {
         candidates = cands.rows;
       } else if (survey.municipality_id) {
         const cands = await db.query(`
-          SELECT id, BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(IND\\.?\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, party,
+          SELECT id, 
+                 BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(.*\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, 
+                 CASE 
+                    WHEN name ILIKE '%(PRI)%' THEN 'PRI'
+                    WHEN name ILIKE '%(MORENA)%' THEN 'MORENA'
+                    WHEN name ILIKE '%(PAN)%' THEN 'PAN'
+                    WHEN name ILIKE '%(PRD)%' THEN 'PRD'
+                    WHEN name ILIKE '%(PT)%' THEN 'PT'
+                    WHEN name ILIKE '%(PVEM)%' THEN 'PVEM'
+                    WHEN name ILIKE '%(MC)%' THEN 'MC'
+                    ELSE party 
+                 END as party,
                  COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
           FROM candidates
           WHERE municipality_id = $1
@@ -653,8 +675,18 @@ router.get('/:id/results', async (req, res) => {
     // Quitamos restricción de question_id para asegurar captura en encuestas con nombres de preguntas variables.
     const resultsQuery = await db.query(`
       SELECT 
-        c.name AS label,
-        c.party,
+        c.id,
+        BTRIM(REGEXP_REPLACE(c.name, '(?i)\\s*\\(.*\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS label,
+        CASE 
+          WHEN c.name ILIKE '%(PRI)%' THEN 'PRI'
+          WHEN c.name ILIKE '%(MORENA)%' THEN 'MORENA'
+          WHEN c.name ILIKE '%(PAN)%' THEN 'PAN'
+          WHEN c.name ILIKE '%(PRD)%' THEN 'PRD'
+          WHEN c.name ILIKE '%(PT)%' THEN 'PT'
+          WHEN c.name ILIKE '%(PVEM)%' THEN 'PVEM'
+          WHEN c.name ILIKE '%(MC)%' THEN 'MC'
+          ELSE c.party 
+        END as party,
         COUNT(sr.id)::int AS vote_count,
         AVG(sr.confidence) FILTER (WHERE sr.confidence >= 50)::float AS avg_confidence
       FROM candidates c
@@ -664,7 +696,11 @@ router.get('/:id/results', async (req, res) => {
           sr.response_value = c.id::text 
           OR sr.response_value = 'candidato_' || c.id
           OR sr.response_value = c.name
-          OR (LENGTH(sr.response_value) >= 3 AND (c.name ILIKE sr.response_value || '%' OR sr.response_value ILIKE c.name || '%'))
+          OR (LENGTH(sr.response_value) >= 3 AND (
+              translate(c.name, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') ILIKE translate(replace(sr.response_value, 'Olager', 'Olaguer'), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') || '%' 
+              OR 
+              translate(replace(sr.response_value, 'Olager', 'Olaguer'), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') ILIKE translate(c.name, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') || '%'
+          ))
         )
       )
       WHERE (
@@ -687,12 +723,11 @@ router.get('/:id/results', async (req, res) => {
 
     // ── 3. Formatear Respuesta JSON Requerida ──
     const formattedResults = results.map(r => {
-      let cleanLabel = r.label.replace(/\\s*\\(IND\\.?\\)\\s*/ig, '').replace(/\\s*Perfil Territorial\\s*/ig, '').trim();
-      let finalLabel = cleanLabel;
+      let finalLabel = r.label;
       // Sólo añadir el partido si no está ya presente en el nombre
       const pty = r.party ? r.party.trim().toUpperCase() : '';
-      if (r.party && pty !== 'INDEPENDIENTE' && pty !== 'IND' && pty !== 'IND.' && !cleanLabel.toUpperCase().includes(pty)) {
-        finalLabel = `${cleanLabel} (${r.party})`;
+      if (r.party && pty !== 'INDEPENDIENTE' && pty !== 'IND' && pty !== 'IND.' && !finalLabel.toUpperCase().includes(pty)) {
+        finalLabel = `${finalLabel} (${r.party})`;
       }
       return {
         label: finalLabel,
