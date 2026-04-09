@@ -479,7 +479,7 @@
         }
 
         /* SELECCIONADO — BORDE DORADO */
-        .profile-card.selected {
+        .profile-card.selected, .candidate-card.selected {
             border-color: #D4AF37 !important;
             box-shadow:
                 0 0 0 2px #D4AF37,
@@ -488,11 +488,11 @@
             background: rgba(212, 175, 55, 0.05);
         }
 
-        .profile-card.selected .avatar-ring {
+        .profile-card.selected .avatar-ring, .candidate-card.selected .img-container {
             border-color: #D4AF37;
         }
 
-        .profile-card.selected .profile-name {
+        .profile-card.selected .profile-name, .candidate-card.selected .card-name-text {
             color: #D4AF37 !important;
         }
 
@@ -502,7 +502,8 @@
         }
 
         /* ENFOQUE: ATENUAR NO SELECCIONADOS */
-        .candidate-profile-grid.has-selection .profile-card:not(.selected) {
+        .candidate-profile-grid.has-selection .profile-card:not(.selected),
+        .has-selection .candidate-card:not(.selected) {
             opacity: 0.45;
             filter: grayscale(60%);
             transform: scale(0.97);
@@ -1061,17 +1062,25 @@
                                 return `
                                                 <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
                                                      data-question="${q.id}" 
-                                                     class="option-card candidate-card glass-card p-6 rounded-3xl text-center group transition-all cursor-pointer hover:scale-[1.03] active:scale-95 border border-white/5 relative overflow-hidden">
-                                                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition"></div>
-                                                    <div class="relative w-28 h-28 mx-auto mb-6 rounded-full p-1 border-2 border-white/10 group-hover:border-amber-500 transition-colors shadow-2xl">
-                                                        <div class="w-full h-full rounded-full overflow-hidden bg-slate-900">
-                                                            ${photo ?
-                                        `<img src="${photo}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800&quot;>${label.charAt(0)}</div>'">` :
-                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${label.charAt(0)}</div>`
-                                    }
-                                                        </div>
+                                                     class="option-card candidate-card glass-card p-4 rounded-2xl text-center group transition-all duration-300 cursor-pointer border border-white/5 relative overflow-hidden flex flex-col items-center">
+                                                    
+                                                    <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
+                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                                        </svg>
                                                     </div>
-                                                    <h5 class="text-sm font-black uppercase tracking-tight text-white mb-2 line-clamp-2">${label}</h5>
+
+                                                    <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px;">
+                                                        ${photo ?
+                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800\\'>${label.charAt(0)}</div>'">` :
+                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800" style="height: 160px;">${label.charAt(0)}</div>`
+                                    }
+                                                    </div>
+                                                    
+                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
+                                                        ${label}
+                                                    </div>
+                                                    
                                                     <input type="radio" name="q-${q.id}" value="${value.replace(/'/g, "\\'")}" class="hidden">
                                                 </div>
                                             `;
@@ -1196,7 +1205,7 @@
         </div>
 
         <!-- Nombre Bold arriba -->
-        <div class="font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words">
+        <div class="card-name-text font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
             ${c.name.trim()}
         </div>
 
