@@ -1160,11 +1160,7 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-   let partyRaw = (c.party || '').trim().toUpperCase();
-if (partyRaw === 'INDEPENDIENTE' || partyRaw === 'IND') {
-    partyRaw = 'IND.';
-}
-const partyDisplay = partyRaw === 'IND.' ? 'IND.' : (c.party || 'IND.');
+    const partyDisplay = (c.party || 'IND').trim().toUpperCase();
     // ── COLOR INSTITUCIONAL POR PARTIDO ──
     const PARTY_COLORS = {
     'MORENA': '#8B0000',
@@ -1178,38 +1174,35 @@ const partyDisplay = partyRaw === 'IND.' ? 'IND.' : (c.party || 'IND.');
     'IND.':   '#64748B',   // ← Gris para independientes
     'INDEPENDIENTE': '#64748B'
 };
-    const badgeColor = PARTY_COLORS[partyRaw] || PARTY_COLORS['IND.'];
-
-    // ── FOTO ──
-    const photoSrc = c.img || c.photo_url || null;
-
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
-         class="option-card profile-card">
+         class="option-card candidate-card glass-card p-4 rounded-2xl text-center flex flex-col items-center relative overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer">
 
-        <!-- Checkmark — esquina superior derecha -->
-        <div class="check-icon">
-            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Checkmark -->
+        <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
 
-        <!-- Foto circular con borde emerald -->
-        <div class="avatar-ring">
+        <!-- Foto con height fijo de 160px -->
+        <div class="w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px; background-color: #001a33;">
             ${photoSrc
-                ? `<img src="${photoSrc}" onerror="this.parentElement.innerHTML='<div class=\\'avatar-placeholder\\'>${c.name.charAt(0)}</div>'" alt="${c.name}">`
-                : `<div class="avatar-placeholder">${c.name.charAt(0)}</div>`
+                ? `<img src="${photoSrc}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-500\\'>${c.name.charAt(0)}</div>'" alt="${c.name}">`
+                : `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-500">${c.name.charAt(0)}</div>`
             }
         </div>
 
         <!-- Nombre Bold arriba -->
-        <div class="profile-name">${c.name.replace(/\\s*\\(IND\\.?\\)\\s*/ig, '').replace(/\\s*Perfil Territorial\\s*/ig, '').trim()}</div>
+        <div class="font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words">
+            ${c.name.trim()}
+        </div>
 
-        <!-- Partido en pill debajo -->
-        <span class="party-pill" style="background-color: ${badgeColor};">
-            ${partyDisplay}
-        </span>
+        <!-- Partido en texto 10% más pequeño -->
+        <div class="w-full text-center uppercase tracking-wide font-medium text-white/80" style="font-size: 90%;">
+            (${partyDisplay})
+        </div>
 
         <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
     </div>

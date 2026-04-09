@@ -117,11 +117,14 @@
 
 .candidate-card {
     position: relative;
-    height: 240px;
+    height: auto;
+    min-height: 220px;
+    padding: 1rem;
     border-radius: 1.25rem;
     overflow: hidden;
-    border: 2px solid rgba(255, 255, 255, 0.06);
-    background: #001a33;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 26, 51, 0.8);
+    backdrop-filter: blur(8px);
     cursor: pointer;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
                 border-color 0.3s ease,
@@ -129,36 +132,31 @@
                 opacity 0.4s ease,
                 filter 0.4s ease;
     transform: scale(0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-/* FOTO: cubre toda la tarjeta */
+.candidate-card .img-container {
+    width: 100%;
+    height: 160px;
+    min-height: 160px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    background-color: #001a33;
+}
+
 .candidate-card img {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: top center !important;
-    transition: transform 0.5s ease !important;
-    z-index: 1 !important;
-    filter: none !important;
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.5s ease;
 }
 
-/* Gradiente inferior para legibilidad del nombre */
-.candidate-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.95) 0%,
-        rgba(0, 0, 0, 0.55) 35%,
-        transparent 65%
-    );
-    z-index: 2;
-    pointer-events: none;
-    transition: background 0.3s ease;
-}
+
 
 /* Hover */
 .candidate-card:hover {
@@ -171,23 +169,14 @@
     transform: scale(1.07) !important;
 }
 
-/* SELECCIONADO */
 .candidate-card.selected {
     transform: scale(1.02) translateY(-4px);
     border-color: #D4AF37 !important;
+    background: rgba(212, 175, 55, 0.05);
     box-shadow:
         0 0 0 2px #D4AF37,
         0 12px 32px rgba(0,0,0,0.8),
         0 0 28px rgba(212,175,55,0.3);
-}
-
-.candidate-card.selected::before {
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.97) 0%,
-        rgba(20, 15, 0, 0.6) 40%,
-        rgba(212, 175, 55, 0.08) 100%
-    );
 }
 
 .candidate-card.selected img {
@@ -206,69 +195,25 @@
     transform: scale(0.96);
 }
 
-/* BADGE DE PARTIDO — esquina superior izquierda */
-.party-badge-tag {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 4;
-    font-size: 9px;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #fff;
-    padding: 3px 8px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-
-/* CHECKMARK — esquina superior derecha */
-.card-check {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 4;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #10B981;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 10px rgba(16,185,129,0.6);
-}
-
-.candidate-card.selected .card-check {
-    display: flex;
-    animation: popIn 0.3s ease-out;
-}
-
-@keyframes popIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-/* NOMBRE — sobre gradiente inferior */
-.power-tag {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10px 12px 12px;
-    z-index: 3;
-}
-
 .card-name {
     display: block;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: 14px;
+    font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: -0.02em;
     color: #ffffff;
     line-height: 1.2;
-    text-shadow: 0 1px 6px rgba(0,0,0,1);
     transition: color 0.3s ease;
+    width: 100%;
+}
+.card-party {
+    margin-top: 4px;
+    display: block;
+    font-size: 90%;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: 100%;
 }
 
         /* Black Box Icon (Auditoría) */
@@ -372,17 +317,12 @@
             padding-bottom: 7rem;
         }
 
-        /* ═══ MOBILE OPTIMIZATIONS ═══ */
         @media (max-width: 640px) {
             .candidate-card {
-                height: 210px;
+                padding: 0.75rem;
             }
             .card-name {
-                font-size: 11px;
-            }
-            .party-badge-tag {
-                font-size: 8px;
-                padding: 2px 6px;
+                font-size: 12px;
             }
         }
     </style>
@@ -669,7 +609,6 @@ function selectCandidate(index) {
         const partyDisplay = isEduardoNery ? 'TERRITORIAL'
             : (!partyRaw || partyRaw === 'IND') ? 'IND.'
             : partyRaw;
-        const badgeColor = PARTY_COLORS[partyDisplay] || '#334155';
         const photoSrc = candidata.imagen || '/img/placeholder_cand.jpg';
         const nombre = sanitizeHTML(candidata.nombreCorto || candidata.nombre);
 
@@ -678,23 +617,15 @@ function selectCandidate(index) {
                  style="animation: fadeInUp 0.6s ease-out ${delay + 0.3}s both;"
                  onclick="selectCandidate(${index})">
 
-                <img src="${photoSrc}"
-                     onerror="this.src='/img/placeholder_cand.jpg';"
-                     alt="${nombre}">
-
-                <span class="party-badge-tag" style="background-color:${badgeColor};">
-                    ${partyDisplay}
-                </span>
-
-                <div class="card-check">
-                    <svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
+                <div class="img-container">
+                    <img src="${photoSrc}"
+                         onerror="this.src='/img/placeholder_cand.jpg';"
+                         alt="${nombre}">
                 </div>
 
-                <div class="power-tag">
-                    <span class="card-name">${nombre}</span>
-                </div>
+                <div class="card-name">${nombre}</div>
+                <div class="card-party">(${partyDisplay})</div>
+
             </div>
         `;
     });
