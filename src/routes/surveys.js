@@ -305,7 +305,7 @@ router.get('/:id/questions', async (req, res) => {
     if (hasSingleChoice) {
       if (survey.election_type === 'gubernatura') {
         const cands = await db.query(`
-          SELECT id, name, party,
+          SELECT id, BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(IND\\.?\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, party,
                  COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
           FROM candidates
           WHERE municipality_id IS NULL
@@ -314,7 +314,7 @@ router.get('/:id/questions', async (req, res) => {
         candidates = cands.rows;
       } else if (survey.municipality_id) {
         const cands = await db.query(`
-          SELECT id, name, party,
+          SELECT id, BTRIM(REGEXP_REPLACE(name, '(?i)\\s*\\(IND\\.?\\)\\s*|\\s*Perfil Territorial\\s*', '', 'g')) AS name, party,
                  COALESCE(NULLIF(photo_url, ''), '/assets/images/candidate-placeholder.png') AS photo_url
           FROM candidates
           WHERE municipality_id = $1
@@ -491,21 +491,35 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
 
     // --- VERIFICACIÓN TERRITORIAL DE ESTRUCTURAS (PROMOTORES) ---
     let isTerritorialVerified = false;
-    if (territorial.locationStatus === 'IN_RANGE' && promoterId) {
+    let finalLocationStatus = territorial.locationStatus;
+
+    if (locationProvided && territorial.locationStatus === 'IN_RANGE' && finalPromoterId) {
       // Intentar validar contra la tabla de promotores (Estructuras)
       try {
         const promoterCheck = await client.query(
           `SELECT seccion FROM promoters WHERE promoter_id = $1 LIMIT 1`,
-          [promoterId]
+          [finalPromoterId]
         );
-        if (promoterCheck.rows.length > 0) {
-          // El líder existe. 
-          // NOTA: Para un Geofencing real necesitamos las coordenadas por sección.
-          // Por ahora, si está IN_RANGE en Guerrero y el líder es válido, marcamos verificación.
-          isTerritorialVerified = true; 
+        let sectionId = null;
+        if (promoterCheck.rows.length > 0 && promoterCheck.rows[0].seccion) {
+          sectionId = promoterCheck.rows[0].seccion;
+        } else {
+          // Si el voto entra con ref=CARLOS1246, validar si las coordenadas GPS caen dentro de la sección 1246
+          const match = finalPromoterId.match(/\\d{2,4}/);
+          if (match) sectionId = match[0];
+        }
+
+        if (sectionId) {
+            const inSection = await require('../services/pipHelper').isLocationInSection(latitude, longitude, sectionId);
+            if (inSection) {
+               isTerritorialVerified = true;
+            } else {
+               // Si el GPS es IN_RANGE pero fuera de la sección, debe marcarse como 'Voto Externo'
+               finalLocationStatus = 'VOTO_EXTERNO';
+            }
         }
       } catch (err) {
-        console.error('⚠️ Error validando promotor:', err.message);
+        console.error('⚠️ Error validando promotor/seccion:', err.message);
       }
     }
 
@@ -551,7 +565,7 @@ router.post('/:id/response', surveyRateLimiter, async (req, res) => {
           clientIp,
           territorial.latitude,
           territorial.longitude,
-          territorial.locationStatus,
+          finalLocationStatus,
           finalPromoterId || null,
           isTerritorialVerified
         ]);
@@ -650,7 +664,7 @@ router.get('/:id/results', async (req, res) => {
           sr.response_value = c.id::text 
           OR sr.response_value = 'candidato_' || c.id
           OR sr.response_value = c.name
-          OR (LENGTH(sr.response_value) > 3 AND c.name ILIKE sr.response_value || '%')
+          OR (LENGTH(sr.response_value) >= 3 AND (c.name ILIKE sr.response_value || '%' OR sr.response_value ILIKE c.name || '%'))
         )
       )
       WHERE (
@@ -660,7 +674,7 @@ router.get('/:id/results', async (req, res) => {
       )
       AND (c.election_type = $3 OR $3 IS NULL OR c.election_type IS NULL)
       GROUP BY c.id, c.name, c.party
-      ORDER BY vote_count DESC, c.name ASC
+      ORDER BY vote_count DESC, label ASC
     `, [surveyId, municipality_id, election_type]);
 
     const results = resultsQuery.rows;
@@ -673,10 +687,12 @@ router.get('/:id/results', async (req, res) => {
 
     // ── 3. Formatear Respuesta JSON Requerida ──
     const formattedResults = results.map(r => {
-      let finalLabel = r.label;
+      let cleanLabel = r.label.replace(/\\s*\\(IND\\.?\\)\\s*/ig, '').replace(/\\s*Perfil Territorial\\s*/ig, '').trim();
+      let finalLabel = cleanLabel;
       // Sólo añadir el partido si no está ya presente en el nombre
-      if (r.party && r.party !== 'INDEPENDIENTE' && !r.label.toUpperCase().includes(r.party.toUpperCase())) {
-        finalLabel = `${r.label} (${r.party})`;
+      const pty = r.party ? r.party.trim().toUpperCase() : '';
+      if (r.party && pty !== 'INDEPENDIENTE' && pty !== 'IND' && pty !== 'IND.' && !cleanLabel.toUpperCase().includes(pty)) {
+        finalLabel = `${cleanLabel} (${r.party})`;
       }
       return {
         label: finalLabel,

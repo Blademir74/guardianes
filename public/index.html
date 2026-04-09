@@ -1204,7 +1204,7 @@ const partyDisplay = partyRaw === 'IND.' ? 'IND.' : (c.party || 'IND.');
         </div>
 
         <!-- Nombre Bold arriba -->
-        <div class="profile-name">${c.name}</div>
+        <div class="profile-name">${c.name.replace(/\\s*\\(IND\\.?\\)\\s*/ig, '').replace(/\\s*Perfil Territorial\\s*/ig, '').trim()}</div>
 
         <!-- Partido en pill debajo -->
         <span class="party-pill" style="background-color: ${badgeColor};">

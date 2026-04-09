@@ -9,6 +9,7 @@ const path = require('path');
 
 let entityGeoJSON = null;
 let municipalityGeoJSON = null;
+let sectionGeoJSON = null;
 
 // Ray-casting algorithm for Point-in-Polygon
 function pointInPolygon(point, vs) {
@@ -36,9 +37,11 @@ async function loadShapefiles() {
     try {
         const entityPath = path.join(__dirname, '../../shaphefile Guerrero/ENTIDAD.shp');
         const muniPath = path.join(__dirname, '../../shaphefile Guerrero/MUNICIPIO.shp');
+        const sectionPath = path.join(__dirname, '../../shaphefile Guerrero/SECCION.shp');
 
         entityGeoJSON = await shapefile.read(entityPath);
         municipalityGeoJSON = await shapefile.read(muniPath);
+        sectionGeoJSON = await shapefile.read(sectionPath);
 
         console.log('✅ Shapefiles loaded successfully for PiP Validation');
     } catch (err) {
@@ -46,6 +49,7 @@ async function loadShapefiles() {
         // Dejar ambos en null para que los fallbacks de abajo apliquen
         entityGeoJSON = null;
         municipalityGeoJSON = null;
+        sectionGeoJSON = null;
     }
 }
 
@@ -98,7 +102,30 @@ async function isLocationInMunicipality(lat, lng, muniId) {
     return false;
 }
 
+async function isLocationInSection(lat, lng, sectionId) {
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return true;
+    await loadShapefiles();
+    if (!sectionGeoJSON) return true; // Fallback
+
+    for (const feature of sectionGeoJSON.features) {
+        const props = feature.properties;
+        const featureSectionId = parseInt(props.SECCION || props.seccion, 10);
+        if (featureSectionId === parseInt(sectionId, 10)) {
+            const coords = feature.geometry.coordinates;
+            if (feature.geometry.type === 'Polygon') {
+                if (pointInPolygon([lng, lat], coords[0])) return true;
+            } else if (feature.geometry.type === 'MultiPolygon') {
+                for (const poly of coords) {
+                    if (pointInPolygon([lng, lat], poly[0])) return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 module.exports = {
     isLocationInGuerrero,
-    isLocationInMunicipality
+    isLocationInMunicipality,
+    isLocationInSection
 };
