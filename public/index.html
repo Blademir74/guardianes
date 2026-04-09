@@ -1174,6 +1174,7 @@
     'IND.':   '#64748B',   // ← Gris para independientes
     'INDEPENDIENTE': '#64748B'
 };
+    const photoSrc = c.img || c.photo_url || null;
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
