@@ -1169,7 +1169,7 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    const partyDisplay = (c.party || 'IND').trim().toUpperCase();
+    const partyDisplay = c.party ? c.party.trim().toUpperCase() : '';
     // ── COLOR INSTITUCIONAL POR PARTIDO ──
     const PARTY_COLORS = {
     'MORENA': '#8B0000',
@@ -1211,7 +1211,7 @@
 
         <!-- Partido en texto 10% más pequeño -->
         <div class="w-full text-center uppercase tracking-wide font-medium text-white/80" style="font-size: 90%;">
-            (${partyDisplay})
+            ${partyDisplay ? `(${partyDisplay})` : ''}
         </div>
 
         <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">

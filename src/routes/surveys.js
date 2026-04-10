@@ -692,16 +692,7 @@ router.get('/:id/results', async (req, res) => {
       FROM candidates c
       LEFT JOIN survey_responses sr ON (
         sr.survey_id = $1
-        AND (
-          sr.response_value = c.id::text 
-          OR sr.response_value = 'candidato_' || c.id
-          OR sr.response_value = c.name
-          OR (LENGTH(sr.response_value) >= 3 AND (
-              translate(c.name, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') ILIKE translate(replace(sr.response_value, 'Olager', 'Olaguer'), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') || '%' 
-              OR 
-              translate(replace(sr.response_value, 'Olager', 'Olaguer'), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') ILIKE translate(c.name, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') || '%'
-          ))
-        )
+        AND sr.response_value = c.id::text 
       )
       WHERE (
         (c.municipality_id = $2) 

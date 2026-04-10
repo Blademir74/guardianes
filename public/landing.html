@@ -606,9 +606,7 @@ function selectCandidate(index) {
         const delay = index * 0.1;
         const partyRaw = (candidata.partido || '').trim().toUpperCase();
         const isEduardoNery = window.location.href.includes('32');
-        const partyDisplay = isEduardoNery ? 'TERRITORIAL'
-            : (!partyRaw || partyRaw === 'IND') ? 'IND.'
-            : partyRaw;
+        const partyDisplay = partyRaw;
         const photoSrc = candidata.imagen || '/img/placeholder_cand.jpg';
         const nombre = sanitizeHTML(candidata.nombreCorto || candidata.nombre);
 
@@ -624,7 +622,7 @@ function selectCandidate(index) {
                 </div>
 
                 <div class="card-name">${nombre}</div>
-                <div class="card-party">(${partyDisplay})</div>
+                <div class="card-party">${partyDisplay ? `(${partyDisplay})` : ''}</div>
 
             </div>
         `;
