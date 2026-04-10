@@ -1169,7 +1169,8 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    const partyDisplay = c.party ? c.party.trim().toUpperCase() : '';
+    let partyDisplay = c.party ? c.party.trim().toUpperCase() : '';
+    if (partyDisplay === 'IND' || partyDisplay === 'IND.') partyDisplay = '';
     // ── COLOR INSTITUCIONAL POR PARTIDO ──
     const PARTY_COLORS = {
     'MORENA': '#8B0000',

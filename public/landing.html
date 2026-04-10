@@ -605,8 +605,8 @@ function selectCandidate(index) {
     candidatas.forEach((candidata, index) => {
         const delay = index * 0.1;
         const partyRaw = (candidata.partido || '').trim().toUpperCase();
-        const isEduardoNery = window.location.href.includes('32');
-        const partyDisplay = partyRaw;
+        let partyDisplay = partyRaw;
+        if (partyDisplay === 'IND' || partyDisplay === 'IND.') partyDisplay = '';
         const photoSrc = candidata.imagen || '/img/placeholder_cand.jpg';
         const nombre = sanitizeHTML(candidata.nombreCorto || candidata.nombre);
 
