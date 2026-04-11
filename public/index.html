@@ -1302,19 +1302,20 @@
             'INDECISO': '#94A3B8'
         };
 
-        function getCandidateColor(label) {
-            const upperLabel = label.toUpperCase();
-            // Mapeo prioritario por nombre (Casos Especiales)
-            if (upperLabel.includes('SALOMÓN') || upperLabel.includes('MAJUL')) return '#FF8A00'; // MC - Naranja
-            if (upperLabel.includes('VIVIANO')) return '#73091B'; 
-            if (upperLabel.includes('ESTHELA')) return '#73091B';
+        function getCandidateColor(partyOrLabel) {
+    const u = (partyOrLabel || '').toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-            for (const [party, color] of Object.entries(CANDIDATE_COLORS)) {
-                if (upperLabel.includes(party)) return color;
-            }
-            
-            return '#1E293B'; // Default dark slate
-        }
+    if (u === 'MORENA' || u.includes('MORENA')) return '#73091B';
+    if (u === 'PRI'    || u.includes('PRI'))    return '#EF4444';
+    if (u === 'PAN'    || u.includes('PAN'))    return '#3B82F6';
+    if (u === 'PVEM'   || u.includes('PVEM'))   return '#10B981';
+    if (u === 'PT'     || u.includes('PT'))     return '#FF0000';
+    if (u === 'MC'     || u.includes('MC'))     return '#FF8A00';
+    if (u === 'PRD'    || u.includes('PRD'))    return '#FFD700';
+    if (u === 'INDEPENDIENTE' || u.includes('IND')) return '#64748B';
+    return '#475569';
+}
 
         // --- REPARACIÓN QUIRÚRGICA: renderResults(data) ---
         function renderResults(data) {
@@ -1354,7 +1355,7 @@
 
             const labels = data.results.map(r => r.label);
             const votes = data.results.map(r => r.vote_count);
-            const colors = data.results.map(r => getCandidateColor(r.label));
+            const colors = data.results.map(r => getCandidateColor(r.party || r.label));
 
             if (chartInstance) {
                 chartInstance.data.labels = labels;
