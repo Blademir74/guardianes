@@ -21,7 +21,8 @@ router.post('/', async (req, res) => {
 
     let userId = null;
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-2027-guerrero');
+      if (!process.env.JWT_SECRET) throw new Error('Servidor mal configurado: JWT_SECRET faltante');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       userId = decoded.userId;
     } catch (err) {
       return res.status(401).json({ error: 'Token inválido o expirado' });

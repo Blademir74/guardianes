@@ -6,7 +6,12 @@
       "use": "@vercel/node",
       "config": {
         "maxDuration": 60,
-        "includeFiles": ["src/**", "api/**", "public/**"] 
+        "includeFiles": [
+          "src/**",
+          "api/**",
+          "public/**",
+          "shapefile_guerrero/**"
+        ]
       }
     }
   ],

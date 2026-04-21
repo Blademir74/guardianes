@@ -5,7 +5,7 @@ const { query } = require('../db');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-2027-guerrero';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Generar hash del teléfono para privacidad
 function generatePhoneHash(phone) {

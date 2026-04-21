@@ -6,7 +6,8 @@ const { query } = db;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-2027-guerrero';
+// ADMIN_JWT_SECRET sin fallback hardcodeado — auth.js ya valida esto en arranque
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 // Helper: normalizar tipo de elección
 function normalizeElectionType(raw) {
@@ -634,4 +635,8 @@ router.get('/surveys/:id/export-masked', authenticateAdmin, async (req, res) => 
   }
 });
 
+// Exportar helpers para uso en surveys.js
+// surveys.js importa: const { normalizeElectionType, syncCandidatesFromSurveyPayload } = require('./admin');
 module.exports = router;
+module.exports.normalizeElectionType          = normalizeElectionType;
+module.exports.syncCandidatesFromSurveyPayload = syncCandidatesFromSurveyPayload;

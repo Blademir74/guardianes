@@ -9,14 +9,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- SEO & Social Meta Tags -->
-    <meta property="og:title" content="Guerrero 2027: La Urna de la Verdad 🗳️🚨">
+    <meta property="og:title" content="Guerrero 2027: La Urna de la Verdad">
     <meta property="og:description" content="Sin registros. Sin nombres. Solo tu opinión protegida por integridad SHA-256. Participa en la auditoría ciudadana.">
     <meta property="og:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
     <meta property="og:url" content="https://pulsoguerrero.vercel.app/landing">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Guerrero 2027: La Urna de la Verdad 🗳️🚨">
+    <meta name="twitter:title" content="Guerrero 2027: La Urna de la Verdad">
     <meta name="twitter:description" content="Participa en la auditoría ciudadana 100% anónima. Guerrero 2027.">
     <meta name="twitter:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
 
@@ -72,7 +71,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Ambiente de luces */
         .ambient-glow {
             position: absolute;
             width: 100vw;
@@ -92,165 +90,148 @@
             border-bottom: 1px solid rgba(212, 175, 55, 0.15);
         }
 
-        /* Duelo de Perfiles / Battle Grid */
         .battle-grid {
             perspective: 1200px;
         }
 
         /* ═══════════════════════════════════════
-   TARJETAS CANDIDATOS — ESTÁNDAR DE ORO
-   ═══════════════════════════════════════ */
+           TARJETAS CANDIDATOS — ESTÁNDAR DE ORO
+        ═══════════════════════════════════════ */
+        #candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0;
+        }
 
-#candidates-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    padding: 0;
-}
+        @media (min-width: 768px) {
+            #candidates-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+        }
 
-@media (min-width: 768px) {
-    #candidates-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-    }
-}
-
-.candidate-card {
-    position: relative;
-    height: auto;
-    min-height: 220px;
-    padding: 1rem;
-    border-radius: 1.25rem;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 26, 51, 0.8);
-    backdrop-filter: blur(8px);
-    cursor: pointer;
-    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
-                border-color 0.3s ease,
-                box-shadow 0.3s ease,
-                opacity 0.4s ease,
-                filter 0.4s ease;
-    transform: scale(0.98);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.candidate-card .img-container {
-    width: 100%;
-    height: 160px;
-    min-height: 160px;
-    border-radius: 0.75rem;
-    overflow: hidden;
-    margin-bottom: 0.75rem;
-    background-color: #001a33;
-}
-
-.candidate-card img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    object-position: top center;
-    transition: transform 0.5s ease;
-}
-
-
-
-/* Hover */
-.candidate-card:hover {
-    transform: scale(1.02) translateY(-4px);
-    border-color: rgba(212, 175, 55, 0.5);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.7), 0 0 20px rgba(212,175,55,0.12);
-}
-
-.candidate-card:hover img {
-    transform: scale(1.07) !important;
-}
-
-.candidate-card.selected {
-    transform: scale(1.02) translateY(-4px);
-    border-color: #D4AF37 !important;
-    background: rgba(212, 175, 55, 0.05);
-    box-shadow:
-        0 0 0 2px #D4AF37,
-        0 12px 32px rgba(0,0,0,0.8),
-        0 0 28px rgba(212,175,55,0.3);
-}
-
-.candidate-card.selected img {
-    filter: brightness(1.05) contrast(1.05) !important;
-}
-
-/* Nombre dorado al seleccionar */
-.candidate-card.selected .card-name {
-    color: #D4AF37 !important;
-}
-
-/* ENFOQUE: atenuar no seleccionados */
-#candidates-grid.has-selection .candidate-card:not(.selected) {
-    opacity: 0.45;
-    filter: grayscale(70%);
-    transform: scale(0.96);
-}
-
-.card-name {
-    display: block;
-    font-size: 14px;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #ffffff;
-    line-height: 1.2;
-    transition: color 0.3s ease;
-    width: 100%;
-}
-.card-party {
-    margin-top: 4px;
-    display: block;
-    font-size: 90%;
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    width: 100%;
-}
-
-        /* Black Box Icon (Auditoría) */
-        .black-box-icon {
-            display: inline-flex;
+        .candidate-card {
+            position: relative;
+            height: auto;
+            min-height: 220px;
+            padding: 1rem;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 26, 51, 0.8);
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        border-color 0.3s ease,
+                        box-shadow 0.3s ease,
+                        opacity 0.4s ease,
+                        filter 0.4s ease;
+            transform: scale(0.98);
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            text-align: center;
+        }
+
+        /* ── Foto: height fijo 160px, object-fit cover, object-position top ── */
+        .candidate-card .img-container {
+            width: 100%;
+            height: 160px !important;
+            min-height: 160px !important;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+            background-color: #001a33;
+        }
+
+        .candidate-card img {
+            width: 100%;
+            height: 160px !important;
+            object-fit: cover !important;
+            object-position: top !important;
+            transition: transform 0.5s ease;
+        }
+
+        .candidate-card:hover {
+            transform: scale(1.02) translateY(-4px);
+            border-color: rgba(212, 175, 55, 0.5);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.7), 0 0 20px rgba(212,175,55,0.12);
+        }
+
+        .candidate-card:hover img {
+            transform: scale(1.07) !important;
+        }
+
+        /* ── Estado .selected: borde dorado + nombre dorado + checkmark verde ── */
+        .candidate-card.selected {
+            transform: scale(1.02) translateY(-4px);
+            border-color: #D4AF37 !important;
+            background: rgba(212, 175, 55, 0.05);
+            box-shadow:
+                0 0 0 2px #D4AF37,
+                0 12px 32px rgba(0,0,0,0.8),
+                0 0 28px rgba(212,175,55,0.3);
+        }
+
+        .candidate-card.selected img {
+            filter: brightness(1.05) contrast(1.05) !important;
+        }
+
+        /* Nombre dorado al seleccionar */
+        .candidate-card.selected .card-name {
+            color: #D4AF37 !important;
+        }
+
+        /* Checkmark verde esmeralda */
+        .card-check {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             width: 26px;
             height: 26px;
-            background: #000;
-            border: 1px solid #10b981;
-            border-radius: 4px;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-            color: #10b981;
-        }
-        
-        .black-box-tooltip {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.2s;
-            position: absolute;
-            bottom: 120%;
-            right: 0;
-            white-space: nowrap;
-            background: #000;
-            border: 1px solid #10b981;
-            padding: 4px 8px;
-            font-size: 0.6rem;
-            border-radius: 4px;
+            background: #10b981;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
         }
 
-        .black-box-container:hover .black-box-tooltip {
-            visibility: visible;
-            opacity: 1;
+        .candidate-card.selected .card-check {
+            display: flex;
         }
 
-        /* Botón CTA Magnífico */
+        /* Atenuar no seleccionados */
+        #candidates-grid.has-selection .candidate-card:not(.selected) {
+            opacity: 0.45;
+            filter: grayscale(70%);
+            transform: scale(0.96);
+        }
+
+        .card-name {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #ffffff;
+            line-height: 1.2;
+            transition: color 0.3s ease;
+            width: 100%;
+        }
+
+        .card-party {
+            margin-top: 4px;
+            display: block;
+            font-size: 90%;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 100%;
+        }
+
         .btn-center-action {
             background: linear-gradient(135deg, #d4af37 0%, #b48509 50%, #855f00 100%);
             color: #000;
@@ -274,7 +255,6 @@
         .btn-center-action:hover:not(:disabled) {
             transform: scale(1.05) translateY(-5px);
             box-shadow: 0 15px 35px rgba(212, 175, 55, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6);
-            letter-spacing: 0.2em;
         }
 
         .btn-disabled {
@@ -284,21 +264,14 @@
             box-shadow: none;
             cursor: not-allowed;
         }
-        
-        .btn-disabled::after {
-            display: none;
-        }
-        
-        .progress-bar {
-            transition: width 1s ease-in-out;
-        }
 
-        /* Sticky Bottom CTA Container */
+        .btn-disabled::after { display: none; }
+
+        .progress-bar { transition: width 1s ease-in-out; }
+
         .sticky-cta-container {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             padding: 1rem 1.5rem;
             background: linear-gradient(to top, #001a33 60%, transparent);
             backdrop-filter: blur(8px);
@@ -307,35 +280,32 @@
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
-        .sticky-cta-container.visible {
-            transform: translateY(0);
-        }
 
-        /* Ensures content doesn't get hidden behind the sticky CTA */
-        .voting-bottom-padding {
-            padding-bottom: 7rem;
+        .sticky-cta-container.visible { transform: translateY(0); }
+
+        .voting-bottom-padding { padding-bottom: 7rem; }
+
+        /* Skeleton loader */
+        .skeleton-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 1.25rem;
+            height: 260px;
+            animation: pulse 1.5s ease-in-out infinite;
         }
 
         @media (max-width: 640px) {
-            .candidate-card {
-                padding: 0.75rem;
-            }
-            .card-name {
-                font-size: 12px;
-            }
+            .candidate-card { padding: 0.75rem; }
+            .card-name { font-size: 12px; }
         }
     </style>
 </head>
 <body class="relative min-h-[100dvh]">
 
-    <!-- Fondo de ambiente -->
     <div class="ambient-glow"></div>
 
     <!-- Navegación Superior -->
     <nav class="fixed w-full z-50 glass-nav transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <!-- Logo Guardianes -->
             <div class="flex items-center gap-4">
                 <div class="w-1.5 h-1.5 bg-gold rounded-full shadow-[0_0_8px_#d4af37] animate-pulse-slow"></div>
                 <div class="flex flex-col">
@@ -343,7 +313,6 @@
                     <span class="text-[8px] md:text-[10px] font-mono tracking-[0.3em] text-gray-400 uppercase mt-1">Estudio de Inteligencia</span>
                 </div>
             </div>
-            <!-- Integridad Seal -->
             <div class="hidden sm:flex items-center gap-3 px-4 py-1.5 rounded border border-emerald/30 bg-emerald/5">
                 <svg class="w-4 h-4 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
@@ -353,14 +322,13 @@
                     <span class="text-[8px] tracking-widest uppercase text-gray-400 leading-tight">Datos Inmutables</span>
                 </div>
             </div>
-            <!-- Progression Step -->
             <div class="flex items-center bg-midnight border border-gold/30 rounded-md px-3 py-1.5 shadow-[0_0_10px_rgba(212,175,55,0.15)]">
                 <span class="text-[10px] md:text-xs font-sans font-bold tracking-[0.1em] text-gold uppercase">Paso 1 de 2 <span class="mx-2 text-gray-500">|</span> <span class="text-white">Elige tu Perfil</span></span>
             </div>
         </div>
     </nav>
 
-    <!-- Header / Hero Section -->
+    <!-- Hero -->
     <header class="relative pt-20 pb-4 px-6 text-center z-10 flex flex-col items-center max-h-[65vh] overflow-hidden">
         <div class="flex flex-wrap justify-center gap-3 mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
             <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-emerald/30 bg-emerald/10 backdrop-blur-md">
@@ -373,8 +341,8 @@
             </div>
         </div>
         
-        <h1 class="text-2xl md:text-5xl font-extrabold text-white leading-tight mb-3 font-serif max-w-4xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
-            EL MEJOR PERFIL PARA ZIHUATANEJO:<br>
+        <h1 class="text-2xl md:text-5xl font-extrabold text-white leading-tight mb-3 font-serif max-w-4xl mx-auto drop-shadow-2xl opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;" id="survey-headline">
+            GUERRERO 2027:<br>
             <span class="text-gold italic">TÚ DECIDES EL RUMBO</span>
         </h1>
         
@@ -385,23 +353,27 @@
         </p>
 
         <a href="#candidates-grid" class="opacity-0 animate-fade-in-up inline-flex items-center justify-center bg-gold hover:bg-gold-light text-midnight font-black py-3 px-10 rounded-full shadow-lg shadow-gold/20 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-sm mb-2" style="animation-delay: 0.5s;">
-            ¡Votar Ahora!
+            Votar Ahora
         </a>
     </header>
 
-    <!-- Contenedor Principal Formularios -->
+    <!-- Contenedor Principal -->
     <div id="voting-container" class="min-h-[100dvh]">
-        <!-- Módulo Dinámico de Candidatas (Battle Grid) -->
         <section class="py-4 relative z-10 px-4 md:px-6 voting-bottom-padding">
             <div id="candidates-grid" class="max-w-6xl mx-auto battle-grid opacity-0 animate-fade-in-up" style="animation-delay: 0.6s;">
-                <!-- Renderizado por JS -->
+                <!-- Skeleton inicial mientras carga la API -->
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
             </div>
         </section>
 
-        <!-- Call To Action Sincronizado (Sticky) -->
         <section id="sticky-cta" class="sticky-cta-container flex flex-col items-center">
             <div class="max-w-3xl mx-auto w-full flex flex-col items-center">
-                <h2 id="cta-heading" class="text-sm md:text-xl font-serif text-gray-500 mb-3 transition-colors hidden md:block">Selecciona a un perfil para continuar</h2>
+                <h2 id="cta-heading" class="text-sm md:text-xl font-serif text-gray-500 mb-3 transition-colors hidden md:block">Selecciona un perfil para continuar</h2>
                 <button id="btn-submit-vote" disabled class="inline-flex items-center justify-center btn-center-action btn-disabled px-8 md:px-14 py-4 md:py-5 text-sm md:text-base tracking-[0.15em] font-bold rounded-full w-full md:w-auto min-w-[300px]">
                     <span id="btn-text">SELLAR MI PREDICCIÓN EN LA CAJA NEGRA</span>
                     <svg id="btn-icon" class="w-5 h-5 ml-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,40 +392,37 @@
         </section>
     </div>
 
-    <!-- Panel de Validación (Oculto Inicialmente) -->
+    <!-- Panel de Validación -->
     <div id="validation-panel" class="hidden pb-24 relative z-20 px-6">
         <div class="max-w-4xl mx-auto">
             <div class="bg-emerald/10 border border-emerald/30 rounded-sm p-6 mb-12 text-center animate-fade-in-up">
                 <div class="w-12 h-12 bg-emerald/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald/50">
                     <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 </div>
-                <h2 class="text-xl md:text-2xl font-serif text-emerald mb-2">Tu decisión ha sido encriptada e inmutable en el registro nacional</h2>
+                <h2 class="text-xl md:text-2xl font-serif text-emerald mb-2">Tu decisión ha sido encriptada en el registro nacional</h2>
                 <p class="text-gray-400 font-mono text-[10px] uppercase tracking-widest">Sello SHA-256 Confirmado / Telemetría Activa</p>
             </div>
 
             <div class="glass-nav rounded-sm p-6 md:p-8 border border-gold/20 shadow-2xl animate-fade-in-up" style="animation-delay: 0.2s;">
-                <h3 class="text-center font-serif text-xl md:text-2xl text-white mb-2">Estado Inmutable de la Elección</h3>
+                <h3 class="text-center font-serif text-xl md:text-2xl text-white mb-2">Estado de la Auditoría</h3>
                 <p class="text-center text-gray-500 font-mono text-[10px] uppercase tracking-widest mb-10" id="live-trust-score">Calculando confianza promedio...</p>
                 
                 <div id="results-bars" class="space-y-6">
-                    <!-- Barras dinámicas renderizadas por JS -->
                     <div class="animate-pulse flex space-x-4"><div class="flex-1 space-y-4 py-1"><div class="h-4 bg-gray-700/50 rounded w-3/4"></div><div class="h-4 bg-gray-700/50 rounded"></div></div></div>
                 </div>
 
                 <div class="mt-10 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                     <span id="total-votes-count">0 Votos Verificados</span>
-                    <a href="/index.html" class="text-gold hover:text-white transition-colors">Volver a inicio →</a>
+                    <a href="/index.html" class="text-gold hover:text-white transition-colors">Volver a inicio</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer Institucional -->
+    <!-- Footer -->
     <footer class="py-10 border-t border-white/10 bg-black/60 backdrop-blur-lg relative z-20">
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-bold tracking-[0.2em] uppercase font-serif text-gray-400">Guardianes <span class="text-gray-600">Guerrero</span></span>
-            </div>
+            <span class="text-sm font-bold tracking-[0.2em] uppercase font-serif text-gray-400">Guardianes <span class="text-gray-600">Guerrero</span></span>
             <div class="text-[10px] font-mono tracking-[0.2em] text-gray-500 uppercase flex items-center gap-2">
                 <svg class="w-3 h-3 text-emerald" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                 Plataforma Blindada &copy; 2027
@@ -461,346 +430,355 @@
         </div>
     </footer>
 
-    <!-- Lógica de Renderizado Dinámico -->
     <script>
-        // Objeto central de configuración para fácil edición
-        const candidatas = [
-            { id: "1", nombreCorto: "Evilenia Bravo", nombre: "Evilenia Bravo Campos ", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/Dgs61378/evilenia.jpg" },
-            { id: "2", nombreCorto: "Gustavo Garcia", nombre: "Gustavo Garcia Bello", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/sp5C2K1L/gustavo.jpg" },
-            { id: "3", nombreCorto: "Jose Maria Morelos", nombre: "Jose Maria Morelos Martinez", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/k2TWKnr2/jose.jpg" },
-            { id: "4", nombreCorto: "Leovigilda Chavez", nombre: "Leovigilda Chavez Hernandez", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/fJ9hzq4/leovigilda.jpg" },
-            { id: "5", nombreCorto: "Maricarmen Cabrera", nombre: "Maricarmen Cabrera Lagunas ", partido: "PVEM", colorClase: "bg-pvem", colorHex: "#009640", imagen: "https://i.ibb.co/NgDRdc6X/maricarmen.jpg" },
-            { id: "6", nombreCorto: "Raul Garcia", nombre: "Raul Garcia Uriostegui", partido: "MORENA", colorClase: "bg-morena", colorHex: "#8a1c14", imagen: "https://i.ibb.co/GQzGNDVg/raul.jpg" }
-        ];
+    // =====================================================================
+    // ESTÁNDAR DE ORO — landing.html VERSIÓN CORREGIDA
+    // Correcciones:
+    //   [P0-XSS]  sanitizeHTML() aplicada a todo dato del DOM
+    //   [SYNC]    Candidatos cargados desde /api/surveys/:id/questions
+    //             NO hay array hardcodeado — la BD es la única fuente de verdad
+    //   [VOTE]    Se envía candidate.id (numérico) como answer, igual que index.html
+    //             Esto garantiza que el LEFT JOIN en /results cuenta correctamente
+    //   [UI]      .selected → nombre en #D4AF37, checkmark verde esmeralda
+    // =====================================================================
 
-        let selectedCandidate = null;
-        
-        // Variables globales para sincronización dinámica con Admin Dashboard
-        let activeSurveyId = null;
-        let activeQuestionId = null;
+    // ── Sanitización XSS ──────────────────────────────────────────────────
+    function sanitizeHTML(str) {
+        if (!str) return '';
+        const temp = document.createElement('div');
+        temp.textContent = String(str);
+        return temp.innerHTML;
+    }
 
-        async function syncWithActiveSurvey() {
-    try {
-        const res = await fetch('/api/surveys/active');
-        if (!res.ok) {
-            // Fetch falló: mostrar grid de todas formas, sin stand-by
-            console.warn('[SYS] Endpoint surveys/active no respondió. Mostrando grid local.');
+    // ── Estado global ─────────────────────────────────────────────────────
+    let activeSurveyId   = null;
+    let activeQuestionId = null;
+    let selectedCandidate = null;  // { id, name, party, photo_url }
+    let candidatesLoaded = [];     // array de candidatos de la BD
+
+    // ── SHA-256 local (anonimización del fingerprint antes de viajar por red)
+    async function sha256(message) {
+        const encoder = new TextEncoder();
+        const data    = encoder.encode(message);
+        const buf     = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── Render del grid con candidatos dinámicos ──────────────────────────
+    function renderBattleGrid(candidates) {
+        const grid = document.getElementById('candidates-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        if (!candidates || candidates.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center shadow-2xl shadow-gold/20">
+                    <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
+                        <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar.</h3>
+                    <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar está procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
+                    <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+                        <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
+                        <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase">Estado: Sistema en Auditoría</span>
+                    </div>
+                </div>
+            `;
+
+            // Ocultar CTA y botón de hero
+            const heroBtn = document.querySelector('header a[href="#candidates-grid"]');
+            if (heroBtn) heroBtn.classList.add('hidden');
+            const stickyCta = document.getElementById('sticky-cta');
+            if (stickyCta) stickyCta.classList.add('hidden');
             return;
         }
 
-        const data = await res.json();
+        candidates.forEach((cand, index) => {
+            const delay      = index * 0.08;
+            const nombre     = sanitizeHTML(cand.name);
+            const party      = (cand.party || '').trim().toUpperCase();
+            // Formato: Nombre (Partido). Sin (IND), sin "Perfil Territorial".
+            const partyLabel = (party && party !== 'IND' && party !== 'IND.' && party !== 'INDEPENDIENTE')
+                ? `(${sanitizeHTML(party)})`
+                : '';
+            const photoSrc   = cand.photo_url || '/img/placeholder_cand.jpg';
 
-        if (data && data.surveys && data.surveys.length > 0) {
-            activeSurveyId = data.surveys[0].id;
-            console.log(`[SYS] Encuesta activa ID: ${activeSurveyId}`);
+            const card = document.createElement('div');
+            card.className = 'candidate-card';
+            card.style.animation = `fadeInUp 0.6s ease-out ${delay + 0.3}s both`;
+            card.dataset.candidateIndex = index;
 
-            // Grid ya renderizado por renderBattleGrid() — no tocar innerHTML
-            const grid = document.getElementById('candidates-grid');
-            if (grid) grid.classList.add('battle-grid');
-
-            // Ocultar stand-by si existe de una carga anterior
-            const standbyBanner = document.getElementById('standby-banner-landing');
-            if (standbyBanner) standbyBanner.classList.add('hidden');
-
-            // Capturar ID de pregunta
-            try {
-                const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
-                if (qRes.ok) {
-                    const qData = await qRes.json();
-                    if (qData.questions && qData.questions.length > 0) {
-                        const validQuestion = qData.questions.find(q => q.questionType === 'single_choice') 
-                            || qData.questions[0];
-                        activeQuestionId = validQuestion.id;
-                        console.log(`[SYS] Pregunta activa ID: ${activeQuestionId}`);
-                    }
-                }
-            } catch (e) {
-                console.warn('[SYS] No se pudo obtener pregunta activa:', e.message);
-            }
-
-        } else {
-            // Confirmado: no hay encuestas activas — activar stand-by
-            console.log('[SYS] Sin encuestas activas. Activando stand-by.');
-
-            const heroBtn = document.querySelector('header a[href="#candidates-grid"]');
-            if (heroBtn) heroBtn.classList.add('hidden');
-
-            const grid = document.getElementById('candidates-grid');
-            if (grid) {
-                grid.classList.remove('battle-grid');
-                grid.innerHTML = `
-                    <div id="standby-banner-landing" class="col-span-full border-2 border-[#D4AF37] bg-[#001a33] rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-500 shadow-2xl shadow-gold/20">
-                       <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
-                           <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                       </div>
-                       <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
-                       <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar está procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
-                       <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                           <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
-                           <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Sistema en Auditoría</span>
-                       </div>
-                    </div>
-                `;
-            }
-
-            const stickyCta = document.getElementById('sticky-cta');
-            if (stickyCta) stickyCta.classList.add('hidden');
-        }
-
-    } catch (err) {
-        // Error de red: dejar el grid visible, no activar stand-by
-        console.error('[ERROR] Falla de sincronización:', err.message);
-    }
-}
-
-// Inicialización — renderBattleGrid() siempre primero
-document.addEventListener('DOMContentLoaded', () => {
-    renderBattleGrid();       // Grid local inmediato, sin esperar red
-    syncWithActiveSurvey();   // Sincronización async después
-});
-
-function selectCandidate(index) {
-    selectedCandidate = candidatas[index];
-    const gridContainer = document.getElementById('candidates-grid');
-    gridContainer.classList.add('has-selection');
-
-    document.querySelectorAll('.candidate-card').forEach((el, i) => {
-        const check = el.querySelector('.card-check');
-        if (i === index) {
-            el.classList.add('selected');
-            if (check) check.style.display = 'flex';
-        } else {
-            el.classList.remove('selected');
-            if (check) check.style.display = 'none';
-        }
-    });
-
-    const btn = document.getElementById('btn-submit-vote');
-    const ctaHeading = document.getElementById('cta-heading');
-    const btnIcon = document.getElementById('btn-icon');
-    const stickyCta = document.getElementById('sticky-cta');
-
-    btn.disabled = false;
-    btn.classList.remove('btn-disabled');
-    if (btnIcon) btnIcon.classList.remove('hidden');
-    if (stickyCta) stickyCta.classList.add('visible');
-    if (ctaHeading) {
-        ctaHeading.innerHTML = `Has seleccionado a ${sanitizeHTML(selectedCandidate.nombreCorto || selectedCandidate.nombre)}`;
-        ctaHeading.classList.remove('text-gray-500');
-        ctaHeading.classList.add('text-gold');
-    }
-}
-
-    function renderBattleGrid() {
-    const gridContainer = document.getElementById('candidates-grid');
-    if (!gridContainer) return;
-    if (gridContainer.querySelector('.candidate-card')) return;
-
-    const PARTY_COLORS = {
-        'MORENA':'#8B0000','PAN':'#1E40AF','PRI':'#DC2626',
-        'PVEM':'#15803D','PT':'#B91C1C','MC':'#EA580C',
-        'PRD':'#92400E','CIUDADANO':'#475569','IND.':'#334155'
-    };
-
-    candidatas.forEach((candidata, index) => {
-        const delay = index * 0.1;
-        const partyRaw = (candidata.partido || '').trim().toUpperCase();
-        let partyDisplay = partyRaw;
-        if (partyDisplay === 'IND' || partyDisplay === 'IND.') partyDisplay = '';
-        const photoSrc = candidata.imagen || '/img/placeholder_cand.jpg';
-        const nombre = sanitizeHTML(candidata.nombreCorto || candidata.nombre);
-
-        gridContainer.innerHTML += `
-            <div class="candidate-card"
-                 style="animation: fadeInUp 0.6s ease-out ${delay + 0.3}s both;"
-                 onclick="selectCandidate(${index})">
-
+            card.innerHTML = `
+                <div class="card-check">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
                 <div class="img-container">
                     <img src="${photoSrc}"
-                         onerror="this.src='/img/placeholder_cand.jpg';"
-                         alt="${nombre}">
+                         alt="${nombre}"
+                         onerror="this.src='/img/placeholder_cand.jpg';">
                 </div>
-
                 <div class="card-name">${nombre}</div>
-                <div class="card-party">${partyDisplay ? `(${partyDisplay})` : ''}</div>
+                <div class="card-party">${partyLabel}</div>
+            `;
 
-            </div>
-        `;
-    });
-}
-        // Utilidad de Sanitización XSS
-        function sanitizeHTML(str) {
-            const temp = document.createElement('div');
-            temp.textContent = str;
-            return temp.innerHTML;
-        }
+            card.addEventListener('click', () => selectCandidate(index));
+            grid.appendChild(card);
+        });
+    }
 
-        // Criptografía SHA-256 para anonimizado local de huella
-        async function sha256(message) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+    // ── Selección de candidato ────────────────────────────────────────────
+    function selectCandidate(index) {
+        selectedCandidate = candidatesLoaded[index];
+        const grid = document.getElementById('candidates-grid');
+        grid.classList.add('has-selection');
 
-        // Manejar el Voto
-        document.getElementById('btn-submit-vote').addEventListener('click', async () => {
-            if (!selectedCandidate) return;
-
-            const btn = document.getElementById('btn-submit-vote');
-            const spinner = document.getElementById('loading-spinner');
-            const errorBox = document.getElementById('error-message');
-            
-            btn.classList.add('hidden');
-            errorBox.classList.add('hidden');
-            spinner.classList.remove('hidden');
-
-            try {
-                // Validación de carga de seguridad
-                if (typeof FingerprintJS === 'undefined') {
-                    const originalBtnText = btn.textContent;
-                    if (btn) btn.textContent = 'INICIANDO PROTOCOLOS DE SEGURIDAD...';
-                    await new Promise(r => setTimeout(r, 1000));
-                }
-
-                // Obtener Fingerprint JS o utilizar Fallback Inquebrantable
-                let rawId;
-                try {
-                    if (typeof FingerprintJS !== 'undefined') {
-                        const fp = await FingerprintJS.load();
-                        const result = await fp.get();
-                        rawId = result.visitorId;
-                    } else {
-                        throw new Error('Script bloqueado por AdBlock/Network');
-                    }
-                } catch (e) {
-                    // Backup ID = IP + UA + RESOLUCION
-                    const ua = navigator.userAgent || 'unknown';
-                    const res = window.screen ? `${window.screen.width}x${window.screen.height}` : 'unknown';
-                    rawId = `fb_${ua}_${res}`;
-                }
-
-                // Hasheado local previo a viajar por red: Nadie puede desanominizar.
-                const fingerprintId = await sha256(rawId);
-
-                // 2. Obtener Ubicación (opcional/tratar de forzar)
-                let lat = null, lng = null, provided = false;
-                try {
-                    const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000 });
-                    });
-                    lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                    provided = true;
-                } catch(e) { /* Ignorar si no da GPS */ }
-
-                // 3. Ejecutar POST dinámico al backend
-                if (!activeSurveyId || !activeQuestionId) {
-                    throw new Error('No se detectó un módulo de escrutinio activo del dashboard administrador. Verifica que la encuesta esté publicada.');
-                }
-
-                // ── CAPTURA DE PROMOTOR (Auditoría V2) ──
-                const urlParams = new URLSearchParams(window.location.search);
-                const promoterRef = urlParams.get('ref') || null;
-
-                // Se envía el nombre que matcheará con sr.response_value
-                const payload = {
-                    fingerprintId: fingerprintId, // Asegurando uso de la variable global de FPJS
-                    locationProvided: provided,
-                    latitude: lat,
-                    longitude: lng,
-                    promoter_id: promoterRef,
-                    confidence_level: 100,
-                    responses: [
-                        { questionId: activeQuestionId, answer: selectedCandidate.nombre }
-                    ]
-                };
-
-                const res = await fetch(`/api/surveys/${activeSurveyId}/response`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                let data = {};
-                const contentType = res.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    data = await res.json();
-                }
-
-                if (!res.ok) {
-                    throw new Error(data.error || `Error del servidor (${res.status}). Por favor contacta a soporte.`);
-                }
-
-                // 4. Éxito: Ocultar Grid y mostrar Validación Global
-                document.getElementById('voting-container').style.display = 'none';
-                const validationPanel = document.getElementById('validation-panel');
-                validationPanel.classList.remove('hidden');
-
-                // 5. Cargar Resultados en Vivo Globales
-                loadGlobalResults();
-
-            } catch (error) {
-                console.error(error);
-                spinner.classList.add('hidden');
-                btn.classList.remove('hidden');
-                btn.textContent = 'REINTENTAR SELLADO';
-                errorBox.textContent = error.message;
-                errorBox.classList.remove('hidden');
+        document.querySelectorAll('.candidate-card').forEach((el, i) => {
+            if (i === index) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
             }
         });
 
-        async function loadGlobalResults() {
-            try {
-                if (!activeSurveyId) return;
-                
-                // Conectar con el endpoint de resultados ligado dinámicamente
-                const res = await fetch(`/api/surveys/${activeSurveyId}/results`);
-                if (res.ok) {
-                    const data = await res.json();
-                    renderGlobalResults(data);
-                }
-            } catch (err) {
-                console.error("Error cargando resultados", err);
-            }
+        const btn        = document.getElementById('btn-submit-vote');
+        const ctaHeading = document.getElementById('cta-heading');
+        const btnIcon    = document.getElementById('btn-icon');
+        const stickyCta  = document.getElementById('sticky-cta');
+
+        btn.disabled = false;
+        btn.classList.remove('btn-disabled');
+        if (btnIcon) btnIcon.classList.remove('hidden');
+        if (stickyCta) stickyCta.classList.add('visible');
+        if (ctaHeading) {
+            // textContent para evitar XSS — el nombre ya está sanitizado en render
+            ctaHeading.textContent = `Has seleccionado a ${selectedCandidate.name}`;
+            ctaHeading.classList.remove('text-gray-500');
+            ctaHeading.classList.add('text-gold');
         }
+    }
 
-        function renderGlobalResults(data) {
-            const container = document.getElementById('results-bars');
-            container.innerHTML = '';
+    // ── Carga dinámica desde la API ───────────────────────────────────────
+    async function initFromAPI() {
+        try {
+            // 1. Encuesta activa
+            const surveyRes = await fetch('/api/surveys/active');
+            if (!surveyRes.ok) {
+                console.warn('[LANDING] /api/surveys/active no respondió:', surveyRes.status);
+                renderBattleGrid([]);
+                return;
+            }
 
-            const results = data.results || [];
-            document.getElementById('total-votes-count').textContent = `${data.total_respondents || 0} VOTOS CIFRADOS`;
-            
-            const conf = data.avg_confidence || 100;
-            document.getElementById('live-trust-score').innerHTML = `NIVEL DE CONFIANZA PROMEDIO: <span class="text-gold">${conf.toFixed(1)}%</span>`;
+            const surveyData = await surveyRes.json();
 
-            results.forEach(r => {
-                const pct = r.percentage || 0;
-                container.innerHTML += `
-                    <div class="mb-4">
-                        <div class="flex justify-between items-end mb-1">
-                            <span class="text-xs font-bold text-gray-300 uppercase">${r.label}</span>
-                            <span class="text-xs font-mono text-gold">${pct}%</span>
-                        </div>
-                        <div class="w-full bg-midnight rounded-sm h-3 border border-white/5 overflow-hidden">
-                            <div class="progress-bar bg-gradient-to-r from-gold-light to-gold h-full rounded-sm" style="width: 0%"></div>
-                        </div>
-                    </div>
-                `;
+            if (!surveyData.surveys || surveyData.surveys.length === 0) {
+                console.log('[LANDING] Sin encuestas activas — activando stand-by.');
+                renderBattleGrid([]);
+                return;
+            }
+
+            const survey = surveyData.surveys[0];
+            activeSurveyId = survey.id;
+            console.log(`[LANDING] Encuesta activa: ${activeSurveyId} — "${survey.title}"`);
+
+            // Actualizar headline con el título real de la encuesta
+            const headline = document.getElementById('survey-headline');
+            if (headline && survey.title) {
+                headline.innerHTML = `${sanitizeHTML(survey.title)}<br><span class="text-gold italic">TÚ DECIDES</span>`;
+            }
+
+            // 2. Preguntas + candidatos del backend
+            const qRes = await fetch(`/api/surveys/${activeSurveyId}/questions`);
+            if (!qRes.ok) {
+                console.warn('[LANDING] /questions no respondió:', qRes.status);
+                renderBattleGrid([]);
+                return;
+            }
+
+            const qData = await qRes.json();
+
+            // Capturar ID de la pregunta single_choice
+            if (qData.questions && qData.questions.length > 0) {
+                const singleQ = qData.questions.find(q => q.questionType === 'single_choice')
+                    || qData.questions[0];
+                activeQuestionId = singleQ.id;
+                console.log(`[LANDING] Pregunta activa ID: ${activeQuestionId}`);
+            }
+
+            // Candidatos vienen en qData.candidates (surveys.js corregido los incluye)
+            const candidates = qData.candidates || [];
+            console.log(`[LANDING] Candidatos recibidos: ${candidates.length}`);
+
+            candidatesLoaded = candidates;
+            renderBattleGrid(candidates);
+
+        } catch (err) {
+            console.error('[LANDING] Error de red en initFromAPI:', err.message);
+            // En error de red, renderizar estado de espera
+            renderBattleGrid([]);
+        }
+    }
+
+    // ── Handler del botón de voto ─────────────────────────────────────────
+    document.getElementById('btn-submit-vote').addEventListener('click', async () => {
+        if (!selectedCandidate) return;
+
+        const btn      = document.getElementById('btn-submit-vote');
+        const spinner  = document.getElementById('loading-spinner');
+        const errorBox = document.getElementById('error-message');
+
+        btn.classList.add('hidden');
+        errorBox.classList.add('hidden');
+        spinner.classList.remove('hidden');
+
+        try {
+            if (!activeSurveyId || !activeQuestionId) {
+                throw new Error('No hay encuesta activa. Verifica que esté publicada desde el admin.');
+            }
+
+            // FingerprintJS con fallback
+            let rawId;
+            try {
+                if (typeof FingerprintJS !== 'undefined') {
+                    const fp     = await FingerprintJS.load();
+                    const result = await fp.get();
+                    rawId = result.visitorId;
+                } else {
+                    throw new Error('Script bloqueado');
+                }
+            } catch (e) {
+                const ua  = navigator.userAgent || 'unknown';
+                const res = window.screen ? `${window.screen.width}x${window.screen.height}` : 'unknown';
+                rawId = `fb_${ua}_${res}`;
+            }
+
+            const fingerprintId = await sha256(rawId);
+
+            // Geolocalización opcional
+            let lat = null, lng = null, provided = false;
+            try {
+                const pos = await new Promise((resolve, reject) =>
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000 })
+                );
+                lat      = pos.coords.latitude;
+                lng      = pos.coords.longitude;
+                provided = true;
+            } catch (e) { /* sin GPS — continuar */ }
+
+            // Promotor desde URL ?ref=
+            const urlParams   = new URLSearchParams(window.location.search);
+            const promoterRef = urlParams.get('ref') || null;
+
+            // CRÍTICO: se envía selectedCandidate.id (numérico, igual que index.html)
+            // Esto garantiza que /results pueda hacer JOIN por c.id::text = sr.response_value
+            const payload = {
+                fingerprintId,
+                locationProvided: provided,
+                latitude:         lat,
+                longitude:        lng,
+                promoter_id:      promoterRef,
+                confidence_level: 100,
+                responses: [
+                    { questionId: activeQuestionId, answer: String(selectedCandidate.id) }
+                ]
+            };
+
+            const res = await fetch(`/api/surveys/${activeSurveyId}/response`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(payload)
             });
 
-            // Trigger animation
-            setTimeout(() => {
-                const bars = container.querySelectorAll('.progress-bar');
-                bars.forEach((bar, idx) => {
-                    bar.style.width = `${results[idx].percentage || 0}%`;
-                });
-            }, 100);
-        }
+            let data = {};
+            const ct = res.headers.get('content-type');
+            if (ct && ct.includes('application/json')) {
+                data = await res.json();
+            }
 
-        // (Handler DOMContentLoaded unificado arriba)
+            if (res.status === 409) {
+                spinner.classList.add('hidden');
+                btn.classList.remove('hidden');
+                errorBox.textContent = data.error || 'Ya registraste tu voto desde este dispositivo.';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(data.error || `Error del servidor (${res.status}).`);
+            }
+
+            // Éxito
+            document.getElementById('voting-container').style.display = 'none';
+            document.getElementById('validation-panel').classList.remove('hidden');
+            loadGlobalResults();
+
+        } catch (error) {
+            console.error('[LANDING] Error en voto:', error);
+            spinner.classList.add('hidden');
+            btn.classList.remove('hidden');
+            btn.textContent = 'REINTENTAR SELLADO';
+            errorBox.textContent = error.message;
+            errorBox.classList.remove('hidden');
+        }
+    });
+
+    // ── Resultados globales post-voto ─────────────────────────────────────
+    async function loadGlobalResults() {
+        try {
+            if (!activeSurveyId) return;
+            const res = await fetch(`/api/surveys/${activeSurveyId}/results`);
+            if (res.ok) {
+                const data = await res.json();
+                renderGlobalResults(data);
+            }
+        } catch (err) {
+            console.error('[LANDING] Error cargando resultados:', err.message);
+        }
+    }
+
+    function renderGlobalResults(data) {
+        const container = document.getElementById('results-bars');
+        container.innerHTML = '';
+
+        const results = data.results || [];
+        document.getElementById('total-votes-count').textContent =
+            `${data.total_respondents || 0} VOTOS CIFRADOS`;
+
+        const conf = data.avg_confidence || 100;
+        document.getElementById('live-trust-score').innerHTML =
+            `CONFIANZA PROMEDIO: <span class="text-gold">${conf.toFixed ? conf.toFixed(1) : conf}%</span>`;
+
+        results.forEach(r => {
+            const pct  = r.percentage || 0;
+            const div  = document.createElement('div');
+            div.className = 'mb-4';
+            div.innerHTML = `
+                <div class="flex justify-between items-end mb-1">
+                    <span class="text-xs font-bold text-gray-300 uppercase">${sanitizeHTML(r.label)}</span>
+                    <span class="text-xs font-mono text-gold">${pct}%</span>
+                </div>
+                <div class="w-full bg-midnight rounded-sm h-3 border border-white/5 overflow-hidden">
+                    <div class="progress-bar bg-gradient-to-r from-gold-light to-gold h-full rounded-sm" style="width: 0%"></div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        // Trigger animación de barras
+        setTimeout(() => {
+            const bars = container.querySelectorAll('.progress-bar');
+            bars.forEach((bar, idx) => {
+                bar.style.width = `${results[idx]?.percentage || 0}%`;
+            });
+        }, 100);
+    }
+
+    // ── Arranque ──────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        initFromAPI();
+    });
     </script>
 </body>
 </html>

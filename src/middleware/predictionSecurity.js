@@ -39,7 +39,7 @@ const predictionSecurity = async (req, res, next) => {
       try {
         const decoded = jwt.verify(
           token,
-          process.env.JWT_SECRET || 'dev-secret-2027-guerrero'
+          process.env.JWT_SECRET
         );
         userId = decoded.userId;
         isAuthenticated = true;

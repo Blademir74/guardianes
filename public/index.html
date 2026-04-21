@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardianes de Guerrero | Caja Negra Democrática</title>
+    <script src="/js/sanitize.js"></script>
     <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/sanitize.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -68,9 +70,17 @@
         }
 
         .candidate-card.selected {
-            border-color: var(--accent);
-            background: rgba(202, 138, 4, 0.1);
-            box-shadow: 0 0 30px rgba(202, 138, 4, 0.3);
+            border-color: #D4AF37 !important;
+            background: rgba(212, 175, 55, 0.12) !important;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.35) !important;
+        }
+
+        .candidate-card.selected .card-name-text {
+            color: #D4AF37 !important;
+        }
+
+        .candidate-card.selected .check-icon {
+            display: flex !important;
         }
 
 
@@ -801,13 +811,7 @@
         // ============================================
         // SHA-256 HASH (Web Crypto API)
         // ============================================
-        async function sha256(message) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        // sha256() importado desde /js/sanitize.js
 
         // ============================================
         // SESSION LOCK (localStorage)
@@ -907,8 +911,8 @@
                           </div>
                           <div>
                               <span class="bg-${typeColor}-600/10 text-${typeColor}-500 font-extrabold text-[9px] px-3 py-1 rounded-full uppercase tracking-widest border border-${typeColor}-600/20">${typeLabel}</span>
-                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${s.title}</h3>
-                              <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${s.description || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
+                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${sanitizeHTML(s.title)}</h3>
+                              <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${sanitizeHTML(s.description) || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
                           </div>
                           <div class="mt-8 flex justify-between items-end">
                             <div>
@@ -949,7 +953,9 @@
                 if (!res.ok) throw new Error(data.error);
                 if (!data.survey) throw new Error('Estructura de datos incorrecta');
 
-                document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
+                const safeTitle = sanitizeHTML(data.survey.title || '');
+                const titleWords = sanitizeHTML(data.survey.title).split(' ');
+                document.getElementById('modal-title').innerHTML = `${titleWords[0]} <span class="text-amber-500">${titleWords.slice(1).join(' ')}</span>`;
                 document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
 
                 // Reset locks
@@ -1051,7 +1057,7 @@
                                 <div class="space-y-10 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
-                                        <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
+                                        <h4 class="text-3xl font-black uppercase tracking-tighter italic">${sanitizeHTML(q.questionText)}</h4>
                                     </div>
                                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                         ${customOptions.map(opt => {
@@ -1072,7 +1078,7 @@
 
                                                     <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px;">
                                                         ${photo ?
-                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800\\'>${label.charAt(0)}</div>'">` :
+                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.textContent='${sanitizeAttr(label.charAt(0))}'"
                                         `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800" style="height: 160px;">${label.charAt(0)}</div>`
                                     }
                                                     </div>
@@ -1207,7 +1213,7 @@
 
         <!-- Nombre Bold arriba -->
         <div class="card-name-text font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
-            ${c.name.trim()}
+            ${sanitizeHTML(c.name.trim())}
         </div>
 
         <!-- Partido en texto 10% más pequeño -->
@@ -1967,14 +1973,14 @@
                     <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-white/10">
                         ${candidate.img
                         ? `<img src="${candidate.img}" class="w-full h-full object-cover" 
-                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${candidate.name.charAt(0)}</span>'"
-                                 alt="${candidate.name}">`
-                        : `<span class="text-2xl font-bold text-slate-500">${candidate.name.charAt(0)}</span>`
+                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${sanitizeHTML(candidate.name).charAt(0)}</span>'"
+                                 alt="${sanitizeHTML(candidate.name)}">`
+                        : `<span class="text-2xl font-bold text-slate-500">${sanitizeHTML(candidate.name).charAt(0)}</span>`
                     }
                     </div>
                     <div>
-                        <h4 class="font-bold text-white text-sm">${candidate.name}</h4>
-                        <span class="text-xs text-amber-500 font-bold">${candidate.party}</span>
+                        <h4 class="font-bold text-white text-sm">${sanitizeHTML(candidate.name)}</h4>
+                        <span class="text-xs text-amber-500 font-bold">${sanitizeHTML(candidate.party)}</span>
                     </div>
                 </div>
             </div>
@@ -2302,7 +2308,7 @@
                 type === 'error' ? 'bg-red-600' :
                     'bg-amber-600'
                 }`;
-            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
+            toast.innerHTML = `<p class="font-black text-white">${sanitizeHTML(message)}</p>`;
             document.body.appendChild(toast);
 
             setTimeout(() => {

@@ -10,6 +10,7 @@ const path = require('path');
 let entityGeoJSON = null;
 let municipalityGeoJSON = null;
 let sectionGeoJSON = null;
+let _loadPromise = null; // Caché de promesa para evitar cargas concurrentes
 
 // Ray-casting algorithm for Point-in-Polygon
 function pointInPolygon(point, vs) {
@@ -27,6 +28,7 @@ function pointInPolygon(point, vs) {
 
 async function loadShapefiles() {
     if (entityGeoJSON && municipalityGeoJSON) return;
+    if (_loadPromise) return _loadPromise; // Evitar cargas concurrentes
 
     // Si shapefile no está disponible en este entorno, salir sin error
     if (!shapefile) {
@@ -34,23 +36,29 @@ async function loadShapefiles() {
         return;
     }
 
-    try {
-        const entityPath = path.join(__dirname, '../../shaphefile Guerrero/ENTIDAD.shp');
-        const muniPath = path.join(__dirname, '../../shaphefile Guerrero/MUNICIPIO.shp');
-        const sectionPath = path.join(__dirname, '../../shaphefile Guerrero/SECCION.shp');
+    _loadPromise = (async () => {
+        try {
+            // ══════════════════════════════════════════════════════════════
+            // RUTA CORREGIDA: 'shaphefile Guerrero' → 'shapefile_guerrero'
+            // ══════════════════════════════════════════════════════════════
+            const entityPath = path.join(__dirname, '../../shapefile_guerrero/ENTIDAD.shp');
+            const muniPath = path.join(__dirname, '../../shapefile_guerrero/MUNICIPIO.shp');
+            const sectionPath = path.join(__dirname, '../../shapefile_guerrero/SECCION.shp');
 
-        entityGeoJSON = await shapefile.read(entityPath);
-        municipalityGeoJSON = await shapefile.read(muniPath);
-        sectionGeoJSON = await shapefile.read(sectionPath);
+            entityGeoJSON = await shapefile.read(entityPath);
+            municipalityGeoJSON = await shapefile.read(muniPath);
+            sectionGeoJSON = await shapefile.read(sectionPath);
 
-        console.log('✅ Shapefiles loaded successfully for PiP Validation');
-    } catch (err) {
-        console.error('❌ Error loading shapefiles:', err);
-        // Dejar ambos en null para que los fallbacks de abajo apliquen
-        entityGeoJSON = null;
-        municipalityGeoJSON = null;
-        sectionGeoJSON = null;
-    }
+            console.log('✅ Shapefiles loaded successfully for PiP Validation');
+        } catch (err) {
+            console.error('❌ Error loading shapefiles:', err.message);
+            entityGeoJSON = null;
+            municipalityGeoJSON = null;
+            sectionGeoJSON = null;
+        }
+    })();
+
+    return _loadPromise;
 }
 
 async function isLocationInGuerrero(lat, lng) {
