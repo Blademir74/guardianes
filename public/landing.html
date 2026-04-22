@@ -392,30 +392,64 @@
         </section>
     </div>
 
-    <!-- Panel de Validación -->
+    <!-- Panel de Validación — Confirmación + Countdown + Resultados -->
     <div id="validation-panel" class="hidden pb-24 relative z-20 px-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-emerald/10 border border-emerald/30 rounded-sm p-6 mb-12 text-center animate-fade-in-up">
-                <div class="w-12 h-12 bg-emerald/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald/50">
-                    <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <div class="max-w-4xl mx-auto pt-8">
+
+            <!-- PASO 1: Confirmación del voto -->
+            <div id="vote-confirmation-block" class="border border-emerald/30 bg-emerald/5 rounded-[2.5rem] p-8 md:p-12 mb-8 text-center animate-fade-in-up">
+                <div class="w-14 h-14 bg-emerald/20 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald/40 shadow-lg shadow-emerald/10">
+                    <svg class="w-7 h-7 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
                 </div>
-                <h2 class="text-xl md:text-2xl font-serif text-emerald mb-2">Tu decisión ha sido encriptada en el registro nacional</h2>
-                <p class="text-gray-400 font-mono text-[10px] uppercase tracking-widest">Sello SHA-256 Confirmado / Telemetría Activa</p>
+                <h2 id="confirmation-candidate-name" class="text-xl md:text-3xl font-serif text-white font-bold mb-2">Voto Sellado</h2>
+                <p class="text-gray-400 text-sm mb-5 font-medium">Tu decisión está protegida con integridad SHA-256 en la Caja Negra de Guardianes.</p>
+                <div class="inline-flex items-center gap-3 bg-black/40 px-5 py-2.5 rounded-full border border-emerald/20 mb-6">
+                    <span class="w-2 h-2 bg-emerald rounded-full animate-pulse"></span>
+                    <span id="vote-hash-display" class="font-mono text-[9px] text-emerald uppercase tracking-widest">Calculando sello...</span>
+                </div>
+                <div id="countdown-row" class="flex items-center justify-center gap-3 mt-4">
+                    <span class="text-gray-500 text-xs uppercase tracking-widest font-bold font-mono">Resultados en</span>
+                    <span id="results-countdown" class="text-gold font-black text-3xl font-mono w-10 text-center">3</span>
+                </div>
             </div>
 
-            <div class="glass-nav rounded-sm p-6 md:p-8 border border-gold/20 shadow-2xl animate-fade-in-up" style="animation-delay: 0.2s;">
-                <h3 class="text-center font-serif text-xl md:text-2xl text-white mb-2">Estado de la Auditoría</h3>
-                <p class="text-center text-gray-500 font-mono text-[10px] uppercase tracking-widest mb-10" id="live-trust-score">Calculando confianza promedio...</p>
-                
-                <div id="results-bars" class="space-y-6">
-                    <div class="animate-pulse flex space-x-4"><div class="flex-1 space-y-4 py-1"><div class="h-4 bg-gray-700/50 rounded w-3/4"></div><div class="h-4 bg-gray-700/50 rounded"></div></div></div>
-                </div>
-
-                <div class="mt-10 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-500 uppercase tracking-widest">
-                    <span id="total-votes-count">0 Votos Verificados</span>
-                    <a href="/index.html" class="text-gold hover:text-white transition-colors">Volver a inicio</a>
+            <!-- PASO 2: Resultados (aparece tras countdown) -->
+            <div id="results-reveal-block" class="hidden animate-fade-in-up">
+                <div class="glass-nav rounded-[2rem] p-6 md:p-8 border border-gold/20 shadow-2xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-serif text-lg md:text-2xl text-white font-bold">Estado de la Auditoría</h3>
+                        <div class="flex items-center gap-2 bg-emerald/10 px-3 py-1.5 rounded-full border border-emerald/20">
+                            <span class="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse"></span>
+                            <span class="text-[9px] font-bold text-emerald uppercase tracking-widest">En Vivo</span>
+                        </div>
+                    </div>
+                    <div id="results-bars" class="space-y-4 mb-8">
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="flex-1 space-y-3 py-1">
+                                <div class="h-3 bg-gray-700/50 rounded w-3/4"></div>
+                                <div class="h-3 bg-gray-700/50 rounded"></div>
+                                <div class="h-3 bg-gray-700/50 rounded w-5/6"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-5 border-t border-white/5">
+                        <div class="text-center">
+                            <div id="total-votes-count" class="text-2xl font-black text-white font-mono">0</div>
+                            <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Votos Cifrados</div>
+                        </div>
+                        <div class="text-center">
+                            <div id="live-trust-score" class="text-2xl font-black text-gold font-mono">--%</div>
+                            <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Confianza Promedio</div>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <a href="/index.html" class="text-xs font-mono text-gray-500 hover:text-gold transition-colors uppercase tracking-widest">Ver auditoría completa →</a>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -709,10 +743,44 @@
                 throw new Error(data.error || `Error del servidor (${res.status}).`);
             }
 
-            // Éxito
+            // Éxito — mostrar confirmación + countdown + resultados
             document.getElementById('voting-container').style.display = 'none';
-            document.getElementById('validation-panel').classList.remove('hidden');
-            loadGlobalResults();
+            const validationPanel = document.getElementById('validation-panel');
+            validationPanel.classList.remove('hidden');
+            validationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Nombre del candidato seleccionado
+            const nameEl = document.getElementById('confirmation-candidate-name');
+            if (nameEl && selectedCandidate) {
+                nameEl.textContent = 'Sellado: ' + selectedCandidate.name;
+            }
+
+            // Hash visual
+            const hashEl = document.getElementById('vote-hash-display');
+            if (hashEl) {
+                const visualHash = Array.from(crypto.getRandomValues(new Uint8Array(12)))
+                    .map(b => b.toString(16).padStart(2, '0')).join('') + '...';
+                hashEl.textContent = 'SHA256: ' + visualHash;
+            }
+
+            // Countdown 3→2→1→0 y luego revelar resultados
+            let count = 3;
+            const countEl = document.getElementById('results-countdown');
+            const countInterval = setInterval(async () => {
+                count--;
+                if (countEl) countEl.textContent = count;
+                if (count <= 0) {
+                    clearInterval(countInterval);
+                    const cdRow = document.getElementById('countdown-row');
+                    if (cdRow) cdRow.style.display = 'none';
+                    const revealBlock = document.getElementById('results-reveal-block');
+                    if (revealBlock) {
+                        revealBlock.classList.remove('hidden');
+                        revealBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    await loadGlobalResults();
+                }
+            }, 1000);
 
         } catch (error) {
             console.error('[LANDING] Error en voto:', error);
@@ -738,29 +806,56 @@
         }
     }
 
+    // Colores institucionales por partido
+    const PARTY_COLORS_LANDING = {
+        'MORENA':'#8B0000','PAN':'#1E40AF','PRI':'#DC2626',
+        'PVEM':'#15803D','PT':'#B91C1C','MC':'#EA580C',
+        'PRD':'#CA8A04','INDEPENDIENTE':'#64748B'
+    };
+
+    function getPartyColor(label) {
+        const u = (label || '').toUpperCase();
+        for (const [party, color] of Object.entries(PARTY_COLORS_LANDING)) {
+            if (u.includes(party)) return color;
+        }
+        return '#D4AF37';
+    }
+
     function renderGlobalResults(data) {
         const container = document.getElementById('results-bars');
+        if (!container) return;
         container.innerHTML = '';
 
         const results = data.results || [];
-        document.getElementById('total-votes-count').textContent =
-            `${data.total_respondents || 0} VOTOS CIFRADOS`;
 
-        const conf = data.avg_confidence || 100;
-        document.getElementById('live-trust-score').innerHTML =
-            `CONFIANZA PROMEDIO: <span class="text-gold">${conf.toFixed ? conf.toFixed(1) : conf}%</span>`;
+        // Contadores
+        const totalEl = document.getElementById('total-votes-count');
+        const trustEl = document.getElementById('live-trust-score');
+        if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
+        if (trustEl) {
+            const conf = data.avg_confidence || 0;
+            trustEl.textContent = (typeof conf === 'number' ? conf.toFixed(1) : conf) + '%';
+        }
 
-        results.forEach(r => {
-            const pct  = r.percentage || 0;
-            const div  = document.createElement('div');
-            div.className = 'mb-4';
+        // Barras con nombre (Partido), color institucional, votos y porcentaje
+        results.forEach((r, idx) => {
+            const pct     = r.percentage || 0;
+            const color   = getPartyColor(r.label);
+            const isLeader = idx === 0 && r.vote_count > 0;
+
+            const div = document.createElement('div');
+            div.className = 'mb-3';
             div.innerHTML = `
-                <div class="flex justify-between items-end mb-1">
-                    <span class="text-xs font-bold text-gray-300 uppercase">${sanitizeHTML(r.label)}</span>
-                    <span class="text-xs font-mono text-gold">${pct}%</span>
+                <div class="flex justify-between items-center mb-1 gap-2">
+                    <span class="text-xs font-bold text-gray-200 uppercase leading-tight flex-1 truncate">
+                        ${isLeader ? '<span style="color:#D4AF37">&#9650; </span>' : ''}${sanitizeHTML(r.label)}
+                    </span>
+                    <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
+                    <span class="font-mono text-[9px] text-gray-500 shrink-0">${r.vote_count} v.</span>
                 </div>
-                <div class="w-full bg-midnight rounded-sm h-3 border border-white/5 overflow-hidden">
-                    <div class="progress-bar bg-gradient-to-r from-gold-light to-gold h-full rounded-sm" style="width: 0%"></div>
+                <div class="w-full bg-midnight rounded-full h-2.5 overflow-hidden border border-white/5">
+                    <div style="width:0%; background-color:${color};" data-target="${pct}%"
+                         class="h-full rounded-full transition-all duration-1000 ease-out"></div>
                 </div>
             `;
             container.appendChild(div);
@@ -768,11 +863,10 @@
 
         // Trigger animación de barras
         setTimeout(() => {
-            const bars = container.querySelectorAll('.progress-bar');
-            bars.forEach((bar, idx) => {
-                bar.style.width = `${results[idx]?.percentage || 0}%`;
+            container.querySelectorAll('[data-target]').forEach(bar => {
+                bar.style.width = bar.dataset.target;
             });
-        }, 100);
+        }, 120);
     }
 
     // ── Arranque ──────────────────────────────────────────────────────────

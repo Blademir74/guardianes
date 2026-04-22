@@ -5,10 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardianes de Guerrero | Caja Negra Democrática</title>
-    <script src="/js/sanitize.js"></script>
     <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/js/sanitize.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -70,17 +68,9 @@
         }
 
         .candidate-card.selected {
-            border-color: #D4AF37 !important;
-            background: rgba(212, 175, 55, 0.12) !important;
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.35) !important;
-        }
-
-        .candidate-card.selected .card-name-text {
-            color: #D4AF37 !important;
-        }
-
-        .candidate-card.selected .check-icon {
-            display: flex !important;
+            border-color: var(--accent);
+            background: rgba(202, 138, 4, 0.1);
+            box-shadow: 0 0 30px rgba(202, 138, 4, 0.3);
         }
 
 
@@ -677,40 +667,71 @@
                     <p class="text-center text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-4">Tu decisión será encriptada (SHA-256) e inmutable en el registro nacional</p>
                 </div>
 
-                <!-- PANEL RESULTADOS EN VIVO — Al fondo, tras interacción -->
-                <div id="live-results-panel" class="mt-6 pt-10 border-t border-white/5 hidden">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg md:text-2xl font-black uppercase tracking-tight text-white">Panel de <span class="text-emerald-500">Validación</span></h3>
-                        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                            <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest hidden md:inline">En Tiempo Real</span>
+                <!-- PANEL POST-VOTO: Confirmación + Resultados en Vivo -->
+                <!-- Oculto por defecto. Se activa vía showPostVotePanel() tras voto exitoso -->
+                <div id="live-results-panel" class="mt-6 hidden">
+
+                    <!-- ── PASO 1: Confirmación animada ── -->
+                    <div id="vote-confirmation-block" class="py-10 px-6 text-center border border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] mb-8 animate-in fade-in zoom-in duration-500">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40 shadow-lg shadow-emerald-500/10">
+                            <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
                         </div>
-                    </div>
-                    
-                    <div class="w-full h-[280px] md:h-[380px] chart-container bg-[#0F172A]/50 rounded-3xl p-4 border border-white/5 relative">
-                        <div class="absolute inset-0 p-4 pb-10">
-                            <canvas id="resultsChart" class="w-full h-full"></canvas>
+                        <h3 id="confirmation-candidate-name" class="text-xl md:text-3xl font-black uppercase tracking-tighter text-white mb-2">
+                            Voto Registrado
+                        </h3>
+                        <p class="text-slate-400 text-sm font-medium mb-4">Tu decisión está protegida con integridad SHA-256 en la Caja Negra.</p>
+                        <div class="inline-flex items-center gap-3 bg-black/40 px-4 py-2 rounded-full border border-emerald-500/20">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span id="vote-hash-display" class="font-mono text-[9px] text-emerald-400 uppercase tracking-widest">Calculando sello...</span>
                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
-                            <div id="votos-totales" class="text-3xl font-black text-white">0</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Votos en Caja Negra</div>
-                        </div>
-                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm">
-                            <div id="confianza-promedio" class="text-3xl font-black text-emerald-500">0%</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Confianza Promedio</div>
-                        </div>
-                        <div class="bg-[#1E293B]/40 p-5 rounded-3xl text-center border border-white/5 backdrop-blur-sm col-span-2 md:col-span-1">
-                            <div id="last-update-live" class="text-sm font-bold text-emerald-500 mt-2">--:--</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Sincronización</div>
+                        <!-- Countdown antes de mostrar resultados -->
+                        <div class="mt-6 flex items-center justify-center gap-2">
+                            <span class="text-slate-500 text-xs uppercase tracking-widest font-bold">Resultados en</span>
+                            <span id="results-countdown" class="text-amber-400 font-black text-2xl font-mono w-8 text-center">3</span>
                         </div>
                     </div>
 
-                    <!-- REPARACIÓN: Listado de Barras de Progreso Dinámicas -->
-                    <div id="resultados-preliminares" class="mt-8 space-y-6 bg-[#0F172A]/30 p-6 rounded-[2.5rem] border border-white/5">
-                        <!-- Injected via renderResults() -->
+                    <!-- ── PASO 2: Resultados en vivo (aparece tras countdown) ── -->
+                    <div id="results-reveal-block" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+                        <div class="flex items-center justify-between mb-6 pt-2 border-t border-white/5">
+                            <h3 class="text-lg md:text-2xl font-black uppercase tracking-tight text-white">Auditoría <span class="text-emerald-500">en Vivo</span></h3>
+                            <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
+                            </div>
+                        </div>
+
+                        <!-- Gráfica Chart.js -->
+                        <div class="w-full h-[280px] md:h-[360px] bg-[#0F172A]/50 rounded-3xl p-4 border border-white/5 relative mb-6">
+                            <div class="absolute inset-0 p-4 pb-10">
+                                <canvas id="resultsChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Barras de porcentaje con nombre y partido -->
+                        <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-6 rounded-[2rem] border border-white/5 mb-6">
+                            <!-- Inyectado por renderResults() -->
+                        </div>
+
+                        <!-- Contadores globales -->
+                        <div class="grid grid-cols-3 gap-3 mt-4">
+                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
+                                <div id="votos-totales" class="text-2xl font-black text-white">0</div>
+                                <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Votos</div>
+                            </div>
+                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
+                                <div id="confianza-promedio" class="text-2xl font-black text-emerald-500">0%</div>
+                                <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Confianza</div>
+                            </div>
+                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
+                                <div id="last-update-live" class="text-xs font-bold text-emerald-500 mt-1">--:--</div>
+                                <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sync</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -811,7 +832,13 @@
         // ============================================
         // SHA-256 HASH (Web Crypto API)
         // ============================================
-        // sha256() importado desde /js/sanitize.js
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         // ============================================
         // SESSION LOCK (localStorage)
@@ -911,8 +938,8 @@
                           </div>
                           <div>
                               <span class="bg-${typeColor}-600/10 text-${typeColor}-500 font-extrabold text-[9px] px-3 py-1 rounded-full uppercase tracking-widest border border-${typeColor}-600/20">${typeLabel}</span>
-                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${sanitizeHTML(s.title)}</h3>
-                              <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${sanitizeHTML(s.description) || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
+                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${s.title}</h3>
+                              <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${s.description || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
                           </div>
                           <div class="mt-8 flex justify-between items-end">
                             <div>
@@ -953,9 +980,7 @@
                 if (!res.ok) throw new Error(data.error);
                 if (!data.survey) throw new Error('Estructura de datos incorrecta');
 
-                const safeTitle = sanitizeHTML(data.survey.title || '');
-                const titleWords = sanitizeHTML(data.survey.title).split(' ');
-                document.getElementById('modal-title').innerHTML = `${titleWords[0]} <span class="text-amber-500">${titleWords.slice(1).join(' ')}</span>`;
+                document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
                 document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
 
                 // Reset locks
@@ -1057,7 +1082,7 @@
                                 <div class="space-y-10 animate-in slide-in-from-bottom-4 duration-500" style="animation-delay: ${qIdx * 0.1}s">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-900/40">${qIdx + 1}</div>
-                                        <h4 class="text-3xl font-black uppercase tracking-tighter italic">${sanitizeHTML(q.questionText)}</h4>
+                                        <h4 class="text-3xl font-black uppercase tracking-tighter italic">${q.questionText}</h4>
                                     </div>
                                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                         ${customOptions.map(opt => {
@@ -1078,7 +1103,7 @@
 
                                                     <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px;">
                                                         ${photo ?
-                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.textContent='${sanitizeAttr(label.charAt(0))}'"
+                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800\\'>${label.charAt(0)}</div>'">` :
                                         `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800" style="height: 160px;">${label.charAt(0)}</div>`
                                     }
                                                     </div>
@@ -1213,7 +1238,7 @@
 
         <!-- Nombre Bold arriba -->
         <div class="card-name-text font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
-            ${sanitizeHTML(c.name.trim())}
+            ${c.name.trim()}
         </div>
 
         <!-- Partido en texto 10% más pequeño -->
@@ -1323,34 +1348,66 @@
     return '#475569';
 }
 
-        // --- REPARACIÓN QUIRÚRGICA: renderResults(data) ---
+        // --- renderResults: gráfica + barras de porcentaje ---
         function renderResults(data) {
             if (!data || !data.results) return;
 
-            // 1. Actualizar Gráfica
+            // 1. Gráfica Chart.js
             updateLiveChart(data);
 
-            // 2. Mapear Nombres y Votos en Barras de Progreso (ELIMINADO POR DUPLICIDAD - SÓLO GRÁFICA)
+            // 2. Barras de porcentaje con nombre y partido (formato: Nombre (Partido))
             const container = document.getElementById('resultados-preliminares');
             if (container) {
-                container.innerHTML = `
-                    <div class="text-center py-4 border-t border-white/5 mt-4">
-                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Auditoría en Progreso — Gráfica en Vivo</span>
-                    </div>
-                `;
+                container.innerHTML = '';
+                const results = data.results || [];
+                const maxVotes = Math.max(...results.map(r => r.vote_count || 0), 1);
+
+                results.forEach((r, idx) => {
+                    const pct   = r.percentage || 0;
+                    const color = getCandidateColor(r.party || r.label);
+                    const isLeader = idx === 0 && r.vote_count > 0;
+
+                    const row = document.createElement('div');
+                    row.className = 'relative';
+                    row.innerHTML = `
+                        <div class="flex justify-between items-center mb-1 gap-2">
+                            <span class="text-xs font-bold text-slate-200 uppercase leading-tight flex-1 truncate">
+                                ${isLeader ? '<span class="text-amber-400 mr-1">▲</span>' : ''}${r.label}
+                            </span>
+                            <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
+                            <span class="font-mono text-[9px] text-slate-500 shrink-0">${r.vote_count} v.</span>
+                        </div>
+                        <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden border border-white/5">
+                            <div class="h-full rounded-full transition-all duration-1000 ease-out"
+                                 style="width: 0%; background-color: ${color};"
+                                 data-target-width="${pct}%">
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+
+                // Trigger animación de barras con pequeño delay
+                setTimeout(() => {
+                    container.querySelectorAll('[data-target-width]').forEach(bar => {
+                        bar.style.width = bar.dataset.targetWidth;
+                    });
+                }, 120);
             }
 
-            // 3. Actualizar Contadores Globales
-            const totalVotesEl = document.getElementById('votos-totales');
+            // 3. Contadores
+            const totalVotesEl    = document.getElementById('votos-totales');
             const avgConfidenceEl = document.getElementById('confianza-promedio');
-            const lastUpdateEl = document.getElementById('last-update-live');
+            const lastUpdateEl    = document.getElementById('last-update-live');
 
-            if (totalVotesEl) totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString();
+            if (totalVotesEl) totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
             if (avgConfidenceEl) {
                 const val = data.avg_confidence || 0;
-                avgConfidenceEl.textContent = Number(val.toFixed(1)) + '%';
+                avgConfidenceEl.textContent = Number(val).toFixed(1) + '%';
             }
-            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
         }
 
         function updateLiveChart(data) {
@@ -1577,31 +1634,65 @@
                 }
 
                 if (res.ok) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '<span style="color: #D97706">VOTO ENCRIPTADO</span>',
-                        html: `
-                            <div class="text-center">
-                                <p class="text-slate-300 mb-4">Tu decisión ha sido resguardada en la <b>Caja Negra</b> de Guardianes.</p>
-                                <div class="bg-black/40 p-3 rounded-xl border border-[#D97706]/20 font-mono text-[10px] text-emerald-400 mb-4 break-all">
-                                    SHA256: ${Array.from(crypto.getRandomValues(new Uint8Array(20))).map(b => b.toString(16).padStart(2, '0')).join('')}...
-                                </div>
-                                <div class="text-[9px] text-slate-500 uppercase tracking-widest">Sello de Integridad Digital Directo</div>
-                            </div>
-                        `,
-                        confirmButtonText: 'VER AUDITORÍA EN VIVO',
-                        confirmButtonColor: '#D97706',
-                        background: '#0A0F1C',
-                        color: '#fff'
-                    });
-                    
-                    // Impacto Instantáneo: Refrescar resultados sin cerrar modal inmediatamente
-                    fetchLiveResults(currentSurveyId).then(data => {
-                        if (data) {
-                            updateLiveChart(data);
-                            document.getElementById('live-results-panel')?.scrollIntoView({ behavior: 'smooth' });
+                    // Cerrar loading
+                    Swal.close();
+
+                    // Nombre del candidato seleccionado para el mensaje
+                    const selectedName = (() => {
+                        const checked = document.querySelector('.option-card.selected .card-name-text');
+                        return checked ? checked.textContent.trim() : 'tu candidato';
+                    })();
+
+                    // Hash visual para el sello
+                    const visualHash = Array.from(crypto.getRandomValues(new Uint8Array(12)))
+                        .map(b => b.toString(16).padStart(2, '0')).join('') + '...';
+
+                    // Mostrar panel post-voto y ocultar botón de envío
+                    const submitBtn = document.getElementById('submit-vote-btn');
+                    if (submitBtn) submitBtn.style.display = 'none';
+
+                    const panel = document.getElementById('live-results-panel');
+                    if (panel) {
+                        panel.classList.remove('hidden');
+                        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+
+                    // Poblar mensaje de confirmación
+                    const nameEl = document.getElementById('confirmation-candidate-name');
+                    if (nameEl) nameEl.textContent = `Sellado: ${selectedName}`;
+
+                    const hashEl = document.getElementById('vote-hash-display');
+                    if (hashEl) hashEl.textContent = `SHA256: ${visualHash}`;
+
+                    // Countdown 3→2→1→0 y luego revelar resultados
+                    let count = 3;
+                    const countEl = document.getElementById('results-countdown');
+                    const countInterval = setInterval(async () => {
+                        count--;
+                        if (countEl) countEl.textContent = count;
+
+                        if (count <= 0) {
+                            clearInterval(countInterval);
+
+                            // Revelar bloque de resultados
+                            const revealBlock = document.getElementById('results-reveal-block');
+                            if (revealBlock) revealBlock.classList.remove('hidden');
+
+                            // Ocultar countdown suavemente
+                            const cdRow = document.querySelector('#vote-confirmation-block .mt-6');
+                            if (cdRow) cdRow.style.display = 'none';
+
+                            // Cargar y renderizar resultados
+                            const liveData = await fetchLiveResults(currentSurveyId);
+                            if (liveData) {
+                                renderResults(liveData);
+                                revealBlock?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+
+                            // Iniciar polling para que los resultados sigan actualizando
+                            startLivePolling(currentSurveyId);
                         }
-                    });
+                    }, 1000);
 
                     loadSurveys();
                 } else {
@@ -1973,14 +2064,14 @@
                     <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-white/10">
                         ${candidate.img
                         ? `<img src="${candidate.img}" class="w-full h-full object-cover" 
-                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${sanitizeHTML(candidate.name).charAt(0)}</span>'"
-                                 alt="${sanitizeHTML(candidate.name)}">`
-                        : `<span class="text-2xl font-bold text-slate-500">${sanitizeHTML(candidate.name).charAt(0)}</span>`
+                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${candidate.name.charAt(0)}</span>'"
+                                 alt="${candidate.name}">`
+                        : `<span class="text-2xl font-bold text-slate-500">${candidate.name.charAt(0)}</span>`
                     }
                     </div>
                     <div>
-                        <h4 class="font-bold text-white text-sm">${sanitizeHTML(candidate.name)}</h4>
-                        <span class="text-xs text-amber-500 font-bold">${sanitizeHTML(candidate.party)}</span>
+                        <h4 class="font-bold text-white text-sm">${candidate.name}</h4>
+                        <span class="text-xs text-amber-500 font-bold">${candidate.party}</span>
                     </div>
                 </div>
             </div>
@@ -2308,7 +2399,7 @@
                 type === 'error' ? 'bg-red-600' :
                     'bg-amber-600'
                 }`;
-            toast.innerHTML = `<p class="font-black text-white">${sanitizeHTML(message)}</p>`;
+            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
             document.body.appendChild(toast);
 
             setTimeout(() => {
