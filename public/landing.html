@@ -645,8 +645,14 @@
             const candidates = qData.candidates || [];
             console.log(`[LANDING] Candidatos recibidos: ${candidates.length}`);
 
-            candidatesLoaded = candidates;
-            renderBattleGrid(candidates);
+            // Asegurar que candidatesLoaded usa el ID numérico real para el voto
+            candidatesLoaded = candidates.map(c => ({
+                id: c.numeric_id || c.id,
+                name: c.name,
+                party: c.party,
+                photo_url: c.photo_url || '/img/placeholder_cand.jpg'
+            }));
+            renderBattleGrid(candidatesLoaded);
 
         } catch (err) {
             console.error('[LANDING] Error de red en initFromAPI:', err.message);
@@ -773,6 +779,12 @@
                     clearInterval(countInterval);
                     const cdRow = document.getElementById('countdown-row');
                     if (cdRow) cdRow.style.display = 'none';
+                    const revealBlock = document.getElementById('results-reveal-block');
+                    if (revealBlock) {
+                        revealBlock.classList.remove('hidden');
+                        revealBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    // Siempre revelar el bloque aunque no haya resultados aún
                     const revealBlock = document.getElementById('results-reveal-block');
                     if (revealBlock) {
                         revealBlock.classList.remove('hidden');

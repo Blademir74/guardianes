@@ -736,18 +736,49 @@ async function loadUsers() {
 // ══════════════════════════════════════════════════════════════
 // MODAL — CREAR ENCUESTA
 // ══════════════════════════════════════════════════════════════
+// Colores institucionales por partido — se usan en preview y en index/landing
+const PARTY_COLORS = {
+  'MORENA':'#8B0000','PAN':'#1E40AF','PRI':'#DC2626','PVEM':'#15803D',
+  'PT':'#B91C1C','MC':'#EA580C','PRD':'#CA8A04','INDEPENDIENTE':'#64748B',
+  'MOVIMIENTO CIUDADANO':'#EA580C'
+};
+
+function getPartyColor(party) {
+  return PARTY_COLORS[(party||'').toUpperCase()] || '#475569';
+}
+
 function addOptionField() {
   const list = document.getElementById('options-list');
   const div  = document.createElement('div');
-  div.className = 'flex gap-3 animate-in fade-in zoom-in-95 duration-200';
+  div.className = 'flex gap-2 items-center animate-in fade-in zoom-in-95 duration-200';
+
+  const partyOptions = [
+    'MORENA','PAN','PRI','PVEM','PT','MC','PRD','INDEPENDIENTE'
+  ].map(p => `<option value="${p}" style="background:#0f172a">${p}</option>`).join('');
+
   div.innerHTML = `
-    <input type="text" placeholder="Nombre Candidato"
-      class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-xs font-bold outline-none focus:border-amber-600">
-    <input type="text" placeholder="URL Foto (opcional)"
-      class="flex-[2] bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-medium outline-none focus:border-amber-600">
+    <input type="text" placeholder="Nombre del Candidato" data-role="name"
+      class="flex-[3] bg-slate-900 border border-white/10 p-3 rounded-xl text-xs font-bold outline-none focus:border-amber-600 transition">
+    <div class="flex-[2] relative">
+      <select data-role="party" onchange="updatePartyDot(this)"
+        class="w-full bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-black uppercase outline-none focus:border-amber-600 transition appearance-none pl-7 cursor-pointer">
+        <option value="">PARTIDO</option>
+        ${partyOptions}
+      </select>
+      <span data-role="dot" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-slate-600 transition-colors pointer-events-none"></span>
+    </div>
+    <input type="text" placeholder="URL Foto" data-role="photo"
+      class="flex-[3] bg-slate-900 border border-white/10 p-3 rounded-xl text-[10px] font-medium outline-none focus:border-amber-600 transition">
     <button onclick="this.parentElement.remove()"
-      class="flex-none w-10 h-10 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition">✕</button>`;
+      class="flex-none w-9 h-9 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition text-sm font-bold">✕</button>`;
   list.appendChild(div);
+}
+
+function updatePartyDot(select) {
+  const color = getPartyColor(select.value);
+  const dot   = select.parentElement.querySelector('[data-role="dot"]');
+  if (dot) dot.style.backgroundColor = color;
+  select.style.borderColor = color + '80';
 }
 
 function toggleMunicipalitySelector() {
@@ -820,9 +851,17 @@ async function createSurvey() {
   if (!title) { showToast('Operación requiere nombre descriptivo', 'error'); return; }
 
   const optionFields = document.getElementById('options-list').children;
-  const options = Array.from(optionFields)
-    .map(f => ({ label: f.children[0].value, value: f.children[0].value, photo: f.children[1].value || null }))
-    .filter(o => o.label.trim());
+  const options = Array.from(optionFields).map(f => {
+    const nameEl  = f.querySelector('[data-role="name"]');
+    const partyEl = f.querySelector('[data-role="party"]');
+    const photoEl = f.querySelector('[data-role="photo"]');
+    return {
+      label: nameEl  ? nameEl.value.trim()  : '',
+      party: partyEl ? partyEl.value.trim() : '',
+      photo: photoEl ? photoEl.value.trim() : null,
+      value: nameEl  ? nameEl.value.trim()  : ''
+    };
+  }).filter(o => o.label);
 
   const level = document.getElementById('s-level').value;
   const payload = {

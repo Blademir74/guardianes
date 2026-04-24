@@ -999,18 +999,12 @@
                         if (candidatesRes.ok) {
                             const candidatesData = await candidatesRes.json();
                             console.log('✅ Candidatos gubernatura:', candidatesData);
-                            candidates = candidatesData.map(c => {
-                                // Si la BD no tiene foto, buscar en ASPIRANTES por nombre
-                                let imgPath = c.photo_url || c.img || null;
-                                if (!imgPath) {
-                                    const match = ASPIRANTES.find(a =>
-                                        a.name.toLowerCase().includes(c.name.toLowerCase().split(' ')[0]) ||
-                                        c.name.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
-                                    );
-                                    if (match && match.img) imgPath = match.img;
-                                }
-                                return { id: c.id, name: c.name, party: c.party, img: imgPath };
-                            });
+                            candidates = candidatesData.map(c => ({
+                                id: c.numeric_id || c.id,
+                                name: c.name,
+                                party: c.party,
+                                img: c.photo_url || c.img || null
+                            }));
                         } else {
                             console.error('❌ Error fetch gubernatura:', candidatesRes.status);
                         }
@@ -1018,32 +1012,26 @@
                         console.error('❌ Error cargando candidatos gubernatura:', e);
                     }
                 } else {
-                    // Cargar candidatos municipales
-                    const munId = data.survey.municipalityId || data.survey.municipality_id;
-
-                    if (!munId) {
-                        console.error('❌ No hay municipalityId para encuesta municipal');
-                        candidates = [];
-                    } else {
-                        try {
-                            const candidatesRes = await fetch(`${API_URL}/data/candidates/${munId}`);
-                            if (candidatesRes.ok) {
-                                const candidatesData = await candidatesRes.json();
-                                console.log('✅ Candidatos municipales:', candidatesData);
-                                candidates = candidatesData.map(c => ({
-                                    id: c.id,
-                                    name: c.name,
-                                    party: c.party,
-                                    img: c.photo_url || c.img || null
-                                }));
-                            } else {
-                                console.error('❌ Error fetch candidatos:', candidatesRes.status);
-                                candidates = [];
-                            }
-                        } catch (e) {
-                            console.error('❌ Error cargando candidatos municipales:', e);
+                    // Candidatos municipales via /by-survey — evita contaminación entre encuestas
+                    try {
+                        const surveyIdForCandidates = data.survey.id || currentSurveyId;
+                        const candidatesRes = await fetch(`${API_URL}/data/candidates/by-survey/${surveyIdForCandidates}`);
+                        if (candidatesRes.ok) {
+                            const candidatesData = await candidatesRes.json();
+                            console.log(`✅ Candidatos by-survey (${surveyIdForCandidates}):`, candidatesData.length);
+                            candidates = candidatesData.map(c => ({
+                                id: c.numeric_id || c.id,
+                                name: c.name,
+                                party: c.party,
+                                img: c.photo_url || c.img || null
+                            }));
+                        } else {
+                            console.error('❌ Error fetch candidatos by-survey:', candidatesRes.status);
                             candidates = [];
                         }
+                    } catch (e) {
+                        console.error('❌ Error cargando candidatos by-survey:', e);
+                        candidates = [];
                     }
                 }
 
@@ -1682,12 +1670,16 @@
                             const cdRow = document.querySelector('#vote-confirmation-block .mt-6');
                             if (cdRow) cdRow.style.display = 'none';
 
-                            // Cargar y renderizar resultados
+                            // Cargar y renderizar resultados — revelar bloque siempre
                             const liveData = await fetchLiveResults(currentSurveyId);
-                            if (liveData) {
+                            if (liveData && liveData.results) {
                                 renderResults(liveData);
-                                revealBlock?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } else {
+                                // Sin resultados aún — mostrar estado vacío en lugar de ocultar
+                                const barsEl = document.getElementById('resultados-preliminares');
+                                if (barsEl) barsEl.innerHTML = '<p class="text-center text-slate-500 text-xs font-mono uppercase tracking-widest py-6">Los resultados aparecerán conforme lleguen los votos</p>';
                             }
+                            revealBlock?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                             // Iniciar polling para que los resultados sigan actualizando
                             startLivePolling(currentSurveyId);

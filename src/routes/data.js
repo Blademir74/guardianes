@@ -1,221 +1,142 @@
-// src/routes/data.js — VERSIÓN CORREGIDA (Auditoría 2026-02-02)
-// Correcciones:
-//   BUG-8  → /comparison y /participation verifican existencia de historical_results
-//   BUG-9  → columnas referenciadas validadas contra el esquema real
-//   BUG-10 → photo_url se retorna una sola vez; frontend usa "photo_url" canónico
-//            Si es NULL, se retorna un placeholder URL para que el frontend no rompa
+// src/routes/data.js — ESTÁNDAR DE ORO v3
+// [FIX-MUN]   Búsqueda flexible de municipality_id (cubre mismatch 18 vs 183)
+// [FIX-PARTY] COALESCE garantiza que party nunca llega NULL al frontend
+// [FIX-CROSS] Endpoint /by-survey/:surveyId evita contaminación entre encuestas
 
 const express = require('express');
 const router  = express.Router();
 const { query } = require('../db');
 
-// Placeholder para candidatos sin foto cargada.
-// Ajuste: reemplaza con tu imagen real o un avatar genérico.
+const candidateSelect = `
+  id,
+  id AS numeric_id,
+  BTRIM(name) AS name,
+  COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
+  COALESCE(
+    NULLIF(photo_url,''),
+    CONCAT('https://ui-avatars.com/api/?name=', REPLACE(BTRIM(name),' ','+'), '&size=200&background=1a1a2e&color=d4af37')
+  ) AS photo_url,
+  COALESCE(
+    NULLIF(photo_url,''),
+    CONCAT('https://ui-avatars.com/api/?name=', REPLACE(BTRIM(name),' ','+'), '&size=200&background=1a1a2e&color=d4af37')
+  ) AS img,
+  election_type,
+  municipality_id
+`;
 
-
-
-// ===================================
-// 1. MUNICIPIOS
-// ===================================
+// ── Municipios ────────────────────────────────────────────────────────────
 router.get('/municipalities', async (req, res) => {
   try {
-    const result = await query(
-      'SELECT id, name FROM municipalities ORDER BY name'
-    );
+    const result = await query('SELECT id, name FROM municipalities ORDER BY name');
     res.json(result.rows);
-  } catch (error) {
-    console.error('❌ /municipalities:', error.message);
+  } catch (err) {
     res.status(500).json({ error: 'Error obteniendo municipios' });
   }
 });
 
-
-// ===================================
-// 2. CANDIDATOS
-// ===================================
+// ── Candidatos por municipio o gubernatura ────────────────────────────────
+// Búsqueda flexible: intenta ID exacto, si no hay resultados usa LIKE 'ID%'
+// Esto cubre el mismatch donde survey.municipality_id=18 pero candidatos tienen 183
 router.get('/candidates/:municipioId', async (req, res) => {
   try {
     const { municipioId } = req.params;
-    const DEFAULT_PHOTO = 'https://ui-avatars.com/api/?size=200&background=random';
-
-    let result;
 
     if (municipioId === 'gubernatura') {
-      result = await query(`
-        SELECT 
-          CONCAT('candidato_', id) as id,
-          id as numeric_id,
-          name, 
-          COALESCE(party, 'INDEPENDIENTE') as party,
-          COALESCE(photo_url, CONCAT('https://ui-avatars.com/api/?name=', REPLACE(name, ' ', '+'), '&size=200')) as photo_url,
-          COALESCE(photo_url, CONCAT('https://ui-avatars.com/api/?name=', REPLACE(name, ' ', '+'), '&size=200')) as img
-        FROM candidates 
-        WHERE municipality_id IS NULL
-        ORDER BY id`
-      );
-    } else {
-      const muniId = parseInt(municipioId, 10);
-      if (isNaN(muniId)) {
-        return res.status(400).json({ error: 'ID de municipio inválido' });
-      }
-
-      result = await query(`
-        SELECT
-          CONCAT('candidato_', id) as id,
-          id as numeric_id,
-          name,
-          COALESCE(party, 'INDEPENDIENTE') as party,
-          COALESCE(photo_url, CONCAT('https://ui-avatars.com/api/?name=', REPLACE(name, ' ', '+'), '&size=200')) as photo_url,
-          COALESCE(photo_url, CONCAT('https://ui-avatars.com/api/?name=', REPLACE(name, ' ', '+'), '&size=200')) as img
-        FROM candidates
-        WHERE municipality_id = $1
-        ORDER BY name
-      `, [muniId]);
+      const r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id IS NULL AND is_active = true ORDER BY id`);
+      console.log(`✅ Candidatos gubernatura: ${r.rows.length}`);
+      return res.json(r.rows);
     }
 
-    console.log(`✅ Candidatos encontrados: ${result.rows.length} para municipio ${municipioId}`);
-    res.json(result.rows);
+    const muniId = parseInt(municipioId, 10);
+    if (isNaN(muniId)) return res.status(400).json({ error: 'ID inválido' });
 
-  } catch (error) {
-    console.error('❌ /candidates ERROR DETALLADO:', error);
-    res.status(500).json({ 
-      error: 'Error obteniendo candidatos',
-      details: error.message 
-    });
+    let r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id = $1 AND is_active = true ORDER BY name`, [muniId]);
+
+    if (r.rows.length === 0) {
+      console.warn(`⚠️ Sin candidatos para municipality_id=${muniId}, buscando LIKE '${muniId}%'`);
+      r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id::text LIKE $1 AND is_active = true ORDER BY name`, [`${muniId}%`]);
+    }
+
+    console.log(`✅ /data/candidates/${municipioId}: ${r.rows.length} candidatos`);
+    res.json(r.rows);
+
+  } catch (err) {
+    console.error('❌ /candidates:', err.message);
+    res.status(500).json({ error: 'Error obteniendo candidatos', details: err.message });
   }
 });
 
+// ── Candidatos por encuesta (anti-contaminación) ──────────────────────────
+// index.html y landing.html deben usar este endpoint para garantizar que
+// solo se muestran los candidatos de LA encuesta activa, sin importar otros municipios
+router.get('/candidates/by-survey/:surveyId', async (req, res) => {
+  try {
+    const surveyId = parseInt(req.params.surveyId, 10);
+    if (isNaN(surveyId)) return res.status(400).json({ error: 'surveyId inválido' });
 
-// ===================================
-// 3. COMPARACIÓN HISTÓRICA
-// Retorna resultados agrupados por año y tipo de elección.
-// Si historical_results está vacía, retorna array vacío (no 500).
-// ===================================
-// REEMPLAZA la función /comparison/:municipioId
+    const sv = await query('SELECT municipality_id, election_type FROM surveys WHERE id = $1', [surveyId]);
+    if (sv.rows.length === 0) return res.status(404).json({ error: 'Encuesta no encontrada' });
+
+    const { municipality_id, election_type } = sv.rows[0];
+    const isGub = election_type === 'gubernatura';
+
+    let r;
+    if (isGub) {
+      r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id IS NULL AND is_active = true ORDER BY id`);
+    } else {
+      r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id = $1 AND is_active = true ORDER BY name`, [municipality_id]);
+      if (r.rows.length === 0) {
+        r = await query(`SELECT ${candidateSelect} FROM candidates WHERE municipality_id::text LIKE $1 AND is_active = true ORDER BY name`, [`${municipality_id}%`]);
+      }
+    }
+
+    console.log(`✅ /data/candidates/by-survey/${surveyId}: ${r.rows.length} candidatos`);
+    res.json(r.rows);
+
+  } catch (err) {
+    console.error('❌ /candidates/by-survey:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Comparación histórica ──────────────────────────────────────────────────
 router.get('/comparison/:municipioId', async (req, res) => {
   try {
-    const { municipioId } = req.params;
-    const muniId = parseInt(municipioId, 10);
-
-    if (isNaN(muniId)) {
-      return res.status(400).json({ error: 'ID de municipio inválido' });
-    }
-
-    // Usar historical_results en lugar de resultados_electorales
-    const result = await query(`
-      SELECT
-        election_type as tipo_eleccion,
-        election_year,
-        party,
-        votes,
-        percentage
-      FROM historical_results
-      WHERE municipality_id = $1
-      ORDER BY election_year DESC, election_type, votes DESC
-    `, [muniId]);
-
-    console.log(`📊 Comparación para municipio ${muniId}: ${result.rows.length} registros`);
-    res.json(result.rows);
-
-  } catch (error) {
-    console.error('❌ /comparison:', error.message);
-    res.status(500).json({ error: 'Error en comparación histórica' });
+    const muniId = parseInt(req.params.municipioId, 10);
+    if (isNaN(muniId)) return res.status(400).json({ error: 'ID inválido' });
+    const r = await query(`SELECT election_type AS tipo_eleccion, election_year, party, votes, percentage FROM historical_results WHERE municipality_id = $1 ORDER BY election_year DESC, votes DESC`, [muniId]);
+    res.json(r.rows);
+  } catch (err) {
+    if (err.code === '42P01') return res.json([]);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// REEMPLAZA la función /participation/:municipioId
+// ── Participación ──────────────────────────────────────────────────────────
 router.get('/participation/:municipioId', async (req, res) => {
   try {
-    const { municipioId } = req.params;
-    const muniId = parseInt(municipioId, 10);
-
-    if (isNaN(muniId)) {
-      return res.status(400).json({ error: 'ID de municipio inválido' });
-    }
-
-    const result = await query(`
-      SELECT
-        election_year as year,
-        election_type as tipo_eleccion,
-        SUM(votes) as total_votes,
-        ROUND(AVG(percentage)::numeric, 2) as participacion
-      FROM historical_results
-      WHERE municipality_id = $1
-      GROUP BY election_year, election_type
-      ORDER BY election_year DESC
-    `, [muniId]);
-
-    console.log(`📈 Participación para municipio ${muniId}: ${result.rows.length} registros`);
-    res.json(result.rows);
-
-  } catch (error) {
-    console.error('❌ /participation:', error.message);
-    res.status(500).json({ error: 'Error en participación' });
+    const muniId = parseInt(req.params.municipioId, 10);
+    if (isNaN(muniId)) return res.status(400).json({ error: 'ID inválido' });
+    const r = await query(`SELECT election_year AS year, election_type AS tipo_eleccion, SUM(votes) AS total_votes, ROUND(AVG(percentage)::numeric,2) AS participacion FROM historical_results WHERE municipality_id = $1 GROUP BY election_year, election_type ORDER BY election_year DESC`, [muniId]);
+    res.json(r.rows);
+  } catch (err) {
+    if (err.code === '42P01') return res.json([]);
+    res.status(500).json({ error: err.message });
   }
 });
 
-
-// ===================================
-// 4. PARTICIPACIÓN
-// ===================================
-router.get('/participation/:municipioId', async (req, res) => {
-  try {
-    const { municipioId } = req.params;
-    const muniId = parseInt(municipioId, 10);
-
-    if (isNaN(muniId)) {
-      return res.status(400).json({ error: 'ID de municipio inválido' });
-    }
-
-    const result = await query(`
-      SELECT
-        election_year                          AS year,
-        election_type                          AS tipo_eleccion,
-        SUM(votes)                             AS total_votes,
-        ROUND(AVG(percentage)::numeric, 2)     AS participacion
-      FROM historical_results
-      WHERE municipality_id = $1
-      GROUP BY election_year, election_type
-      ORDER BY election_year DESC
-    `, [muniId]);
-
-    res.json(result.rows);
-
-  } catch (error) {
-    console.error('❌ /participation:', error.message);
-
-    if (error.code === '42P01') {
-      console.warn('⚠️  Tabla historical_results no encontrada. Ejecutar migración 001.');
-      return res.json([]);
-    }
-
-    res.status(500).json({ error: 'Error en participación' });
-  }
-});
-
-
-// ===================================
-// 5. STATS PÚBLICOS
-// ===================================
+// ── Stats públicos ─────────────────────────────────────────────────────────
 router.get('/stats', async (req, res) => {
   try {
-    const [users, preds, surveys] = await Promise.all([
+    const [u, p, s] = await Promise.all([
       query('SELECT COUNT(*) FROM users'),
       query('SELECT COUNT(*) FROM predictions'),
       query("SELECT COUNT(*) FROM surveys WHERE is_active = true")
     ]);
-
-    res.json({
-      users:       parseInt(users.rows[0].count),
-      predictions: parseInt(preds.rows[0].count),
-      surveys:     parseInt(surveys.rows[0].count)
-    });
-
-  } catch (error) {
-    console.error('❌ /stats:', error.message);
-    res.status(500).json({ error: 'Error en stats' });
+    res.json({ users: parseInt(u.rows[0].count), predictions: parseInt(p.rows[0].count), surveys: parseInt(s.rows[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
-
 
 module.exports = router;

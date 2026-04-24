@@ -496,13 +496,15 @@ router.get('/:id/results', async (req, res) => {
     // con 0 votos también aparece (LEFT JOIN garantiza esto).
     // response_value puede ser el ID numérico del candidato (enviado desde index.html)
     // o el nombre completo (enviado desde landing.html).
+    // Búsqueda flexible de candidatos:
+    // cubre mismatch donde survey.municipality_id=18 pero candidatos tienen municipality_id=183
     const resultsQuery = await db.query(`
       SELECT
         c.id,
-        BTRIM(c.name) AS label,
-        c.party,
-        COUNT(sr.id)::int                                       AS vote_count,
-        AVG(sr.confidence) FILTER (WHERE sr.confidence >= 50)  AS avg_confidence
+        BTRIM(c.name)                                                AS label,
+        COALESCE(NULLIF(BTRIM(c.party),''), 'INDEPENDIENTE')         AS party,
+        COUNT(sr.id)::int                                            AS vote_count,
+        AVG(sr.confidence) FILTER (WHERE sr.confidence >= 50)        AS avg_confidence
       FROM candidates c
       LEFT JOIN survey_responses sr
         ON sr.survey_id = $1
@@ -510,13 +512,20 @@ router.get('/:id/results', async (req, res) => {
           sr.response_value = c.id::text
           OR LOWER(TRIM(sr.response_value)) = LOWER(TRIM(c.name))
         )
-      WHERE (
-        ($2 IS NULL AND c.municipality_id IS NULL)
-        OR (c.municipality_id = $2)
-        OR (c.election_type = 'gubernatura' AND $3 = 'gubernatura')
-      )
-      AND (c.election_type = $3 OR $3 IS NULL OR c.election_type IS NULL)
-      AND c.is_active = true
+      WHERE c.is_active = true
+        AND (
+          -- Gubernatura: candidatos sin municipio
+          ($3 = 'gubernatura' AND c.municipality_id IS NULL)
+          OR
+          -- Municipal: coincidencia exacta O búsqueda flexible (18 encuentra 183)
+          (
+            $3 != 'gubernatura'
+            AND (
+              c.municipality_id = $2
+              OR ($2 IS NOT NULL AND c.municipality_id::text LIKE ($2::text || '%'))
+            )
+          )
+        )
       GROUP BY c.id, c.name, c.party
       ORDER BY vote_count DESC, label ASC
     `, [surveyId, municipality_id, election_type]);
