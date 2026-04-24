@@ -1266,23 +1266,10 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    let partyDisplay = c.party ? c.party.trim().toUpperCase() : '';
-    if (partyDisplay === 'IND' || partyDisplay === 'IND.') partyDisplay = '';
-    // ── COLOR INSTITUCIONAL POR PARTIDO ──
-    const PARTY_COLORS = {
-    'MORENA': '#8B0000',
-    'PAN':    '#1E40AF',
-    'PRI':    '#DC2626',
-    'PVEM':   '#15803D',
-    'PT':     '#B91C1C',
-    'MC':     '#EA580C',
-    'PRD':    '#CA8A04',
-    'CIUDADANO': '#475569',
-    'IND.':   '#64748B',   // ← Gris para independientes
-    'INDEPENDIENTE': '#64748B'
-};
+    let pDisplay = (c.party || '').trim().toUpperCase();
+    if (pDisplay === 'IND' || pDisplay === 'IND.') pDisplay = 'IND.';
+    
     const photoSrc = c.img || c.photo_url || null;
-    const partyDisplay = (c.party || '').trim().toUpperCase();
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
@@ -1306,7 +1293,7 @@
         </div>
 
         <div class="party-box" style="background-color: ${getCandidateColor(c.party || c.name)}">
-            ${partyDisplay || 'IND.'}
+            ${pDisplay || 'IND.'}
         </div>
 
         <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
@@ -2435,14 +2422,6 @@
                             </div>
                             <div class="space-y-2">
                                 <div class="flex justify-between text-[10px] font-bold uppercase">
-                                    <span class="text-slate-500">Predicciones</span>
-                                    <span class="text-white">${r.total_predictions || 0}</span>
-                                </div>
-                                <div class="flex justify-between text-[10px] font-bold uppercase">
-                                    <span class="text-slate-500">Confianza Promedio</span>
-                                    <span class="text-amber-500">${Math.round(r.avg_confidence || 0)}%</span>
-                                </div>
-                                <div class="flex justify-between text-[10px] font-bold uppercase">
                                     <span class="text-slate-500">Puntuación de Tendencia</span>
                                     <span class="text-emerald-500">${Math.round(r.trend_score || 0)}</span>
                                 </div>
@@ -2457,12 +2436,14 @@
                 console.log('Sin resultados de predicciones aún:', e);
             }
         }
+
         // ============================================
         // INICIALIZACIÓN DIRECTA (SIN AUTHENTICACIÓN)
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
              // Iniciar la plataforma de Prestigio directamente
-             document.getElementById('portal-section').classList.remove('hidden');
+             const portal = document.getElementById('portal-section');
+             if (portal) portal.classList.remove('hidden');
              loadSurveys();
              populateMunicipios();
         });
@@ -2471,12 +2452,13 @@
         // TOAST (NOTIFICACIONES)
         // ============================================
         function showToast(message, type = 'info') {
+            if (document.getElementById('toast-' + message)) return;
             const toast = document.createElement('div');
+            toast.id = 'toast-' + message;
             toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${type === 'success' ? 'bg-emerald-600' :
                 type === 'error' ? 'bg-red-600' :
                     'bg-amber-600'
                 }`;
-            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
             document.body.appendChild(toast);
 
             setTimeout(() => {
@@ -2484,6 +2466,9 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
+    </script>
+</body>
+</html>
 
         // ============================================
         // AUTO-LOGIN SI YA HAY TOKEN

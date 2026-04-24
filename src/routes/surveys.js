@@ -223,8 +223,7 @@ router.get('/:id/questions', async (req, res) => {
           COALESCE(NULLIF(photo_url, ''), '/img/placeholder_cand.jpg') AS photo_url
         FROM candidates
         WHERE
-          ${isGub ? 'municipality_id IS NULL' : 'municipality_id = $1'}
-          AND (election_type = '${survey.election_type}' OR election_type IS NULL)
+          (${isGub ? 'municipality_id IS NULL' : 'municipality_id = $1'})
           AND is_active = true
         ORDER BY id
       `, isGub ? [] : [survey.municipality_id]);
