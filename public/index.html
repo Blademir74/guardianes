@@ -1104,22 +1104,10 @@
                                                     </div>
 
                                                     <!-- Nombre limpio (sin partido en paréntesis) -->
-                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-2 uppercase text-center break-words transition-colors duration-300">
+                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
                                                         ${cleanLabel}
                                                     </div>
-
-                                                    <!-- Chip de partido con color institucional -->
-                                                    ${partyName ? `
-                                                    <div style="
-                                                        display:inline-flex; align-items:center; gap:5px;
-                                                        background-color:${partyColor};
-                                                        color:#ffffff; font-size:9px; font-weight:900;
-                                                        letter-spacing:0.1em; text-transform:uppercase;
-                                                        padding:3px 10px; border-radius:999px;
-                                                        margin-top:2px; width:auto; max-width:100%;
-                                                        border: 1px solid rgba(255,255,255,0.15);
-                                                        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-                                                    ">${partyName}</div>` : ''}
+                                                    ${partyName ? `<span class="party-chip" style="background-color:${partyColor};">${partyName}</span>` : ''}
 
                                                     <input type="radio" name="q-${q.id}" value="${String(opt.id || value).replace(/'/g, "\\'")}" class="hidden">
                                                 </div>
@@ -1368,55 +1356,53 @@
             container.innerHTML = '';
             const results = data.results || [];
 
+            if (results.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500 text-xs font-mono py-6 uppercase tracking-widest">Los votos aparecerán aquí en tiempo real</p>';
+            }
+
             results.forEach((r, idx) => {
                 const pct      = r.percentage || 0;
-                // Limpiar label: quitar "(PARTIDO)" si el backend lo incluyó
+                // Limpiar "(PARTIDO)" del label que viene del backend
                 const cleanLbl = (r.label || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
-                const partyRaw = (r.party || (r.label.match(/\(([^)]+)\)/) || [])[1] || '').trim().toUpperCase();
-                const color    = getCandidateColor(partyRaw || r.party || r.label);
+                // Extraer partido: del campo party primero, luego del paréntesis del label
+                const partyRaw = ((r.party && r.party.trim())
+                                  || ((r.label || '').match(/\(([^)]+)\)/) || [])[1]
+                                  || '').trim().toUpperCase().replace(/^IND\.?$/, 'IND');
+                const color    = getCandidateColor(partyRaw || r.label);
                 const isLeader = idx === 0 && r.vote_count > 0;
 
                 const row = document.createElement('div');
                 row.className = 'mb-4';
-                row.innerHTML = `
-                    <div class="flex justify-between items-center mb-1.5 gap-2">
-                        <div class="flex items-center gap-2 flex-1 min-w-0">
-                            ${isLeader ? '<span class="text-amber-400 text-xs shrink-0">▲</span>' : ''}
-                            <span class="text-xs font-bold text-slate-100 uppercase truncate">${cleanLbl}</span>
-                            ${partyRaw ? `<span style="
-                                background:${color}; color:#fff; font-size:8px; font-weight:900;
-                                letter-spacing:.08em; padding:2px 7px; border-radius:999px;
-                                white-space:nowrap; border:1px solid rgba(255,255,255,.15);
-                                box-shadow:0 1px 4px rgba(0,0,0,.4); flex-shrink:0;
-                            ">${partyRaw}</span>` : ''}
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <span class="font-mono text-xs font-black" style="color:${color}">${pct}%</span>
-                            <span class="font-mono text-[9px] text-slate-500">${r.vote_count}v</span>
-                        </div>
-                    </div>
-                    <div class="w-full rounded-full overflow-hidden" style="height:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07);">
-                        <div style="width:0%; height:100%; background:${color}; border-radius:999px; transition:width 1s ease-out;"
-                             data-target-width="${pct}%"></div>
-                    </div>
-                `;
+                row.innerHTML =
+                    '<div class="flex justify-between items-center mb-1.5 gap-2">' +
+                        '<div class="flex items-center gap-2 flex-1 min-w-0">' +
+                            (isLeader ? '<span style="color:#F59E0B;font-size:10px;flex-shrink:0">&#9650;</span>' : '') +
+                            '<span class="text-xs font-bold text-slate-100 uppercase truncate">' + cleanLbl + '</span>' +
+                            (partyRaw ? '<span class="party-chip" style="background-color:' + color + ';flex-shrink:0;">' + partyRaw + '</span>' : '') +
+                        '</div>' +
+                        '<div class="flex items-center gap-2 shrink-0">' +
+                            '<span class="font-mono text-xs font-black" style="color:' + color + '">' + pct + '%</span>' +
+                            '<span class="font-mono text-[9px] text-slate-500">' + r.vote_count + 'v</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="width:100%;height:10px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);">' +
+                        '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out;" data-target-width="' + pct + '%"></div>' +
+                    '</div>';
                 container.appendChild(row);
             });
 
-            // Trigger animación
             setTimeout(() => {
                 container.querySelectorAll('[data-target-width]').forEach(bar => {
                     bar.style.width = bar.dataset.targetWidth;
                 });
             }, 120);
 
-            // Contadores
-            const totalVotesEl    = document.getElementById('votos-totales');
-            const avgConfidenceEl = document.getElementById('confianza-promedio');
-            const lastUpdateEl    = document.getElementById('last-update-live');
-            if (totalVotesEl)    totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
-            if (avgConfidenceEl) avgConfidenceEl.textContent = Number(data.avg_confidence || 0).toFixed(1) + '%';
-            if (lastUpdateEl)    lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            const totalEl = document.getElementById('votos-totales');
+            const confEl  = document.getElementById('confianza-promedio');
+            const syncEl  = document.getElementById('last-update-live');
+            if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
+            if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
+            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
         }
 
         function updateLiveChart(data) {

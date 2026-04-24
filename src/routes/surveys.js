@@ -209,43 +209,38 @@ router.get('/:id/questions', async (req, res) => {
       ORDER BY order_num ASC
     `, [surveyId]);
 
+    // Candidatos: siempre se cargan si hay candidatos activos para este municipio
+    // No depender de question_type = 'single_choice' — cualquier encuesta municipal muestra candidatos
     let candidates = [];
-    const hasSingleChoice = questionsResult.rows.some(q => q.questionType === 'single_choice');
+    const isGub  = survey.election_type === 'gubernatura';
+    const muniId = survey.municipality_id;
 
-    if (hasSingleChoice) {
-      // Query unificada — limpia nombre y partido en SQL, sin etiquetas (IND) ni "Perfil Territorial"
-      const isGub = survey.election_type === 'gubernatura';
-      // Búsqueda flexible: exact match OR LIKE (cubre mismatch 18 vs 183)
-      // election_type NULL en candidatos coincide con cualquier tipo de encuesta
-      const muniId = survey.municipality_id;
-      let candsResult;
-      if (isGub) {
-        candsResult = await db.query(
-          `SELECT id, id AS numeric_id,
-                  BTRIM(name) AS name,
-                  COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
-                  COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
-           FROM candidates
-           WHERE is_active = true AND municipality_id IS NULL
-           ORDER BY id`
-        );
-      } else {
-        candsResult = await db.query(
-          `SELECT id, id AS numeric_id,
-                  BTRIM(name) AS name,
-                  COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
-                  COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
-           FROM candidates
-           WHERE is_active = true
-             AND (municipality_id = $1 OR municipality_id::text LIKE ($1::text || '%'))
-           ORDER BY id`,
-          [muniId]
-        );
-      }
-      const cands = candsResult;
-
-      candidates = cands.rows;
+    let candsResult;
+    if (isGub) {
+      candsResult = await db.query(
+        `SELECT id, id AS numeric_id,
+                BTRIM(name) AS name,
+                COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
+                COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
+         FROM candidates
+         WHERE is_active = true AND municipality_id IS NULL
+         ORDER BY id`
+      );
+    } else {
+      candsResult = await db.query(
+        `SELECT id, id AS numeric_id,
+                BTRIM(name) AS name,
+                COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
+                COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
+         FROM candidates
+         WHERE is_active = true
+           AND (municipality_id = $1 OR municipality_id::text LIKE ($1::text || '%'))
+         ORDER BY id`,
+        [muniId]
+      );
     }
+    candidates = candsResult.rows;
+    console.log(`[/questions] survey=${surveyId} muni=${muniId} candidatos=${candidates.length}`);
 
     res.json({
       survey: {

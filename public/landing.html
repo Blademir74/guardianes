@@ -297,6 +297,23 @@
             .candidate-card { padding: 0.75rem; }
             .card-name { font-size: 12px; }
         }
+
+        /* ── Chip de Partido — Estándar de Oro ── */
+        .party-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            margin-top: 4px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="relative min-h-[100dvh]">
@@ -563,16 +580,7 @@
                          onerror="this.src='/img/placeholder_cand.jpg';">
                 </div>
                 <div class="card-name">${nombre}</div>
-                ${party && party !== 'INDEPENDIENTE' ? `
-                <div style="
-                    display:inline-flex;align-items:center;
-                    background:${partyColor};color:#fff;
-                    font-size:9px;font-weight:900;letter-spacing:.1em;
-                    padding:3px 10px;border-radius:999px;margin-top:4px;
-                    border:1px solid rgba(255,255,255,.15);
-                    box-shadow:0 2px 6px rgba(0,0,0,.4);
-                    text-transform:uppercase;
-                ">${party}</div>` : ''}
+                <span class="party-chip" style="background-color:${partyColor};">${party || 'IND'}</span>
             `;
 
             card.addEventListener('click', () => selectCandidate(index));
@@ -797,12 +805,6 @@
                     clearInterval(countInterval);
                     const cdRow = document.getElementById('countdown-row');
                     if (cdRow) cdRow.style.display = 'none';
-                    const revealBlock = document.getElementById('results-reveal-block');
-                    if (revealBlock) {
-                        revealBlock.classList.remove('hidden');
-                        revealBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                    // Siempre revelar el bloque aunque no haya resultados aún
                     const revealBlock = document.getElementById('results-reveal-block');
                     if (revealBlock) {
                         revealBlock.classList.remove('hidden');
