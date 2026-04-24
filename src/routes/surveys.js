@@ -539,9 +539,7 @@ router.get('/:id/results', async (req, res) => {
     const formattedResults = results.map(r => {
       const pty = (r.party || '').trim().toUpperCase();
       // Formato innegociable: Nombre (Partido). Sin (IND), sin "Perfil Territorial".
-      const label = (pty && pty !== 'INDEPENDIENTE' && pty !== 'IND' && pty !== 'IND.')
-        ? `${r.label} (${r.party})`
-        : r.label;
+      const label = r.label;
 
       return {
         label,
