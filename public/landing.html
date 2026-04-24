@@ -222,31 +222,14 @@
         }
 
         .card-party {
-            display: none; /* Eliminado formato antiguo */
-        }
-
-        .party-badge-v2 {
-            display: inline-block;
-            color: #FFFFFF;
-            font-weight: 700;
-            font-size: 0.65rem;
-            padding: 3px 12px;
-            border-radius: 0.375rem; /* rounded-md */
+            margin-top: 4px;
+            display: block;
+            font-size: 90%;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
             text-transform: uppercase;
-            margin-top: 6px;
             letter-spacing: 0.05em;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease;
-        }
-
-        /* Fotos de Poder: Height Forzado 160px */
-        .candidate-card .img-container,
-        .candidate-card .img-container img {
-            height: 160px !important;
-            min-height: 160px !important;
-            max-height: 160px !important;
-            object-fit: cover !important;
-            object-position: top center !important;
+            width: 100%;
         }
 
         .btn-center-action {
@@ -547,9 +530,12 @@
 
         candidates.forEach((cand, index) => {
             const delay      = index * 0.08;
-            const nombre     = sanitizeHTML(cand.name).split('(')[0].trim();
+            const nombre     = sanitizeHTML(cand.name);
             const party      = (cand.party || '').trim().toUpperCase();
-            const partyColor = getPartyColor(party);
+            // Formato: Nombre (Partido). Sin (IND), sin "Perfil Territorial".
+            const partyLabel = (party && party !== 'IND' && party !== 'IND.' && party !== 'INDEPENDIENTE')
+                ? `(${sanitizeHTML(party)})`
+                : '';
             const photoSrc   = cand.photo_url || '/img/placeholder_cand.jpg';
 
             const card = document.createElement('div');
@@ -569,29 +555,12 @@
                          onerror="this.src='/img/placeholder_cand.jpg';">
                 </div>
                 <div class="card-name">${nombre}</div>
-                <div class="party-badge-v2" style="background-color: ${partyColor}">
-                    ${party || 'IND.'}
-                </div>
+                <div class="card-party">${partyLabel}</div>
             `;
 
             card.addEventListener('click', () => selectCandidate(index));
             grid.appendChild(card);
         });
-    }
-
-    function getPartyColor(party) {
-        const colors = {
-            'MORENA': '#8a1c14',
-            'PAN': '#0284c7',
-            'PRI': '#dc2626',
-            'PVEM': '#22c55e',
-            'PT': '#e11d48',
-            'MC': '#f97316',
-            'PRD': '#CA8A04',
-            'INDEPENDIENTE': '#64748B',
-            'IND': '#64748B'
-        };
-        return colors[party] || '#475569';
     }
 
     // ── Selección de candidato ────────────────────────────────────────────
@@ -648,11 +617,10 @@
             activeSurveyId = survey.id;
             console.log(`[LANDING] Encuesta activa: ${activeSurveyId} — "${survey.title}"`);
 
-            // Actualizar headline con el título real de la encuesta (Sanitizado para emojis)
+            // Actualizar headline con el título real de la encuesta
             const headline = document.getElementById('survey-headline');
             if (headline && survey.title) {
-                const safeTitle = encodeURIComponent(survey.title).replace(/%20/g, ' ');
-                headline.innerHTML = `${sanitizeHTML(decodeURIComponent(safeTitle))}<br><span class="text-gold italic">TÚ DECIDES</span>`;
+                headline.innerHTML = `${sanitizeHTML(survey.title)}<br><span class="text-gold italic">TÚ DECIDES</span>`;
             }
 
             // 2. Preguntas + candidatos del backend
@@ -822,10 +790,7 @@
                         revealBlock.classList.remove('hidden');
                         revealBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
-            // Polling Quirúrgico cada 30 segundos
-            if (window.pollingResults) clearInterval(window.pollingResults);
-            window.pollingResults = setInterval(loadGlobalResults, 30000);
-            await loadGlobalResults();
+                    await loadGlobalResults();
                 }
             }, 1000);
 

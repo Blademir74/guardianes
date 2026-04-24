@@ -292,51 +292,12 @@
                 /* Espacio para etiquetas del eje X */
             }
 
-        /* ============================================
-           TARJETAS CANDIDATOS — ESTÁNDAR DE ORO
-           ============================================ */
-        .candidate-card .img-container {
-            width: 100%;
-            height: 160px !important;
-            min-height: 160px !important;
-            border-radius: 0.75rem;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
-            background-color: #0c1222;
-        }
-
-        .candidate-card img {
-            width: 100%;
-            height: 160px !important;
-            object-fit: cover !important;
-            object-position: top !important;
-            transition: transform 0.5s ease;
-        }
-
-        .candidate-card:hover img {
-            transform: scale(1.07);
-        }
-
-        .party-box {
-            font-size: 9px !important;
-            font-weight: 900 !important;
-            color: white !important;
-            padding: 4px 10px !important;
-            border-radius: 6px !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
-            display: inline-block !important;
-            margin-top: 4px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
-        .chart-container {
-            position: relative;
-            height: 350px !important;
-            width: 100% !important;
-            margin-top: 1rem;
-        }
+            /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
+            .chart-container {
+                position: relative;
+                height: 350px !important;
+                width: 100% !important;
+                margin-top: 1rem;
             }
 
 
@@ -586,30 +547,7 @@
         padding: 2px 6px !important;
     }
 }
-        .party-box {
-            display: inline-block;
-            color: white;
-            font-weight: 600;
-            font-size: 0.65rem;
-            padding: 2px 10px;
-            border-radius: 4px; /* rounded-md */
-            text-transform: uppercase;
-            margin-top: 4px;
-            letter-spacing: 0.025em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        /* Fotos de Poder: height fijo 160px forced */
-        .candidate-card .img-container, 
-        .candidate-card .img-container img,
-        .profile-card .avatar-ring,
-        .profile-card .avatar-ring img {
-            height: 160px !important;
-            min-height: 160px !important;
-            max-height: 160px !important;
-            object-fit: cover !important;
-            object-position: top center !important;
-        }
+    </style>
 </head>
 
 <body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -803,14 +741,6 @@
 
     <!-- LOGIC -->
     <script>
-        // --- UTILS ---
-        function sanitizeHTML(str) {
-            if (!str) return '';
-            const temp = document.createElement('div');
-            temp.textContent = String(str);
-            return temp.innerHTML;
-        }
-
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000/api'
             : 'https://pulsoguerrero.vercel.app/api';
@@ -1050,11 +980,7 @@
                 if (!res.ok) throw new Error(data.error);
                 if (!data.survey) throw new Error('Estructura de datos incorrecta');
 
-                const safeTitle = encodeURIComponent(data.survey.title).replace(/%20/g, ' ');
-                const cleanTitle = decodeURIComponent(safeTitle);
-                const firstWord = cleanTitle.split(' ')[0];
-                const restTitle = cleanTitle.split(' ').slice(1).join(' ');
-                document.getElementById('modal-title').innerHTML = `${firstWord} <span class="text-amber-500">${restTitle}</span>`;
+                document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
                 document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
 
                 // Reset locks
@@ -1153,33 +1079,29 @@
                                 const value = opt.value || opt.label || label;
 
                                 return `
-                                                 <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
+                                                <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
                                                      data-question="${q.id}" 
                                                      class="option-card candidate-card glass-card p-4 rounded-2xl text-center group transition-all duration-300 cursor-pointer border border-white/5 relative overflow-hidden flex flex-col items-center">
-                                                     
-                                                     <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
-                                                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                                         </svg>
-                                                     </div>
+                                                    
+                                                    <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
+                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    </div>
 
-                                                     <div class="img-container w-full mb-3 rounded-xl overflow-hidden h-48">
-                                                         ${photo ?
-                                        `<img src="${photo}" alt="${label}" class="w-full h-full object-cover" onerror="this.src='/img/placeholder_cand.jpg'">` :
-                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${label.charAt(0)}</div>`
-                                     }
-                                                     </div>
-                                                     
-                                                     <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
-                                                         ${label.split('(')[0].trim()}
-                                                     </div>
-
-                                                     <div class="party-box" style="background-color: ${getCandidateColor(opt.party || label)}">
-                                                        ${(opt.party || '').toUpperCase() || 'IND.'}
-                                                     </div>
-                                                     
-                                                     <input type="radio" name="q-${q.id}" value="${value.replace(/'/g, "\\'")}" class="hidden">
-                                                 </div>
+                                                    <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px;">
+                                                        ${photo ?
+                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800\\'>${label.charAt(0)}</div>'">` :
+                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800" style="height: 160px;">${label.charAt(0)}</div>`
+                                    }
+                                                    </div>
+                                                    
+                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
+                                                        ${label}
+                                                    </div>
+                                                    
+                                                    <input type="radio" name="q-${q.id}" value="${value.replace(/'/g, "\\'")}" class="hidden">
+                                                </div>
                                             `;
                             }).join('')}
                                     </div>
@@ -1266,34 +1188,50 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" data-grid-question="${q.id}">
                             ${candidates.map(c => {
     // ── PARTIDO: normalizar ──
-    let pDisplay = (c.party || '').trim().toUpperCase();
-    if (pDisplay === 'IND' || pDisplay === 'IND.') pDisplay = 'IND.';
-    
+    let partyDisplay = c.party ? c.party.trim().toUpperCase() : '';
+    if (partyDisplay === 'IND' || partyDisplay === 'IND.') partyDisplay = '';
+    // ── COLOR INSTITUCIONAL POR PARTIDO ──
+    const PARTY_COLORS = {
+    'MORENA': '#8B0000',
+    'PAN':    '#1E40AF',
+    'PRI':    '#DC2626',
+    'PVEM':   '#15803D',
+    'PT':     '#B91C1C',
+    'MC':     '#EA580C',
+    'PRD':    '#CA8A04',
+    'CIUDADANO': '#475569',
+    'IND.':   '#64748B',   // ← Gris para independientes
+    'INDEPENDIENTE': '#64748B'
+};
     const photoSrc = c.img || c.photo_url || null;
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
          class="option-card candidate-card glass-card p-4 rounded-2xl text-center flex flex-col items-center relative overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer">
 
+        <!-- Checkmark -->
         <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
 
-        <div class="img-container w-full mb-3 rounded-xl overflow-hidden">
+        <!-- Foto con height fijo de 160px -->
+        <div class="w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px; background-color: #001a33;">
             ${photoSrc
-                ? `<img src="${photoSrc}" alt="${c.name}" onerror="this.src='/img/placeholder_cand.jpg'">`
+                ? `<img src="${photoSrc}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-500\\'>${c.name.charAt(0)}</div>'" alt="${c.name}">`
                 : `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-500">${c.name.charAt(0)}</div>`
             }
         </div>
 
-        <div class="card-name-text font-bold text-[14px] w-full text-white uppercase mb-1">
-            ${c.name.split('(')[0].trim()}
+        <!-- Nombre Bold arriba -->
+        <div class="card-name-text font-bold text-[14px] w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
+            ${c.name.trim()}
         </div>
 
-        <div class="party-box" style="background-color: ${getCandidateColor(c.party || c.name)}">
-            ${pDisplay || 'IND.'}
+        <!-- Partido en texto 10% más pequeño -->
+        <div class="w-full text-center uppercase tracking-wide font-medium text-white/80" style="font-size: 90%;">
+            ${partyDisplay ? `(${partyDisplay})` : ''}
         </div>
 
         <input type="radio" name="q-${q.id}" value="${c.id}" class="hidden">
@@ -1418,29 +1356,19 @@
                     const isLeader = idx === 0 && r.vote_count > 0;
 
                     const row = document.createElement('div');
-                    row.className = 'relative animate-in fade-in slide-in-from-left duration-500';
-                    row.style.animationDelay = `${idx * 0.1}s`;
-                    
-                    const cleanLabel = sanitizeHTML(r.label).split('(')[0].trim();
-                    
+                    row.className = 'relative';
                     row.innerHTML = `
-                        <div class="flex justify-between items-center mb-1.5 gap-2">
-                            <div class="flex items-center gap-2 flex-1 truncate">
-                                ${isLeader ? '<span class="text-amber-400 text-[10px] animate-pulse">👑</span>' : ''}
-                                <span class="text-[11px] font-black text-slate-200 uppercase tracking-tight truncate">
-                                    ${cleanLabel}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-3 shrink-0">
-                                <span class="font-mono text-[11px] font-black" style="color:${color}">${pct}%</span>
-                                <span class="font-mono text-[9px] text-slate-500 font-bold opacity-60">${r.vote_count}</span>
-                            </div>
+                        <div class="flex justify-between items-center mb-1 gap-2">
+                            <span class="text-xs font-bold text-slate-200 uppercase leading-tight flex-1 truncate">
+                                ${isLeader ? '<span class="text-amber-400 mr-1">▲</span>' : ''}${r.label}
+                            </span>
+                            <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
+                            <span class="font-mono text-[9px] text-slate-500 shrink-0">${r.vote_count} v.</span>
                         </div>
-                        <div class="w-full bg-slate-800/50 rounded-full h-2.5 overflow-hidden border border-white/5 relative">
-                            <div class="h-full rounded-full transition-all duration-[1500ms] ease-out shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                        <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden border border-white/5">
+                            <div class="h-full rounded-full transition-all duration-1000 ease-out"
                                  style="width: 0%; background-color: ${color};"
                                  data-target-width="${pct}%">
-                                 <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-transparent"></div>
                             </div>
                         </div>
                     `;
@@ -2422,6 +2350,14 @@
                             </div>
                             <div class="space-y-2">
                                 <div class="flex justify-between text-[10px] font-bold uppercase">
+                                    <span class="text-slate-500">Predicciones</span>
+                                    <span class="text-white">${r.total_predictions || 0}</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] font-bold uppercase">
+                                    <span class="text-slate-500">Confianza Promedio</span>
+                                    <span class="text-amber-500">${Math.round(r.avg_confidence || 0)}%</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] font-bold uppercase">
                                     <span class="text-slate-500">Puntuación de Tendencia</span>
                                     <span class="text-emerald-500">${Math.round(r.trend_score || 0)}</span>
                                 </div>
@@ -2436,14 +2372,12 @@
                 console.log('Sin resultados de predicciones aún:', e);
             }
         }
-
         // ============================================
         // INICIALIZACIÓN DIRECTA (SIN AUTHENTICACIÓN)
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
              // Iniciar la plataforma de Prestigio directamente
-             const portal = document.getElementById('portal-section');
-             if (portal) portal.classList.remove('hidden');
+             document.getElementById('portal-section').classList.remove('hidden');
              loadSurveys();
              populateMunicipios();
         });
@@ -2452,13 +2386,12 @@
         // TOAST (NOTIFICACIONES)
         // ============================================
         function showToast(message, type = 'info') {
-            if (document.getElementById('toast-' + message)) return;
             const toast = document.createElement('div');
-            toast.id = 'toast-' + message;
             toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${type === 'success' ? 'bg-emerald-600' :
                 type === 'error' ? 'bg-red-600' :
                     'bg-amber-600'
                 }`;
+            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
             document.body.appendChild(toast);
 
             setTimeout(() => {
@@ -2466,9 +2399,6 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
-    </script>
-</body>
-</html>
 
         // ============================================
         // AUTO-LOGIN SI YA HAY TOKEN
