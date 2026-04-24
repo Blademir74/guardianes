@@ -530,18 +530,25 @@
 
         candidates.forEach((cand, index) => {
             const delay      = index * 0.08;
-            const nombre     = sanitizeHTML(cand.name);
-            const party      = (cand.party || '').trim().toUpperCase();
-            // Formato: Nombre (Partido). Sin (IND), sin "Perfil Territorial".
-            const partyLabel = (party && party !== 'IND' && party !== 'IND.' && party !== 'INDEPENDIENTE')
-                ? `(${sanitizeHTML(party)})`
-                : '';
+            // Limpiar nombre — quitar "(PARTIDO)" si viene del backend
+            const nombreRaw  = sanitizeHTML(cand.name).replace(/\s*\([^)]+\)\s*$/, '').trim();
+            const nombre     = nombreRaw;
+            const party      = (cand.party || '').trim().toUpperCase()
+                                .replace(/^IND\.?$/, 'INDEPENDIENTE');
             const photoSrc   = cand.photo_url || '/img/placeholder_cand.jpg';
 
             const card = document.createElement('div');
             card.className = 'candidate-card';
             card.style.animation = `fadeInUp 0.6s ease-out ${delay + 0.3}s both`;
             card.dataset.candidateIndex = index;
+
+            // Color institucional del partido
+            const partyColor = (function(p) {
+                const COLORS = { MORENA:'#8B0000', PAN:'#1E40AF', PRI:'#DC2626',
+                    PVEM:'#15803D', PT:'#B91C1C', MC:'#EA580C', PRD:'#CA8A04', INDEPENDIENTE:'#475569' };
+                for (const [k,v] of Object.entries(COLORS)) if (p.includes(k)) return v;
+                return '#475569';
+            })(party.toUpperCase());
 
             card.innerHTML = `
                 <div class="card-check">
@@ -552,10 +559,20 @@
                 <div class="img-container">
                     <img src="${photoSrc}"
                          alt="${nombre}"
+                         style="width:100%;height:160px!important;object-fit:cover!important;object-position:top!important;"
                          onerror="this.src='/img/placeholder_cand.jpg';">
                 </div>
                 <div class="card-name">${nombre}</div>
-                <div class="card-party">${partyLabel}</div>
+                ${party && party !== 'INDEPENDIENTE' ? `
+                <div style="
+                    display:inline-flex;align-items:center;
+                    background:${partyColor};color:#fff;
+                    font-size:9px;font-weight:900;letter-spacing:.1em;
+                    padding:3px 10px;border-radius:999px;margin-top:4px;
+                    border:1px solid rgba(255,255,255,.15);
+                    box-shadow:0 2px 6px rgba(0,0,0,.4);
+                    text-transform:uppercase;
+                ">${party}</div>` : ''}
             `;
 
             card.addEventListener('click', () => selectCandidate(index));
@@ -617,10 +634,11 @@
             activeSurveyId = survey.id;
             console.log(`[LANDING] Encuesta activa: ${activeSurveyId} — "${survey.title}"`);
 
-            // Actualizar headline con el título real de la encuesta
+            // Actualizar headline — eliminar emojis antes de inyectar para evitar SyntaxError
             const headline = document.getElementById('survey-headline');
             if (headline && survey.title) {
-                headline.innerHTML = `${sanitizeHTML(survey.title)}<br><span class="text-gold italic">TÚ DECIDES</span>`;
+                const safeTitle = survey.title.replace(/[^\x00-\x7F\u00C0-\u024F\u00A0-\u00FF]/g, '').trim() || survey.title;
+                headline.innerHTML = sanitizeHTML(safeTitle) + '<br><span class="text-gold italic">TÚ DECIDES</span>';
             }
 
             // 2. Preguntas + candidatos del backend
@@ -851,23 +869,30 @@
 
         // Barras con nombre (Partido), color institucional, votos y porcentaje
         results.forEach((r, idx) => {
-            const pct     = r.percentage || 0;
-            const color   = getPartyColor(r.label);
+            const pct      = r.percentage || 0;
+            // Limpiar label y extraer partido limpio
+            const cleanLbl = sanitizeHTML((r.label || '').replace(/\s*\([^)]+\)\s*$/, '').trim());
+            const partyStr = ((r.party || '') || ((r.label || '').match(/\(([^)]+)\)/) || [])[1] || '')
+                             .trim().toUpperCase().replace(/^IND\.?$/, 'INDEPENDIENTE');
+            const color    = getPartyColor(partyStr || r.label);
             const isLeader = idx === 0 && r.vote_count > 0;
 
             const div = document.createElement('div');
-            div.className = 'mb-3';
+            div.className = 'mb-4';
             div.innerHTML = `
-                <div class="flex justify-between items-center mb-1 gap-2">
-                    <span class="text-xs font-bold text-gray-200 uppercase leading-tight flex-1 truncate">
-                        ${isLeader ? '<span style="color:#D4AF37">&#9650; </span>' : ''}${sanitizeHTML(r.label)}
-                    </span>
-                    <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
-                    <span class="font-mono text-[9px] text-gray-500 shrink-0">${r.vote_count} v.</span>
+                <div class="flex justify-between items-center mb-1.5 gap-2">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        ${isLeader ? '<span style="color:#D4AF37;font-size:10px">&#9650;</span>' : ''}
+                        <span class="text-xs font-bold text-gray-100 uppercase truncate">${cleanLbl}</span>
+                        ${partyStr && partyStr !== 'INDEPENDIENTE' ? `<span style="background:${color};color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.15);box-shadow:0 1px 4px rgba(0,0,0,.4);flex-shrink:0;">${partyStr}</span>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="font-mono text-xs font-black" style="color:${color}">${pct}%</span>
+                        <span class="font-mono text-[9px] text-gray-500">${r.vote_count}v</span>
+                    </div>
                 </div>
-                <div class="w-full bg-midnight rounded-full h-2.5 overflow-hidden border border-white/5">
-                    <div style="width:0%; background-color:${color};" data-target="${pct}%"
-                         class="h-full rounded-full transition-all duration-1000 ease-out"></div>
+                <div style="width:100%;height:10px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);">
+                    <div style="width:0%;height:100%;background:${color};border-radius:999px;transition:width 1s ease-out;" data-target="${pct}%"></div>
                 </div>
             `;
             container.appendChild(div);

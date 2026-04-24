@@ -215,18 +215,34 @@ router.get('/:id/questions', async (req, res) => {
     if (hasSingleChoice) {
       // Query unificada — limpia nombre y partido en SQL, sin etiquetas (IND) ni "Perfil Territorial"
       const isGub = survey.election_type === 'gubernatura';
-      const cands = await db.query(`
-        SELECT
-          id,
-          BTRIM(name) AS name,
-          party,
-          COALESCE(NULLIF(photo_url, ''), '/img/placeholder_cand.jpg') AS photo_url
-        FROM candidates
-        WHERE
-          (${isGub ? 'municipality_id IS NULL' : 'municipality_id = $1'})
-          AND is_active = true
-        ORDER BY id
-      `, isGub ? [] : [survey.municipality_id]);
+      // Búsqueda flexible: exact match OR LIKE (cubre mismatch 18 vs 183)
+      // election_type NULL en candidatos coincide con cualquier tipo de encuesta
+      const muniId = survey.municipality_id;
+      let candsResult;
+      if (isGub) {
+        candsResult = await db.query(
+          `SELECT id, id AS numeric_id,
+                  BTRIM(name) AS name,
+                  COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
+                  COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
+           FROM candidates
+           WHERE is_active = true AND municipality_id IS NULL
+           ORDER BY id`
+        );
+      } else {
+        candsResult = await db.query(
+          `SELECT id, id AS numeric_id,
+                  BTRIM(name) AS name,
+                  COALESCE(NULLIF(BTRIM(party),''), 'INDEPENDIENTE') AS party,
+                  COALESCE(NULLIF(photo_url,''), '/img/placeholder_cand.jpg') AS photo_url
+           FROM candidates
+           WHERE is_active = true
+             AND (municipality_id = $1 OR municipality_id::text LIKE ($1::text || '%'))
+           ORDER BY id`,
+          [muniId]
+        );
+      }
+      const cands = candsResult;
 
       candidates = cands.rows;
     }
@@ -538,7 +554,9 @@ router.get('/:id/results', async (req, res) => {
     const formattedResults = results.map(r => {
       const pty = (r.party || '').trim().toUpperCase();
       // Formato innegociable: Nombre (Partido). Sin (IND), sin "Perfil Territorial".
-      const label = r.label;
+      const label = (pty && pty !== 'INDEPENDIENTE' && pty !== 'IND' && pty !== 'IND.')
+        ? `${r.label} (${r.party})`
+        : r.label;
 
       return {
         label,

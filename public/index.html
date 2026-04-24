@@ -704,12 +704,8 @@
                             </div>
                         </div>
 
-                        <!-- Gráfica Chart.js -->
-                        <div class="w-full h-[280px] md:h-[360px] bg-[#0F172A]/50 rounded-3xl p-4 border border-white/5 relative mb-6">
-                            <div class="absolute inset-0 p-4 pb-10">
-                                <canvas id="resultsChart" class="w-full h-full"></canvas>
-                            </div>
-                        </div>
+                        <!-- Gráfica Chart.js: desactivada — solo barras de progreso -->
+                        <canvas id="resultsChart" class="hidden"></canvas>
 
                         <!-- Barras de porcentaje con nombre y partido -->
                         <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-6 rounded-[2rem] border border-white/5 mb-6">
@@ -1078,29 +1074,54 @@
                                 const photo = opt.photo || opt.photo_url || opt.img || null;
                                 const value = opt.value || opt.label || label;
 
+                                // Limpiar partido del label (puede venir "Nombre (PARTIDO)" del backend)
+                                const cleanLabel = label.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                                const partyName  = (opt.party || '').trim().toUpperCase() ||
+                                                   (label.match(/\(([^)]+)\)/) || [])[1] || '';
+                                const partyColor = getCandidateColor(partyName);
+
                                 return `
-                                                <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
-                                                     data-question="${q.id}" 
+                                                <div onclick="selectOption(${q.id}, '${String(opt.id || value).replace(/'/g, "\\'")}', this)"
+                                                     data-question="${q.id}"
+                                                     data-candidate-id="${opt.id || ''}"
                                                      class="option-card candidate-card glass-card p-4 rounded-2xl text-center group transition-all duration-300 cursor-pointer border border-white/5 relative overflow-hidden flex flex-col items-center">
-                                                    
+
+                                                    <!-- Checkmark verde esmeralda -->
                                                     <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
                                                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                                         </svg>
                                                     </div>
 
-                                                    <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height: 160px; min-height: 160px;">
-                                                        ${photo ?
-                                        `<img class="candidate-img" src="${photo}" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800\\'>${label.charAt(0)}</div>'">` :
-                                        `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800" style="height: 160px;">${label.charAt(0)}</div>`
+                                                    <!-- Foto: height fijo 160px, object-fit cover, object-position top -->
+                                                    <div class="img-container w-full mb-3 rounded-xl overflow-hidden" style="height:160px !important; min-height:160px !important;">
+                                                        ${photo
+                                        ? `<img src="${photo}" alt="${cleanLabel}"
+                                                style="width:100%; height:160px !important; object-fit:cover !important; object-position:top !important;"
+                                                onerror="this.parentElement.innerHTML='<div style=\"width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#475569;background:#1e293b;\">${cleanLabel.charAt(0)}</div>'">`
+                                        : `<div style="width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#475569;background:#1e293b;">${cleanLabel.charAt(0)}</div>`
                                     }
                                                     </div>
-                                                    
-                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words transition-colors duration-300">
-                                                        ${label}
+
+                                                    <!-- Nombre limpio (sin partido en paréntesis) -->
+                                                    <div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-2 uppercase text-center break-words transition-colors duration-300">
+                                                        ${cleanLabel}
                                                     </div>
-                                                    
-                                                    <input type="radio" name="q-${q.id}" value="${value.replace(/'/g, "\\'")}" class="hidden">
+
+                                                    <!-- Chip de partido con color institucional -->
+                                                    ${partyName ? `
+                                                    <div style="
+                                                        display:inline-flex; align-items:center; gap:5px;
+                                                        background-color:${partyColor};
+                                                        color:#ffffff; font-size:9px; font-weight:900;
+                                                        letter-spacing:0.1em; text-transform:uppercase;
+                                                        padding:3px 10px; border-radius:999px;
+                                                        margin-top:2px; width:auto; max-width:100%;
+                                                        border: 1px solid rgba(255,255,255,0.15);
+                                                        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                                                    ">${partyName}</div>` : ''}
+
+                                                    <input type="radio" name="q-${q.id}" value="${String(opt.id || value).replace(/'/g, "\\'")}" class="hidden">
                                                 </div>
                                             `;
                             }).join('')}
@@ -1336,66 +1357,66 @@
     return '#475569';
 }
 
-        // --- renderResults: gráfica + barras de porcentaje ---
+        // --- renderResults: SOLO barras de progreso con chip de partido ---
+        // La gráfica Chart.js fue eliminada — duplicaba la información
         function renderResults(data) {
             if (!data || !data.results) return;
 
-            // 1. Gráfica Chart.js
-            updateLiveChart(data);
-
-            // 2. Barras de porcentaje con nombre y partido (formato: Nombre (Partido))
             const container = document.getElementById('resultados-preliminares');
-            if (container) {
-                container.innerHTML = '';
-                const results = data.results || [];
-                const maxVotes = Math.max(...results.map(r => r.vote_count || 0), 1);
+            if (!container) return;
 
-                results.forEach((r, idx) => {
-                    const pct   = r.percentage || 0;
-                    const color = getCandidateColor(r.party || r.label);
-                    const isLeader = idx === 0 && r.vote_count > 0;
+            container.innerHTML = '';
+            const results = data.results || [];
 
-                    const row = document.createElement('div');
-                    row.className = 'relative';
-                    row.innerHTML = `
-                        <div class="flex justify-between items-center mb-1 gap-2">
-                            <span class="text-xs font-bold text-slate-200 uppercase leading-tight flex-1 truncate">
-                                ${isLeader ? '<span class="text-amber-400 mr-1">▲</span>' : ''}${r.label}
-                            </span>
-                            <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
-                            <span class="font-mono text-[9px] text-slate-500 shrink-0">${r.vote_count} v.</span>
+            results.forEach((r, idx) => {
+                const pct      = r.percentage || 0;
+                // Limpiar label: quitar "(PARTIDO)" si el backend lo incluyó
+                const cleanLbl = (r.label || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
+                const partyRaw = (r.party || (r.label.match(/\(([^)]+)\)/) || [])[1] || '').trim().toUpperCase();
+                const color    = getCandidateColor(partyRaw || r.party || r.label);
+                const isLeader = idx === 0 && r.vote_count > 0;
+
+                const row = document.createElement('div');
+                row.className = 'mb-4';
+                row.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5 gap-2">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            ${isLeader ? '<span class="text-amber-400 text-xs shrink-0">▲</span>' : ''}
+                            <span class="text-xs font-bold text-slate-100 uppercase truncate">${cleanLbl}</span>
+                            ${partyRaw ? `<span style="
+                                background:${color}; color:#fff; font-size:8px; font-weight:900;
+                                letter-spacing:.08em; padding:2px 7px; border-radius:999px;
+                                white-space:nowrap; border:1px solid rgba(255,255,255,.15);
+                                box-shadow:0 1px 4px rgba(0,0,0,.4); flex-shrink:0;
+                            ">${partyRaw}</span>` : ''}
                         </div>
-                        <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden border border-white/5">
-                            <div class="h-full rounded-full transition-all duration-1000 ease-out"
-                                 style="width: 0%; background-color: ${color};"
-                                 data-target-width="${pct}%">
-                            </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="font-mono text-xs font-black" style="color:${color}">${pct}%</span>
+                            <span class="font-mono text-[9px] text-slate-500">${r.vote_count}v</span>
                         </div>
-                    `;
-                    container.appendChild(row);
+                    </div>
+                    <div class="w-full rounded-full overflow-hidden" style="height:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07);">
+                        <div style="width:0%; height:100%; background:${color}; border-radius:999px; transition:width 1s ease-out;"
+                             data-target-width="${pct}%"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            // Trigger animación
+            setTimeout(() => {
+                container.querySelectorAll('[data-target-width]').forEach(bar => {
+                    bar.style.width = bar.dataset.targetWidth;
                 });
+            }, 120);
 
-                // Trigger animación de barras con pequeño delay
-                setTimeout(() => {
-                    container.querySelectorAll('[data-target-width]').forEach(bar => {
-                        bar.style.width = bar.dataset.targetWidth;
-                    });
-                }, 120);
-            }
-
-            // 3. Contadores
+            // Contadores
             const totalVotesEl    = document.getElementById('votos-totales');
             const avgConfidenceEl = document.getElementById('confianza-promedio');
             const lastUpdateEl    = document.getElementById('last-update-live');
-
-            if (totalVotesEl) totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
-            if (avgConfidenceEl) {
-                const val = data.avg_confidence || 0;
-                avgConfidenceEl.textContent = Number(val).toFixed(1) + '%';
-            }
-            if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', {
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
+            if (totalVotesEl)    totalVotesEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
+            if (avgConfidenceEl) avgConfidenceEl.textContent = Number(data.avg_confidence || 0).toFixed(1) + '%';
+            if (lastUpdateEl)    lastUpdateEl.textContent = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
         }
 
         function updateLiveChart(data) {
