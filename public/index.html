@@ -292,12 +292,51 @@
                 /* Espacio para etiquetas del eje X */
             }
 
-            /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
-            .chart-container {
-                position: relative;
-                height: 350px !important;
-                width: 100% !important;
-                margin-top: 1rem;
+        /* ============================================
+           TARJETAS CANDIDATOS — ESTÁNDAR DE ORO
+           ============================================ */
+        .candidate-card .img-container {
+            width: 100%;
+            height: 160px !important;
+            min-height: 160px !important;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+            background-color: #0c1222;
+        }
+
+        .candidate-card img {
+            width: 100%;
+            height: 160px !important;
+            object-fit: cover !important;
+            object-position: top !important;
+            transition: transform 0.5s ease;
+        }
+
+        .candidate-card:hover img {
+            transform: scale(1.07);
+        }
+
+        .party-box {
+            font-size: 9px !important;
+            font-weight: 900 !important;
+            color: white !important;
+            padding: 4px 10px !important;
+            border-radius: 6px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            display: inline-block !important;
+            margin-top: 4px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
+        .chart-container {
+            position: relative;
+            height: 350px !important;
+            width: 100% !important;
+            margin-top: 1rem;
+        }
             }
 
 
@@ -764,6 +803,14 @@
 
     <!-- LOGIC -->
     <script>
+        // --- UTILS ---
+        function sanitizeHTML(str) {
+            if (!str) return '';
+            const temp = document.createElement('div');
+            temp.textContent = String(str);
+            return temp.innerHTML;
+        }
+
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000/api'
             : 'https://pulsoguerrero.vercel.app/api';
@@ -1106,14 +1153,19 @@
                                 const value = opt.value || opt.label || label;
 
                                 return `
-                                                <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
+                                                 <div onclick="selectOption(${q.id}, '${value.replace(/'/g, "\\'")}', this)" 
                                                      data-question="${q.id}" 
                                                      class="option-card candidate-card glass-card p-4 rounded-2xl text-center group transition-all duration-300 cursor-pointer border border-white/5 relative overflow-hidden flex flex-col items-center">
                                                      
+                                                     <div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">
+                                                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                                         </svg>
+                                                     </div>
 
-                                                     <div class="img-container w-full mb-3 rounded-xl overflow-hidden">
+                                                     <div class="img-container w-full mb-3 rounded-xl overflow-hidden h-48">
                                                          ${photo ?
-                                        `<img src="${photo}" alt="${label}" onerror="this.src='/img/placeholder_cand.jpg'">` :
+                                        `<img src="${photo}" alt="${label}" class="w-full h-full object-cover" onerror="this.src='/img/placeholder_cand.jpg'">` :
                                         `<div class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-700 bg-slate-800">${label.charAt(0)}</div>`
                                      }
                                                      </div>
@@ -1230,6 +1282,7 @@
     'INDEPENDIENTE': '#64748B'
 };
     const photoSrc = c.img || c.photo_url || null;
+    const partyDisplay = (c.party || '').trim().toUpperCase();
     return `
     <div onclick="selectOption(${q.id}, '${c.id}', this)"
          data-question="${q.id}"
@@ -1378,20 +1431,29 @@
                     const isLeader = idx === 0 && r.vote_count > 0;
 
                     const row = document.createElement('div');
-                    row.className = 'relative';
-                    const cleanLabel = r.label.split('(')[0].trim();
+                    row.className = 'relative animate-in fade-in slide-in-from-left duration-500';
+                    row.style.animationDelay = `${idx * 0.1}s`;
+                    
+                    const cleanLabel = sanitizeHTML(r.label).split('(')[0].trim();
+                    
                     row.innerHTML = `
-                        <div class="flex justify-between items-center mb-1 gap-2">
-                            <span class="text-xs font-bold text-slate-200 uppercase leading-tight flex-1 truncate">
-                                ${isLeader ? '<span class="text-amber-400 mr-1">▲</span>' : ''}${cleanLabel}
-                            </span>
-                            <span class="font-mono text-xs font-black shrink-0" style="color:${color}">${pct}%</span>
-                            <span class="font-mono text-[9px] text-slate-500 shrink-0">${r.vote_count} v.</span>
+                        <div class="flex justify-between items-center mb-1.5 gap-2">
+                            <div class="flex items-center gap-2 flex-1 truncate">
+                                ${isLeader ? '<span class="text-amber-400 text-[10px] animate-pulse">👑</span>' : ''}
+                                <span class="text-[11px] font-black text-slate-200 uppercase tracking-tight truncate">
+                                    ${cleanLabel}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <span class="font-mono text-[11px] font-black" style="color:${color}">${pct}%</span>
+                                <span class="font-mono text-[9px] text-slate-500 font-bold opacity-60">${r.vote_count}</span>
+                            </div>
                         </div>
-                        <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden border border-white/5">
-                            <div class="h-full rounded-full transition-all duration-1000 ease-out"
+                        <div class="w-full bg-slate-800/50 rounded-full h-2.5 overflow-hidden border border-white/5 relative">
+                            <div class="h-full rounded-full transition-all duration-[1500ms] ease-out shadow-[0_0_15px_rgba(0,0,0,0.5)]"
                                  style="width: 0%; background-color: ${color};"
                                  data-target-width="${pct}%">
+                                 <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-transparent"></div>
                             </div>
                         </div>
                     `;

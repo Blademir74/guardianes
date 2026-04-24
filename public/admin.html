@@ -339,6 +339,13 @@
      SCRIPTS
 ═══════════════════════════════════════════════════════════ -->
 <script>
+function sanitizeHTML(str) {
+  if (!str) return '';
+  const temp = document.createElement('div');
+  temp.textContent = String(str);
+  return temp.innerHTML;
+}
+
 const API_URL = '/api';
 let adminToken = localStorage.getItem('guardianAdminToken');
 
