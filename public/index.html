@@ -636,7 +636,7 @@
                         <p class="text-slate-400 mt-4 max-w-md text-sm md:text-base font-medium">
                             Auditoría ciudadana en tiempo real. Tu identidad es anónima mediante integridad SHA-256.
                         </p>
-                        <a href="#surveys-grid-container" class="mt-6 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-10 rounded-full shadow-lg shadow-emerald-900/40 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-lg">
+                        <a href="#survey-grid-container" class="mt-6 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-10 rounded-full shadow-lg shadow-emerald-900/40 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-lg">
                             ¡Votar Ahora!
                         </a>
                     </div>
@@ -1011,6 +1011,54 @@
 
         let currentSurveyId = null;
 
+
+        // ═══════════════════════════════════════════════════════
+        // buildCandidateGrid — ESTÁNDAR DE ORO
+        // Fuente única de verdad: array candidates de la BD
+        // Chip de partido con color institucional
+        // Foto 160px object-fit:cover object-position:top
+        // ═══════════════════════════════════════════════════════
+        function buildCandidateGrid(questions, candidates) {
+            const q         = questions[0] || {};
+            const qTitle    = q.questionText || '¿Quién crees que ganará?';
+            const qId       = q.id || 'candidate_q';
+
+            const cards = candidates.map(function(c) {
+                var cid      = c.id || c.numeric_id || '';
+                var name     = (c.name || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
+                var party    = (c.party || '').trim().toUpperCase().replace(/^IND\.?$/, 'IND');
+                var photo    = c.img || c.photo_url || '';
+                var color    = getCandidateColor(party || name);
+                var initial  = name.charAt(0);
+
+                var imgHtml = photo
+                    ? '<img src="' + photo + '" alt="' + name + '" style="width:100%;height:160px;object-fit:cover;object-position:top;" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#475569;background:#1e293b;\'>' + initial + '</div>'">'
+                    : '<div style="width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#475569;background:#1e293b;">' + initial + '</div>';
+
+                var chipHtml = party
+                    ? '<span class="party-chip" style="background:' + color + ';">' + party + '</span>'
+                    : '';
+
+                return '<div onclick="selectOption(' + JSON.stringify(qId) + ', ' + JSON.stringify(String(cid)) + ', this)"'
+                    + ' data-question="' + qId + '" data-candidate-id="' + cid + '"'
+                    + ' class="option-card candidate-card glass-card p-4 rounded-2xl text-center cursor-pointer border border-white/5 relative overflow-hidden flex flex-col items-center transition-all duration-300">'
+                    + '<div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 hidden items-center justify-center z-10">'
+                    + '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>'
+                    + '</div>'
+                    + '<div style="width:100%;height:160px;min-height:160px;border-radius:12px;overflow:hidden;margin-bottom:10px;">' + imgHtml + '</div>'
+                    + '<div class="card-name-text font-bold text-sm w-full leading-tight text-white mb-1 uppercase text-center break-words">' + name + '</div>'
+                    + chipHtml
+                    + '<input type="radio" name="q-' + qId + '" value="' + cid + '" class="hidden">'
+                    + '</div>';
+            }).join('');
+
+            return '<div class="space-y-8">'
+                + '<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center font-black text-slate-950 text-xl">1</div>'
+                + '<h4 class="text-2xl font-black uppercase tracking-tighter italic text-white">' + qTitle + '</h4></div>'
+                + '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">' + cards + '</div>'
+                + '</div>';
+        }
+
         async function openSurvey(id) {
             currentSurveyId = id;
             try {
@@ -1096,6 +1144,12 @@
 
                 console.log('📊 Total candidatos a renderizar:', candidates.length);
                 console.log('📋 Candidatos:', candidates);
+
+                // ESTÁNDAR DE ORO: Si hay candidatos de BD, siempre mostrarlos
+                if (candidates.length > 0) {
+                    content.innerHTML = buildCandidateGrid(data.questions, candidates);
+                    return;  // skip old questions renderer
+                }
 
                 content.innerHTML = data.questions.map((q, qIdx) => {
                     // Manejo de preguntas de opción única/múltiple
