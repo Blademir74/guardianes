@@ -763,7 +763,7 @@
                                 <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
                             </div>
                         </div>
-                        <canvas id="resultsChart" class="hidden"></canvas>
+                        <canvas id="resultsChart" style="width:100%;height:280px;display:block;" class="mb-4"></canvas>
                         <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-5 rounded-2xl border border-white/5 mb-4">
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-3">
@@ -790,6 +790,14 @@
 
     <!-- LOGIC -->
     <script>
+        // sanitizeHTML — previene XSS en toda inyección de datos al DOM
+        function sanitizeHTML(str) {
+            if (!str) return '';
+            var t = document.createElement('div');
+            t.textContent = String(str);
+            return t.innerHTML;
+        }
+
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000/api'
             : 'https://pulsoguerrero.vercel.app/api';
@@ -987,7 +995,7 @@
                           </div>
                           <div>
                               <span class="bg-${typeColor}-600/10 text-${typeColor}-500 font-extrabold text-[9px] px-3 py-1 rounded-full uppercase tracking-widest border border-${typeColor}-600/20">${typeLabel}</span>
-                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${s.title}</h3>
+                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${(s.title||"").replace(/[\u{1F600}-\u{1FFFF}]/gu,"").trim()}</h3>
                               <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${s.description || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
                           </div>
                           <div class="mt-8 flex justify-between items-end">
@@ -1084,7 +1092,7 @@
                  + '<h4 class="text-2xl md:text-3xl font-black uppercase tracking-tighter'
                  + ' italic text-white">' + qTitle + '</h4>'
                  + '</div>'
-                 + '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">' + cards + '</div>'
+                 + '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4 candidate-grid-prestige">' + cards + '</div>'
                  + '</div>';
         }
         async function openSurvey(id) {
@@ -1406,14 +1414,20 @@
 
             // Fetch inicial
             fetchLiveResults(pollId).then(data => {
-                if (data && data.success) renderResults(data);
+                if (data && data.success) {
+                    renderResults(data);
+                    updateLiveChart(data);
+                }
             });
 
-            // Polling Quirúrgico cada 30 segundos
+            // Polling cada 30 segundos
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(() => {
                 fetchLiveResults(pollId).then(data => {
-                    if (data && data.success) renderResults(data);
+                    if (data && data.success) {
+                        renderResults(data);
+                        updateLiveChart(data);
+                    }
                 });
             }, 30000);
         }
@@ -1614,6 +1628,7 @@
                             const liveData = await fetchLiveResults(currentSurveyId);
                             if (liveData && liveData.results && liveData.results.length > 0) {
                                 renderResults(liveData);
+                                updateLiveChart(liveData);
                             } else {
                                 const barsEl = document.getElementById('resultados-preliminares');
                                 if (barsEl) barsEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
