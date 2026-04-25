@@ -5,6 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardianes de Guerrero | Caja Negra Democrática</title>
+    <!-- SEO + Viral OG Tags -->
+    <meta name="description" content="Auditoria ciudadana 100% anonima. Tu decides quien gobierna Guerrero 2027. Sin registro. Sin nombres. Solo tu opinion.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Guardianes Guerrero">
+    <meta property="og:title" content="Guerrero 2027: La Caja Negra Democratica — Tu voto cuenta">
+    <meta property="og:description" content="Sin registro. Sin nombres. 100% anonimo. Tu decides quien gobierna Guerrero 2027. Participa en la auditoria ciudadana.">
+    <meta property="og:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://pulsoguerrero.vercel.app/">
+    <meta property="og:locale" content="es_MX">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@GuardianesGro">
+    <meta name="twitter:title" content="Guerrero 2027: La Caja Negra Democratica">
+    <meta name="twitter:description" content="Auditoria ciudadana anonima. Tu decides quien gobierna Guerrero 2027.">
+    <meta name="twitter:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
     <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap"
@@ -15,6 +31,41 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
+
+        /* ── Chip de Partido Estándar de Oro ── */
+        .party-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            margin-top: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        /* Botones de compartir */
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .share-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         :root {
             --color-background: #0A0F1C; /* Azul Medianoche Absoluto */
             --color-surface: #161E31; /* Slate 900 más oscuro */
@@ -671,59 +722,61 @@
                 <!-- Oculto por defecto. Se activa vía showPostVotePanel() tras voto exitoso -->
                 <div id="live-results-panel" class="mt-6 hidden">
 
-                    <!-- ── PASO 1: Confirmación animada ── -->
-                    <div id="vote-confirmation-block" class="py-10 px-6 text-center border border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] mb-8 animate-in fade-in zoom-in duration-500">
-                        <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40 shadow-lg shadow-emerald-500/10">
-                            <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- PASO 1: Confirmación -->
+                    <div id="vote-confirmation-block" class="py-8 px-6 text-center border border-emerald-500/20 bg-emerald-500/5 rounded-3xl mb-6">
+                        <div class="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/40">
+                            <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <h3 id="confirmation-candidate-name" class="text-xl md:text-3xl font-black uppercase tracking-tighter text-white mb-2">
-                            Voto Registrado
-                        </h3>
-                        <p class="text-slate-400 text-sm font-medium mb-4">Tu decisión está protegida con integridad SHA-256 en la Caja Negra.</p>
-                        <div class="inline-flex items-center gap-3 bg-black/40 px-4 py-2 rounded-full border border-emerald-500/20">
+                        <h3 id="confirmation-candidate-name" class="text-xl md:text-2xl font-black uppercase tracking-tighter text-white mb-1">Voto Registrado</h3>
+                        <p class="text-slate-400 text-xs font-medium mb-3">Tu decisión está protegida con SHA-256 en la Caja Negra.</p>
+                        <div class="inline-flex items-center gap-2 bg-black/40 px-4 py-2 rounded-full border border-emerald-500/20 mb-4">
                             <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                             <span id="vote-hash-display" class="font-mono text-[9px] text-emerald-400 uppercase tracking-widest">Calculando sello...</span>
                         </div>
-                        <!-- Countdown antes de mostrar resultados -->
-                        <div class="mt-6 flex items-center justify-center gap-2">
-                            <span class="text-slate-500 text-xs uppercase tracking-widest font-bold">Resultados en</span>
+                        <!-- Botones compartir — visibles desde el inicio -->
+                        <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
+                            <span class="text-slate-500 text-[9px] uppercase tracking-widest font-mono w-full">Invita a participar</span>
+                            <a id="share-wa" href="#" target="_blank" rel="noopener" class="share-btn" style="background:#25D366;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                WhatsApp
+                            </a>
+                            <a id="share-fb" href="#" target="_blank" rel="noopener" class="share-btn" style="background:#1877F2;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                Facebook
+                            </a>
+                        </div>
+                        <!-- Countdown -->
+                        <div id="countdown-row" class="flex items-center justify-center gap-2">
+                            <span class="text-slate-500 text-[10px] uppercase tracking-widest font-bold">Resultados en</span>
                             <span id="results-countdown" class="text-amber-400 font-black text-2xl font-mono w-8 text-center">3</span>
                         </div>
                     </div>
 
-                    <!-- ── PASO 2: Resultados en vivo (aparece tras countdown) ── -->
-                    <div id="results-reveal-block" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-                        <div class="flex items-center justify-between mb-6 pt-2 border-t border-white/5">
-                            <h3 class="text-lg md:text-2xl font-black uppercase tracking-tight text-white">Auditoría <span class="text-emerald-500">en Vivo</span></h3>
-                            <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                    <!-- PASO 2: Resultados permanentes -->
+                    <div id="results-reveal-block" class="hidden">
+                        <div class="flex items-center justify-between mb-4 pt-2 border-t border-white/5">
+                            <h3 class="text-base md:text-xl font-black uppercase tracking-tight text-white">Auditoria <span class="text-emerald-500">en Vivo</span></h3>
+                            <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                                 <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                                 <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
                             </div>
                         </div>
-
-                        <!-- Gráfica Chart.js: desactivada — solo barras de progreso -->
                         <canvas id="resultsChart" class="hidden"></canvas>
-
-                        <!-- Barras de porcentaje con nombre y partido -->
-                        <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-6 rounded-[2rem] border border-white/5 mb-6">
-                            <!-- Inyectado por renderResults() -->
+                        <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-5 rounded-2xl border border-white/5 mb-4">
                         </div>
-
-                        <!-- Contadores globales -->
-                        <div class="grid grid-cols-3 gap-3 mt-4">
-                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
-                                <div id="votos-totales" class="text-2xl font-black text-white">0</div>
+                        <div class="grid grid-cols-3 gap-2 mt-3">
+                            <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                                <div id="votos-totales" class="text-xl font-black text-white">0</div>
                                 <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Votos</div>
                             </div>
-                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
-                                <div id="confianza-promedio" class="text-2xl font-black text-emerald-500">0%</div>
+                            <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                                <div id="confianza-promedio" class="text-xl font-black text-emerald-500">--%</div>
                                 <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Confianza</div>
                             </div>
-                            <div class="bg-[#1E293B]/40 p-4 rounded-2xl text-center border border-white/5">
-                                <div id="last-update-live" class="text-xs font-bold text-emerald-500 mt-1">--:--</div>
+                            <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                                <div id="last-update-live" class="text-[10px] font-bold text-emerald-500 mt-1">--:--</div>
                                 <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sync</div>
                             </div>
                         </div>
@@ -1349,62 +1402,61 @@
         // La gráfica Chart.js fue eliminada — duplicaba la información
         function renderResults(data) {
             if (!data || !data.results) return;
-
-            const container = document.getElementById('resultados-preliminares');
+            var container = document.getElementById('resultados-preliminares');
             if (!container) return;
-
             container.innerHTML = '';
-            const results = data.results || [];
+            var results = data.results || [];
 
             if (results.length === 0) {
-                container.innerHTML = '<p class="text-center text-slate-500 text-xs font-mono py-6 uppercase tracking-widest">Los votos aparecerán aquí en tiempo real</p>';
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
+                return;
             }
 
-            results.forEach((r, idx) => {
-                const pct      = r.percentage || 0;
-                // Limpiar "(PARTIDO)" del label que viene del backend
-                const cleanLbl = (r.label || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
-                // Extraer partido: del campo party primero, luego del paréntesis del label
-                const partyRaw = ((r.party && r.party.trim())
-                                  || ((r.label || '').match(/\(([^)]+)\)/) || [])[1]
-                                  || '').trim().toUpperCase().replace(/^IND\.?$/, 'IND');
-                const color    = getCandidateColor(partyRaw || r.label);
-                const isLeader = idx === 0 && r.vote_count > 0;
+            results.forEach(function(r, idx) {
+                var pct      = r.percentage || 0;
+                var rawLbl   = r.label || '';
+                var cleanLbl = rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                var partyStr = '';
+                if (r.party && r.party.trim()) {
+                    partyStr = r.party.trim().toUpperCase();
+                } else {
+                    var m = rawLbl.match(/\(([^)]+)\)/);
+                    if (m) partyStr = m[1].trim().toUpperCase();
+                }
+                partyStr = partyStr.replace(/^IND\.?$/, 'IND');
+                var color    = getCandidateColor(partyStr || rawLbl);
+                var isLeader = idx === 0 && r.vote_count > 0;
 
-                const row = document.createElement('div');
-                row.className = 'mb-4';
-                row.innerHTML =
-                    '<div class="flex justify-between items-center mb-1.5 gap-2">' +
-                        '<div class="flex items-center gap-2 flex-1 min-w-0">' +
-                            (isLeader ? '<span style="color:#F59E0B;font-size:10px;flex-shrink:0">&#9650;</span>' : '') +
-                            '<span class="text-xs font-bold text-slate-100 uppercase truncate">' + cleanLbl + '</span>' +
-                            (partyRaw ? '<span class="party-chip" style="background-color:' + color + ';flex-shrink:0;">' + partyRaw + '</span>' : '') +
-                        '</div>' +
-                        '<div class="flex items-center gap-2 shrink-0">' +
-                            '<span class="font-mono text-xs font-black" style="color:' + color + '">' + pct + '%</span>' +
-                            '<span class="font-mono text-[9px] text-slate-500">' + r.vote_count + 'v</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div style="width:100%;height:10px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);">' +
-                        '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out;" data-target-width="' + pct + '%"></div>' +
-                    '</div>';
+                var row = document.createElement('div');
+                row.style.marginBottom = '14px';
+                var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">';
+                html += '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
+                if (isLeader) html += '<span style="color:#F59E0B;font-size:11px;flex-shrink:0">&#9650;</span>';
+                html += '<span style="font-size:12px;font-weight:700;color:#F1F5F9;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + cleanLbl + '</span>';
+                if (partyStr) html += '<span class="party-chip" style="background:' + color + ';">' + partyStr + '</span>';
+                html += '</div>';
+                html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
+                html += '<span style="font-family:monospace;font-weight:900;font-size:12px;color:' + color + '">' + pct + '%</span>';
+                html += '<span style="font-family:monospace;font-size:10px;color:#64748b">' + r.vote_count + 'v</span>';
+                html += '</div></div>';
+                html += '<div style="width:100%;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;">';
+                html += '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out" data-w="' + pct + '%"></div>';
+                html += '</div>';
+                row.innerHTML = html;
                 container.appendChild(row);
             });
 
-            setTimeout(() => {
-                container.querySelectorAll('[data-target-width]').forEach(bar => {
-                    bar.style.width = bar.dataset.targetWidth;
-                });
+            setTimeout(function() {
+                container.querySelectorAll('[data-w]').forEach(function(b) { b.style.width = b.dataset.w; });
             }, 120);
 
-            const totalEl = document.getElementById('votos-totales');
-            const confEl  = document.getElementById('confianza-promedio');
-            const syncEl  = document.getElementById('last-update-live');
+            var totalEl = document.getElementById('votos-totales');
+            var confEl  = document.getElementById('confianza-promedio');
+            var syncEl  = document.getElementById('last-update-live');
             if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
             if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
-            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
         }
-
         function updateLiveChart(data) {
             if (!data || !data.results) return;
 
@@ -1659,36 +1711,41 @@
                     const hashEl = document.getElementById('vote-hash-display');
                     if (hashEl) hashEl.textContent = `SHA256: ${visualHash}`;
 
-                    // Countdown 3→2→1→0 y luego revelar resultados
+                    // URLs de compartir
+                    const _url = encodeURIComponent('https://pulsoguerrero.vercel.app/landing.html');
+                    const _txt = encodeURIComponent('Vote en la Auditoria Ciudadana Guerrero 2027. 100% anonimo. Participa:');
+                    const waEl = document.getElementById('share-wa');
+                    const fbEl = document.getElementById('share-fb');
+                    if (waEl) waEl.href = 'https://wa.me/?text=' + _txt + '%20' + _url;
+                    if (fbEl) fbEl.href = 'https://www.facebook.com/sharer/sharer.php?u=' + _url;
+
+                    // Countdown 3→2→1→0 luego revelar resultados permanentes
                     let count = 3;
                     const countEl = document.getElementById('results-countdown');
+                    const countRow = document.getElementById('countdown-row');
                     const countInterval = setInterval(async () => {
                         count--;
                         if (countEl) countEl.textContent = count;
-
                         if (count <= 0) {
                             clearInterval(countInterval);
+                            if (countRow) countRow.style.display = 'none';
 
-                            // Revelar bloque de resultados
                             const revealBlock = document.getElementById('results-reveal-block');
-                            if (revealBlock) revealBlock.classList.remove('hidden');
+                            if (revealBlock) {
+                                revealBlock.classList.remove('hidden');
+                                setTimeout(() => revealBlock.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                            }
 
-                            // Ocultar countdown suavemente
-                            const cdRow = document.querySelector('#vote-confirmation-block .mt-6');
-                            if (cdRow) cdRow.style.display = 'none';
-
-                            // Cargar y renderizar resultados — revelar bloque siempre
+                            // Cargar resultados — siempre muestra el bloque
                             const liveData = await fetchLiveResults(currentSurveyId);
-                            if (liveData && liveData.results) {
+                            if (liveData && liveData.results && liveData.results.length > 0) {
                                 renderResults(liveData);
                             } else {
-                                // Sin resultados aún — mostrar estado vacío en lugar de ocultar
                                 const barsEl = document.getElementById('resultados-preliminares');
-                                if (barsEl) barsEl.innerHTML = '<p class="text-center text-slate-500 text-xs font-mono uppercase tracking-widest py-6">Los resultados aparecerán conforme lleguen los votos</p>';
+                                if (barsEl) barsEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
                             }
-                            revealBlock?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-                            // Iniciar polling para que los resultados sigan actualizando
+                            // Polling cada 10s para resultados en vivo permanentes
                             startLivePolling(currentSurveyId);
                         }
                     }, 1000);
