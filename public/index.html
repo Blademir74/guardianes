@@ -796,30 +796,15 @@
 
             showPortal();
             updateHeroStats();
-            setInterval(updateHeroStats, 10000); // Polling silencioso cada 10s
+            setInterval(updateHeroStats, 60000); // Polling hero cada 60s (evita reflow frecuente)
         });
 
         function animateCount(elem, target) {
-            // Setup target property to not reanimate if same
-            if (elem.dataset.target == target) return;
-            elem.dataset.target = target;
-            
-            let current = parseInt(elem.textContent.replace(/,/g, '')) || 0;
-            const duration = 1500;
-            const stepTime = 20;
-            const steps = duration / stepTime;
-            const inc = Math.max(1, (target - current) / steps);
-            
-            clearInterval(elem.animateTimer);
-            
-            elem.animateTimer = setInterval(() => {
-                current += inc;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(elem.animateTimer);
-                }
-                elem.textContent = Math.floor(current).toLocaleString();
-            }, stepTime);
+            // Sin setInterval — actualización directa evita reflow continuo y scroll jump
+            if (elem.dataset.target == String(target)) return;
+            elem.dataset.target = String(target);
+            if (elem.animateTimer) { clearInterval(elem.animateTimer); elem.animateTimer = null; }
+            elem.textContent = Math.floor(target).toLocaleString('es-MX');
         }
 
         async function updateHeroStats() {
@@ -1327,10 +1312,11 @@
                 container.appendChild(row);
             });
 
-            // Animación de barras
-            setTimeout(function() {
+            // Barras sin setTimeout — evita micro-reflows que causan scroll jump
+            // requestAnimationFrame es seguro: no modifica layout, solo pinta
+            requestAnimationFrame(function() {
                 container.querySelectorAll('[data-w]').forEach(function(b) { b.style.width = b.dataset.w; });
-            }, 120);
+            });
 
             // Actualizar stats globales
             var totalEl = document.getElementById('votos-totales');
@@ -1418,21 +1404,25 @@
             const pollId = surveyId || currentSurveyId;
             if (!pollId) return;
 
-            // Fetch inicial — renderiza siempre sin importar visibilidad del panel
+            // Fetch inicial
             fetchLiveResults(pollId).then(function(liveData) {
-                if (liveData && liveData.results) {   // ← cambiar .success por .results
+                if (liveData && liveData.results) {
                     renderResults(liveData);
                     updateLiveChart(liveData);
                 }
             });
 
-            // Polling cada 30 segundos
+            // UN SOLO setInterval a 30s — sin scroll, sin recursión
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(function() {
                 fetchLiveResults(pollId).then(function(liveData) {
                     if (liveData && liveData.results) {
                         renderResults(liveData);
-                        updateLiveChart(liveData);
+                        // updateLiveChart solo si canvas es visible (evita resize scroll)
+                        var canvas = document.getElementById('resultsChart');
+                        if (canvas && canvas.offsetParent !== null) {
+                            updateLiveChart(liveData);
+                        }
                     }
                 });
             }, 30000);
