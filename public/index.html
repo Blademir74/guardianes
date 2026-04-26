@@ -1184,7 +1184,7 @@
                 }
 
 
-                startLivePolling(id, false);
+                startLivePolling(id, true);
 
             } catch (e) {
                 console.error('❌ ERROR CRÍTICO en openSurvey:', e);
@@ -1463,6 +1463,8 @@
         }
 
         async function submitSurvey() {
+            let submitBtn = null;
+            let originalBtnText = null;
             const inputs = document.querySelectorAll('.survey-input');
             const responses = [];
 
@@ -2192,117 +2194,6 @@
 
 
         // ============================================
-        // INICIALIZACIÓN AL CARGAR LA PÁGINA
-        // ============================================
-
-        document.addEventListener('DOMContentLoaded', async function () {
-            console.log('🚀 Inicializando sistema de autenticación Guardianes');
-
-            // Verificar si hay sesión activa
-            if (auth.isAuthenticated()) {
-                try {
-                    const response = await auth.authenticatedFetch('/api/auth/me');
-                    if (response.ok) {
-                        const userData = await response.json();
-                        console.log('✅ Usuario autenticado:', userData.name);
-
-                        // Actualizar UI con info del usuario
-                        if (document.getElementById('userInfo')) {
-                            document.getElementById('userInfo').innerHTML = `
-                        <span>👤 ${userData.name}</span>
-                        <span>🏆 ${userData.points} puntos</span>
-                    `;
-                        }
-                    }
-                } catch (error) {
-                    console.log('⚠️ Sesión no válida, limpiando...');
-                    auth.logout();
-                }
-            }
-        });
-
-        // ============================================
-        // FUNCIONES AUXILIARES
-        // ============================================
-
-        function updateUserPoints() {
-            // Actualizar puntos en la UI
-            if (auth.isAuthenticated() && auth.user) {
-                fetch('/api/auth/me', {
-                    headers: auth.getAuthHeaders()
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        auth.user.points = data.points;
-                        localStorage.setItem('user', JSON.stringify(auth.user));
-
-                        // Actualizar UI
-                        const pointsElements = document.querySelectorAll('.user-points');
-                        pointsElements.forEach(el => {
-                            el.textContent = data.points;
-                        });
-                    })
-                    .catch(console.error);
-            }
-        }
-
-        function updatePredictionStats(municipalityId) {
-            // Recargar estadísticas de predicción
-            fetch(`/api/predictions/stats/${municipalityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    console.log('📊 Estadísticas actualizadas:', data);
-                    // Actualizar gráficas si existen
-                    if (typeof updateCharts === 'function') {
-                        updateCharts(data);
-                    }
-                })
-                .catch(console.error);
-        }
-
-        async function loadPredictionResults(municipalityId) {
-            try {
-                const res = await fetch(`${API_URL}/predictions/results/${municipalityId}`);
-                const data = await res.json();
-
-                const resultsContainer = document.getElementById('predictions-results');
-                const resultsGrid = document.getElementById('results-grid');
-
-                if (data.rankings && data.rankings.length > 0) {
-                    resultsGrid.innerHTML = data.rankings.slice(0, 6).map((r, idx) => `
-                        <div class="glass-card p-6 rounded-[2rem] ${idx === 0 ? 'border-amber-600 bg-amber-600/5' : ''}">
-                            <div class="flex items-center gap-4 mb-4">
-                                <div class="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center font-black text-slate-950 text-sm">${idx + 1}</div>
-                                <div class="flex-1">
-                                    <h5 class="font-black text-sm uppercase tracking-tight text-white">${r.candidate_name}</h5>
-                                    <div class="text-[8px] font-bold text-amber-500 uppercase tracking-widest">${r.party || 'INDEPENDIENTE'}</div>
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-[10px] font-bold uppercase">
-                                    <span class="text-slate-500">Predicciones</span>
-                                    <span class="text-white">${r.total_predictions || 0}</span>
-                                </div>
-                                <div class="flex justify-between text-[10px] font-bold uppercase">
-                                    <span class="text-slate-500">Confianza Promedio</span>
-                                    <span class="text-amber-500">${Math.round(r.avg_confidence || 0)}%</span>
-                                </div>
-                                <div class="flex justify-between text-[10px] font-bold uppercase">
-                                    <span class="text-slate-500">Puntuación de Tendencia</span>
-                                    <span class="text-emerald-500">${Math.round(r.trend_score || 0)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                    resultsContainer.classList.remove('hidden');
-                } else {
-                    resultsContainer.classList.add('hidden');
-                }
-            } catch (e) {
-                console.log('Sin resultados de predicciones aún:', e);
-            }
-        }
-        // ============================================
         // INICIALIZACIÓN DIRECTA (SIN AUTHENTICACIÓN)
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
@@ -2312,31 +2203,6 @@
              populateMunicipios();
         });
 
-        // ============================================
-        // TOAST (NOTIFICACIONES)
-        // ============================================
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl z-[9999] animate-in slide-in-from-bottom-4 ${type === 'success' ? 'bg-emerald-600' :
-                type === 'error' ? 'bg-red-600' :
-                    'bg-amber-600'
-                }`;
-            toast.innerHTML = `<p class="font-black text-white">${message}</p>`;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.add('animate-out', 'fade-out');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ============================================
-        // AUTO-LOGIN SI YA HAY TOKEN
-        // ============================================
-        if (auth_token) {
-            console.log('🔑 Token encontrado, auto-login...');
-            showPortal();
-        }
     </script>
 
 
