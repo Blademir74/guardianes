@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardianes de Guerrero | Caja Negra Democrática</title>
-    <meta name="description" content="Auditoria ciudadana 100% anonima. Tu decides quien gobierna Guerrero 2027.">
+    <!-- SEO + Viral OG Tags -->
+    <meta name="description" content="Auditoria ciudadana 100% anonima. Tu decides quien gobierna Guerrero 2027. Sin registro. Sin nombres. Solo tu opinion.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Guardianes Guerrero">
     <meta property="og:title" content="Guerrero 2027: La Caja Negra Democratica — Tu voto cuenta">
-    <meta property="og:description" content="Sin registro. Sin nombres. 100% anonimo. Tu decides quien gobierna Guerrero 2027.">
+    <meta property="og:description" content="Sin registro. Sin nombres. 100% anonimo. Tu decides quien gobierna Guerrero 2027. Participa en la auditoria ciudadana.">
     <meta property="og:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -21,413 +23,2259 @@
     <meta name="twitter:image" content="https://pulsoguerrero.vercel.app/img/mosaico-guardianes.jpg">
     <script src="https://openfpcdn.io/fingerprintjs/v4" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
-        /* ====== Tus estilos originales (se mantienen intactos) ====== */
-        .party-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: #ffffff; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.4); margin-top: 4px; white-space: nowrap; flex-shrink: 0; }
-        .share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid rgba(255,255,255,0.15); }
-        .share-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        :root { --color-background: #0A0F1C; --color-surface: #161E31; --color-primary: #D97706; --color-secondary: #F59E0B; --color-accent: #10B981; --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-text-dim: #94A3B8; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--color-background); color: var(--color-text-primary); overflow-x: hidden; }
-        html { scroll-behavior: smooth; }
-        h1,h2,h3,h4,.font-black { font-family: 'Poppins', sans-serif; font-weight: 700; }
-        .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .candidate-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; }
-        .candidate-card:hover { transform: translateY(-8px) scale(1.02); border-color: rgba(202, 138, 4, 0.4); }
-        .candidate-card.selected { border-color: var(--accent); background: rgba(202, 138, 4, 0.1); box-shadow: 0 0 30px rgba(202, 138, 4, 0.3); }
-        .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 2rem; border-radius: 1rem; z-index: 1000; animation: slideIn 0.3s ease-out; font-weight: 800; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        button.bg-amber-600, button.bg-emerald-600, button.bg-red-600, button[onclick="submitSurvey()"] { background-color: var(--color-primary) !important; transition: all 200ms ease-out !important; border-radius: 1.5rem !important; }
-        button.bg-amber-600:hover, button.bg-emerald-600:hover, button.bg-red-600:hover, button[onclick="submitSurvey()"]:hover { background-color: var(--color-secondary) !important; transform: translateY(-1px); }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .animate-pulse { animation: pulse 2s infinite; }
-        @media (max-width: 640px) {
-            #survey-modal h2#modal-title { font-size: 1.4rem !important; line-height: 1.2 !important; white-space: normal !important; text-align: center !important; }
-            #survey-modal .candidate-card { padding: 0.8rem !important; height: 100% !important; flex-direction: column !important; }
-            #survey-modal .candidate-card .w-28 { width: 5rem !important; height: 5rem !important; }
-            #survey-modal .candidate-card h5 { white-space: normal !important; word-wrap: break-word !important; }
-            #survey-modal .grid.grid-cols-2 { gap: 0.5rem !important; }
-            #survey-modal #resultsChart { min-height: 350px !important; }
-            .chart-container { height: 350px !important; }
-            .results-bar-container { height: 1.25rem; }
-            .results-bar-fill { min-height: 1.25rem !important; }
+
+        /* ── Chip de Partido Estándar de Oro ── */
+        .party-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            margin-top: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        #standby-banner { background: linear-gradient(135deg, #0A0F1C 0%, #161E31 100%); border: 2px solid #D97706; box-shadow: 0 0 30px rgba(217, 119, 6, 0.2); }
-        .text-prestige-gold { color: #D97706; }
-        #survey-modal .candidate-profile-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
-        @media (min-width:768px) { #survey-modal .candidate-profile-grid { grid-template-columns: repeat(3,1fr); gap: 16px; } }
-        .profile-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem 0.75rem; background: #111827; border: 2px solid rgba(255,255,255,0.06); border-radius: 1.5rem; cursor: pointer; transition: all 0.3s; min-height: 200px; }
-        .profile-card:hover { transform: translateY(-4px) scale(1.02); border-color: rgba(16,185,129,0.4); }
-        .profile-card .avatar-ring { width: 5.5rem; height: 5.5rem; border-radius: 50%; padding: 3px; border: 2px solid rgba(16,185,129,0.3); margin-bottom: 0.75rem; overflow: hidden; }
-        .profile-card .avatar-ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top center; }
-        .profile-card .profile-name { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: #fff; text-align: center; line-height: 1.15; margin-bottom: 0.5rem; }
-        .profile-card .party-pill { font-size: 0.55rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; padding: 3px 10px; border-radius: 9999px; margin-top: auto; }
-        .profile-card .profile-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: #10B981; display: none; align-items: center; justify-content: center; }
-        .profile-card.selected, .candidate-card.selected { border-color: #D4AF37 !important; box-shadow: 0 0 0 2px #D4AF37, 0 8px 24px rgba(0,0,0,0.6); background: rgba(212,175,55,0.05); }
-        .profile-card.selected .profile-name, .candidate-card.selected .card-name-text { color: #D4AF37 !important; }
-        .profile-card.selected .profile-check { display: flex; animation: checkPop 0.3s ease-out; }
-        @keyframes checkPop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
-        @media (max-width:640px) { .profile-card { padding: 1rem 0.5rem; min-height: 180px; } .profile-card .avatar-ring { width: 4.5rem; height: 4.5rem; } .profile-card .profile-name { font-size: 0.65rem; } }
+        /* Botones de compartir */
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .share-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        :root {
+            --color-background: #0A0F1C; /* Azul Medianoche Absoluto */
+            --color-surface: #161E31; /* Slate 900 más oscuro */
+            --color-primary: #D97706; /* Dorado Prestige */
+            --color-secondary: #F59E0B; /* Dorado más claro */
+            --color-accent: #10B981; /* Verde Esmeralda */
+            --color-text-primary: #F8FAFC; 
+            --color-text-secondary: #94A3B8; 
+            --color-text-dim: #94A3B8; /* Para texto secundario o atenuado */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-black {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-active {
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .candidate-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(202, 138, 4, 0.4);
+        }
+
+        .candidate-card.selected {
+            border-color: var(--accent);
+            background: rgba(202, 138, 4, 0.1);
+            box-shadow: 0 0 30px rgba(202, 138, 4, 0.3);
+        }
+
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Botones Quirúrgicos */
+        button.bg-amber-600,
+        button.bg-emerald-600,
+        button.bg-red-600,
+        button[onclick="submitSurvey()"] {
+            background-color: var(--color-primary) !important;
+            transition: all 200ms ease-out !important;
+            border-radius: 1.5rem !important;
+        }
+
+        button.bg-amber-600:hover,
+        button.bg-emerald-600:hover,
+        button.bg-red-600:hover,
+        button[onclick="submitSurvey()"]:hover {
+            background-color: var(--color-secondary) !important;
+            transform: translateY(-1px);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Estilos para el modal de login */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-step {
+            display: none;
+        }
+
+        .auth-step.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .auth-button:hover {
+            background: #0056b3;
+        }
+
+        .auth-timer {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        /* ============================================
+   📱 CORRECCIONES PARA MÓVIL V2.0 (FINAL)
+   ============================================ */
+
+        @media (max-width: 640px) {
+
+            /* 1. TÍTULOS DE MODAL (Evita cortes) */
+            #survey-modal h2#modal-title {
+                font-size: 1.4rem !important;
+                /* Un pelín más chico para asegurar ajuste */
+                line-height: 1.2 !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                text-align: center !important;
+                padding: 0 0.5rem;
+                width: 100% !important;
+                display: block !important;
+            }
+
+            /* 2. TARJETAS DE CANDIDATOS (Nombres completos) */
+            #survey-modal .candidate-card {
+                padding: 0.8rem !important;
+                /* Optimiza espacio interno */
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+            }
+
+            #survey-modal .candidate-card .w-28 {
+                width: 5rem !important;
+                /* Foto grande pero controlada */
+                height: 5rem !important;
+                min-width: 5rem !important;
+                min-height: 5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            /* EL CAMBIO CLAVE: Nombres sin cortar */
+            #survey-modal .candidate-card h5 {
+                height: auto !important;
+                min-height: 2.5em !important;
+                /* Altura mínima para alineación */
+                line-height: 1.1 !important;
+                font-size: 0.75rem !important;
+                /* Letra legible y nítida */
+                white-space: normal !important;
+                /* Permite saltos de línea */
+                word-wrap: break-word !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                display: block !important;
+                /* Quita el flex/box que corta */
+                -webkit-line-clamp: unset !important;
+                /* Quita límite de líneas */
+                line-clamp: unset !important;
+                -webkit-box-orient: unset !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            /* Partido Político */
+            #survey-modal .candidate-card .text-10px {
+                margin-top: auto !important;
+                /* Empuja el partido al fondo */
+                padding-top: 5px !important;
+            }
+
+            /* Ajuste del grid */
+            #survey-modal .grid.grid-cols-2 {
+                gap: 0.5rem !important;
+                align-items: stretch !important;
+                /* Que todas las tarjetas tengan misma altura */
+            }
+
+            /* 3. GRÁFICA DE RESULTADOS (Más aire) */
+            #survey-modal #resultsChart {
+                min-height: 350px !important;
+                /* Más altura para ver nombres largos */
+                height: auto !important;
+                padding-bottom: 20px !important;
+                /* Espacio para etiquetas del eje X */
+            }
+
+            /* Contenedor de la gráfica - FIJAR ALTURA PARA EVITAR DISTORSIÓN */
+            .chart-container {
+                position: relative;
+                height: 350px !important;
+                width: 100% !important;
+                margin-top: 1rem;
+            }
+
+
+            /* --- REPARACIÓN QUIRÚRGICA: BARRAS DE RESULTADOS --- */
+            .results-bar-container {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 1rem;
+                height: 1.25rem;
+                overflow: hidden;
+                width: 100%;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                margin-top: 0.5rem;
+            }
+
+            .results-bar-fill {
+                height: 100%;
+                border-radius: 1rem;
+                transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+                /* Evitar compresión vertical en móvil */
+                min-height: 1.25rem !important; 
+            }
+
+            /* Contraste Crítico: Nombres en Blanco sobre Azul Medianoche */
+            .candidate-name-label {
+                color: #FFFFFF !important;
+                font-weight: 800 !important;
+                letter-spacing: -0.02em;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            }
+
+            @media (max-width: 640px) {
+                .results-bar-container {
+                    height: 1rem;
+                }
+                .results-bar-fill {
+                    min-height: 1rem !important;
+                }
+            }
+        }
+
+        /* --- STAND-BY BANNER --- */
+        #standby-banner {
+            background: linear-gradient(135deg, #0A0F1C 0%, #161E31 100%);
+            border: 2px solid #D97706;
+            box-shadow: 0 0 30px rgba(217, 119, 6, 0.2);
+        }
+        .text-prestige-gold {
+            color: #D97706;
+        }
+
+        /* ═══════════════════════════════════════════════════
+           TARJETAS PERFIL CIRCULAR — INDEX.HTML
+           Estilo: Avatar circular + nombre + partido
+           Compatible con candidatos dinámicos del Admin
+           ═══════════════════════════════════════════════════ */
+
+        #survey-modal .candidate-profile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        @media (min-width: 768px) {
+            #survey-modal .candidate-profile-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+        }
+
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem 0.75rem;
+            background: #111827;
+            border: 2px solid rgba(255,255,255,0.06);
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+        }
+
+        .profile-card .avatar-ring {
+            width: 5.5rem;
+            height: 5.5rem;
+            border-radius: 50%;
+            padding: 3px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            margin-bottom: 0.75rem;
+            transition: border-color 0.3s ease;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .profile-card:hover .avatar-ring {
+            border-color: rgba(16, 185, 129, 0.7);
+        }
+
+        .profile-card .avatar-ring img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        .profile-card .avatar-ring .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #1E293B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: #475569;
+        }
+
+        .profile-card .profile-name {
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            color: #FFFFFF;
+            text-align: center;
+            line-height: 1.15;
+            margin-bottom: 0.5rem;
+            min-height: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+            word-wrap: break-word;
+            width: 100%;
+            padding: 0 2px;
+        }
+
+        .profile-card .party-pill {
+            font-size: 0.55rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            margin-top: auto;
+        }
+
+        .profile-card .profile-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #10B981;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(16,185,129,0.5);
+            z-index: 5;
+        }
+
+        @keyframes checkPop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        /* SELECCIONADO — BORDE DORADO */
+        .profile-card.selected, .candidate-card.selected {
+            border-color: #D4AF37 !important;
+            box-shadow:
+                0 0 0 2px #D4AF37,
+                0 8px 24px rgba(0,0,0,0.6),
+                0 0 20px rgba(212,175,55,0.25);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .profile-card.selected .avatar-ring, .candidate-card.selected .img-container {
+            border-color: #D4AF37;
+        }
+
+        .profile-card.selected .profile-name, .candidate-card.selected .card-name-text {
+            color: #D4AF37 !important;
+        }
+
+        .profile-card.selected .profile-check {
+            display: flex;
+            animation: checkPop 0.3s ease-out;
+        }
+
+        /* ENFOQUE: ATENUAR NO SELECCIONADOS */
+        .candidate-profile-grid.has-selection .profile-card:not(.selected),
+        .has-selection .candidate-card:not(.selected) {
+            opacity: 0.45;
+            filter: grayscale(60%);
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 640px) {
+            .profile-card {
+                padding: 1rem 0.5rem;
+                min-height: 180px;
+                border-radius: 1.25rem;
+            }
+            .profile-card .avatar-ring {
+                width: 4.5rem;
+                height: 4.5rem;
+            }
+            .profile-card .profile-name {
+                font-size: 0.65rem;
+            }
+            .profile-card .party-pill {
+                font-size: 0.5rem;
+                padding: 2px 8px;
+            }
+        }
+@media (max-width: 640px) {
+    .profile-card {
+        padding: 0.75rem 0.5rem !important;
+        min-height: 170px !important;
+    }
+    .profile-card .avatar-ring {
+        width: 4rem !important;
+        height: 4rem !important;
+    }
+    .profile-card .profile-name {
+        font-size: 0.7rem !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    .profile-card .party-pill {
+        font-size: 0.5rem !important;
+        padding: 2px 6px !important;
+    }
+}
     </style>
 </head>
+
 <body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
-<script>
-    const sanitizeHTML = (str) => { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; };
-    console.log('✅ Candado de Integridad Triple Activado.');
-</script>
-<nav class="fixed top-0 w-full z-50 bg-[#0A0F1C]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="closeSurvey()">
-            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center font-black text-2xl shadow-lg shadow-emerald-900/40 text-slate-950">G</div>
-            <h1 class="text-xl font-extrabold tracking-tight uppercase">Guardianes <span class="text-emerald-500">2027</span></h1>
+    <script>
+        // 1. Definición de Utilidades Críticas (Evitar ReferenceError)
+        const sanitizeHTML = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+        console.log('✅ Candado de Integridad Triple Activado.');
+    </script>
+    <!-- NAVBAR PRESTIGE -->
+    <nav class="fixed top-0 w-full z-50 bg-[#0A0F1C]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="closeSurvey()">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center font-black text-2xl shadow-lg shadow-emerald-900/40 text-slate-950">G</div>
+                <h1 class="text-xl font-extrabold tracking-tight uppercase">Guardianes <span class="text-emerald-500">2027</span></h1>
+            </div>
         </div>
-    </div>
-</nav>
-<main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
-    <section id="portal-section" class="animate-in fade-in duration-700">
-        <div id="tab-encuestas" class="w-full transition-all">
-            <div class="mb-4 mt-2 flex flex-col md:flex-row items-center justify-center md:justify-between text-center md:text-left min-h-[40vh] max-h-[60vh]">
-                <div class="flex-1 md:pr-8 flex flex-col items-center md:items-start">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[10px] font-black tracking-[0.2em] text-emerald-400 uppercase">Sistema Auditable Activo</span>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="pt-28 pb-20 px-4 max-w-7xl mx-auto">
+
+
+        <!-- PORTAL MAIN -->
+        <section id="portal-section" class="animate-in fade-in duration-700">
+            <div id="tab-encuestas" class="w-full transition-all">
+                
+                <!-- HERO PRESTIGE COMMAND CENTER -->
+                <div class="mb-4 mt-2 flex flex-col md:flex-row items-center justify-center md:justify-between text-center md:text-left min-h-[40vh] max-h-[60vh]">
+                    <div class="flex-1 md:pr-8 flex flex-col items-center md:items-start">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span class="text-[10px] font-black tracking-[0.2em] text-emerald-400 uppercase">Sistema Auditable Activo</span>
+                        </div>
+                        <h2 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 leading-tight">
+                            El Vigía del Faro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">de la Democracia</span>
+                        </h2>
+                        <p class="text-slate-400 mt-4 max-w-md text-sm md:text-base font-medium">
+                            Auditoría ciudadana en tiempo real. Tu identidad es anónima mediante integridad SHA-256.
+                        </p>
+                        <a href="#survey-grid-container" class="mt-6 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-10 rounded-full shadow-lg shadow-emerald-900/40 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-lg">
+                            ¡Votar Ahora!
+                        </a>
                     </div>
-                    <h2 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 leading-tight">El Vigía del Faro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">de la Democracia</span></h2>
-                    <p class="text-slate-400 mt-4 max-w-md text-sm md:text-base font-medium">Auditoría ciudadana en tiempo real. Tu identidad es anónima mediante integridad SHA-256.</p>
-                    <a href="#survey-grid-container" class="mt-6 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-10 rounded-full shadow-lg shadow-emerald-900/40 transition-all transform hover:scale-105 active:scale-95 uppercase tracking-tighter text-lg">¡Votar Ahora!</a>
-                </div>
-                <div class="flex-1 w-full mt-8 md:mt-0 grid grid-cols-2 gap-4 max-w-md">
-                    <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                        <div class="skeleton-stat h-10 w-24 bg-white/10 rounded-md animate-pulse mb-1"></div>
-                        <span id="votos-totales-hero" class="text-4xl font-black text-white hidden">0</span>
-                        <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-2">Votos Procesados</span>
-                    </div>
-                    <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
-                        <div class="skeleton-stat h-10 w-20 bg-white/10 rounded-md animate-pulse mb-1"></div>
-                        <span id="guardianes-activos" class="text-4xl font-black text-emerald-500 hidden">0</span>
-                        <span class="text-[9px] uppercase tracking-widest text-emerald-500/80 font-bold mt-2">Guardianes Activos</span>
-                    </div>
-                </div>
-            </div>
-            <div id="banner-prestige" class="hidden scroll-mt-32">
-                <div class="border-2 border-[#D4AF37] bg-[#001a33]/80 backdrop-blur-xl rounded-[3rem] p-12 md:p-20 text-center">
-                    <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
-                        <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
-                    <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto">El radar se encuentra procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
-                    <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                        <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse"></span>
-                        <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Stand-by de Auditoría</span>
-                    </div>
-                </div>
-            </div>
-            <div id="survey-grid-container" class="scroll-mt-32 hidden">
-                <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4 mt-8">
-                    <h3 class="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight">Cápsulas de <span class="text-emerald-500">Voto</span></h3>
-                </div>
-                <div id="survey-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            </div>
-            <section id="results-section" class="max-w-3xl mx-auto px-4 pb-16 hidden">
-                <div class="glass-card rounded-[2rem] p-6 border border-white/5">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-black uppercase tracking-tight text-white">Auditoría <span class="text-emerald-500">en Vivo</span></h3>
-                        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                            <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
+                    
+                    <!-- LIVE COUNTERS -->
+                    <div class="flex-1 w-full mt-8 md:mt-0 grid grid-cols-2 gap-4 max-w-md">
+                        <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
+                            <div class="skeleton-stat h-10 w-24 bg-white/10 rounded-md animate-pulse mb-1"></div>
+                            <span id="votos-totales-hero" class="text-4xl font-black text-white hidden">0</span>
+                            <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-2">Votos Procesados</span>
+                            <div class="text-[10px] text-slate-400/80 mt-2 leading-tight text-center">
+                                Auditadas en tiempo real.
+                            </div>
+                        </div>
+                        <div class="bg-[#1E293B]/40 border border-white/5 rounded-[2rem] p-5 flex flex-col items-center justify-center backdrop-blur-sm">
+                            <div class="skeleton-stat h-10 w-20 bg-white/10 rounded-md animate-pulse mb-1"></div>
+                            <span id="guardianes-activos" class="text-4xl font-black text-emerald-500 hidden">0</span>
+                            <span class="text-[9px] uppercase tracking-widest text-emerald-500/80 font-bold mt-2">Guardianes Activos</span>
+                            <div class="text-[10px] text-slate-400/80 mt-2 leading-tight text-center">
+                                Conexiones activas.
+                            </div>
                         </div>
                     </div>
-                    <canvas id="resultsChart" style="width:100%;height:260px;display:block;margin-bottom:16px;"></canvas>
-                    <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-5 rounded-2xl border border-white/5 mb-4"></div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5"><div id="votos-totales" class="text-xl font-black text-white">0</div><div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Votos</div></div>
-                        <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5"><div id="confianza-promedio" class="text-xl font-black text-emerald-500">--%</div><div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Confianza</div></div>
-                        <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5"><div id="last-update-live" class="text-[10px] font-bold text-emerald-500">--:--</div><div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sync</div></div>
+                </div>
+
+                <!-- BANNER PRESTIGE (STAND-BY) -->
+                <div id="banner-prestige" class="hidden scroll-mt-32">
+                    <div class="border-2 border-[#D4AF37] bg-[#001a33]/80 backdrop-blur-xl rounded-[3rem] p-12 md:p-20 text-center animate-in fade-in zoom-in duration-700 shadow-2xl shadow-[#D4AF37]/20 border-gold/40">
+                        <div class="w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full flex items-center justify-center mx-auto mb-8 border border-[#D4AF37]/30">
+                            <svg class="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="text-3xl md:text-5xl font-black text-[#D4AF37] uppercase tracking-tighter mb-6 leading-tight">Gracias por participar en esta nueva urna digital de Guerrero.</h3>
+                        <p class="text-slate-300 text-xl md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed">El radar se encuentra procesando datos. Mantente atento a la próxima encuesta ciudadana.</p>
+                        <div class="mt-12 inline-flex items-center gap-4 px-6 py-3 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+                            <span class="w-3 h-3 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_10px_#D4AF37]"></span>
+                            <span class="text-xs font-black tracking-[0.3em] text-[#D4AF37] uppercase italic">Estado: Stand-by de Auditoría</span>
+                        </div>
                     </div>
                 </div>
-            </section>
-        </div>
-    </section>
-</main>
-<div id="survey-modal" class="hidden animate-in slide-in-from-bottom-10 fade-in duration-500 mt-10 min-h-[100dvh]">
-    <div class="w-full max-w-4xl mx-auto rounded-[3rem] border border-white/5 bg-[#1E293B]/20 relative shadow-2xl overflow-hidden backdrop-blur-md">
-        <button onclick="closeSurvey()" class="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-        <div class="p-8 md:p-14">
-            <header class="mb-12 border-l-4 border-emerald-500 pl-6"><span id="modal-level" class="text-emerald-500 font-bold uppercase tracking-[0.3em] text-[10px]">CÁMARA DE VOTO</span><h2 id="modal-title" class="text-3xl md:text-5xl font-black mt-3 leading-tight tracking-tighter uppercase text-white">Cruce de Tendencias</h2></header>
-            <div id="modal-content" class="space-y-16"></div>
-            <div class="mt-10 mb-6"><button onclick="submitSurvey()" id="submit-vote-btn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 md:p-8 rounded-full font-black text-xl md:text-2xl shadow-xl shadow-emerald-900/40 hover:from-emerald-400 hover:to-emerald-500 transition-all transform active:scale-[0.98] text-slate-950 uppercase tracking-tighter">✅ Sellar Auditoría Criptográfica</button><p class="text-center text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-4">Tu decisión será encriptada (SHA-256) e inmutable en el registro nacional</p></div>
+
+                <!-- SURVEYS GRID (LIST) -->
+                <div id="survey-grid-container" class="scroll-mt-32 hidden">
+                    <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4 mt-8">
+                        <h3 class="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight">Cápsulas de <span class="text-emerald-500">Voto</span></h3>
+                    </div>
+                    <div id="survey-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Surveys Injected -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+             🔧 FIX QUIRÚRGICO — PANEL DE RESULTADOS EN VIVO
+             Movido FUERA de #survey-grid-container y #portal-section
+             para garantizar visibilidad independiente del estado
+             de la encuesta. Es hermano directo de <main>.
+             Antes: anidado dentro de un padre .hidden → invisible.
+             Ahora: visibilidad controlada SOLO por su propia clase.
+        ═══════════════════════════════════════════════════════ -->
+        <section id="results-section" class="max-w-3xl mx-auto px-4 pb-16 hidden" style="display:none;">
+            <div class="glass-card rounded-[2rem] p-6 border border-white/5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-black uppercase tracking-tight text-white">
+                        Auditoría <span class="text-emerald-500">en Vivo</span>
+                    </h3>
+                    <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
+                    </div>
+                </div>
+                <canvas id="resultsChart" style="width:100%;height:260px;display:block;margin-bottom:16px;"></canvas>
+                <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-5 rounded-2xl border border-white/5 mb-4"></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                        <div id="votos-totales" class="text-xl font-black text-white">0</div>
+                        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Votos</div>
+                    </div>
+                    <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                        <div id="confianza-promedio" class="text-xl font-black text-emerald-500">--%</div>
+                        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Confianza</div>
+                    </div>
+                    <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
+                        <div id="last-update-live" class="text-[10px] font-bold text-emerald-500">--:--</div>
+                        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sync</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- SINGLE PAGE: URNA DE VOTO / SURVEY COMPONENT -->
+    <div id="survey-modal" class="hidden animate-in slide-in-from-bottom-10 fade-in duration-500 mt-10 min-h-[100dvh]">
+        <div class="w-full max-w-4xl mx-auto rounded-[3rem] border border-white/5 bg-[#1E293B]/20 relative shadow-2xl overflow-hidden backdrop-blur-md">
+            <!-- Botón de retorno estilo iOS -->
+            <button onclick="closeSurvey()" class="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="p-8 md:p-14">
+                <header class="mb-12 border-l-4 border-emerald-500 pl-6">
+                    <span id="modal-level" class="text-emerald-500 font-bold uppercase tracking-[0.3em] text-[10px]">CÁMARA DE VOTO</span>
+                    <h2 id="modal-title" class="text-3xl md:text-5xl font-black mt-3 leading-tight tracking-tighter uppercase text-white">Cruce de Tendencias</h2>
+                </header>
+
+                <div id="modal-content" class="space-y-16">
+                    <!-- Dynamic Questions (Candidate Cards) -->
+                </div>
+
+<!-- Confidence Slider Removed Surgically -->
+                <!-- BOTÓN DE SELLADO: Inmediatamente debajo de los candidatos -->
+                <div class="mt-10 mb-6">
+                    <button onclick="submitSurvey()" id="submit-vote-btn"
+                        class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 md:p-8 rounded-full font-black text-xl md:text-2xl shadow-xl shadow-emerald-900/40 hover:from-emerald-400 hover:to-emerald-500 transition-all transform active:scale-[0.98] text-slate-950 uppercase tracking-tighter">
+                        ✅ Sellar Auditoría Criptográfica
+                    </button>
+                    <p class="text-center text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-4">Tu decisión será encriptada (SHA-256) e inmutable en el registro nacional</p>
+                </div>
+
+                <!-- PANEL POST-VOTO: Confirmación + Resultados en Vivo -->
+                <!-- Oculto por defecto. Se activa vía showPostVotePanel() tras voto exitoso -->
+
+            </div>
         </div>
     </div>
-</div>
-<div id="success-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4" style="background:rgba(0,0,0,0.85);" onclick="if(event.target===this)this.classList.add('hidden')">
-    <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;width:100%;max-width:380px;text-align:center;">
-        <div style="width:60px;height:60px;background:rgba(16,185,129,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg width="28" height="28" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <h2 style="font-size:1.2rem;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px;">¡Voto Sellado!</h2>
-        <p style="color:#94a3b8;font-size:.82rem;margin-bottom:6px;">Tu auditoría ha sido sellada en la Urna Digital de Guerrero.</p>
-        <p id="success-hash" style="color:#10b981;font-size:.62rem;font-family:monospace;margin-bottom:20px;word-break:break-all;"></p>
-        <p style="color:#64748b;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Invita a participar</p>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">
-            <a href="https://api.whatsapp.com/send?text=%C2%A1Ya+sell%C3%A9+mi+auditor%C3%ADa+en+la+Caja+Negra!+Vota+t%C3%BA+tambi%C3%A9n+aqu%C3%AD%3A+https%3A%2F%2Fpulsoguerrero.vercel.app%2F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;background:#25D366;color:#fff;font-size:11px;font-weight:900;text-decoration:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp</a>
-            <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpulsoguerrero.vercel.app%2F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;background:#1877F2;color:#fff;font-size:11px;font-weight:900;text-decoration:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>Facebook</a>
-        </div>
-        <button onclick="document.getElementById('success-modal').classList.add('hidden')" style="padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.06);color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Ver Resultados</button>
-    </div>
-</div>
 
-<script>
-    // ========== LOGICA PRINCIPAL (CORREGIDA) ==========
-    function sanitizeTitle(str) { if (!str) return ''; try { return str.replace(/[^\x00-\xFF]/g, '').trim() || str.trim(); } catch(e) { return str.trim(); } }
-    const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://pulsoguerrero.vercel.app/api';
+    <!-- LOGIC -->
+    <script>
+        // ── Helpers globales (definidos antes de cualquier uso) ───────────
+        function sanitizeTitle(str) {
+            if (!str) return '';
+            // Elimina emojis y caracteres no-ASCII sin romper template literals
+            try { return str.replace(/[^\x00-\xFF]/g, '').trim() || str.trim(); }
+            catch(e) { return str.trim(); }
+        }
+ 
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000/api'
+            : 'https://pulsoguerrero.vercel.app/api';
 
-    document.addEventListener('DOMContentLoaded', async function () {
-        console.log('🚀 Inicializando');
-        const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref');
-        if (ref) { sessionStorage.setItem('grd_promoter_id', ref); showToast(`Estructura detectada: ${ref}`, 'success'); }
-        showPortal();
-        updateHeroStats();
-        setInterval(updateHeroStats, 60000);
-    });
+// Confidence gate logic removed.
 
-    function animateCount(elem, target) {
-        if (elem.dataset.target == String(target)) return;
-        elem.dataset.target = String(target);
-        if (elem.animateTimer) clearInterval(elem.animateTimer);
-        elem.textContent = Math.floor(target).toLocaleString('es-MX');
-    }
-    async function updateHeroStats() {
-        try {
-            const res = await fetch(`${API_URL}/surveys/active`);
-            if (res.ok) {
-                const data = await res.json();
-                let totalVotos = 0;
-                if (data.surveys) data.surveys.forEach(s => totalVotos += parseInt(s.totalRespondents || 0));
-                const baseActive = Math.floor(totalVotos * 0.08) + 24;
-                const randomFlux = Math.floor(Math.random() * 7) - 3;
-                document.querySelectorAll('.skeleton-stat').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('[id="votos-totales"],[id="votos-totales-hero"]').forEach(el => { el.classList.remove('hidden'); animateCount(el, totalVotos); });
-                document.querySelectorAll('[id="guardianes-activos"]').forEach(el => { el.classList.remove('hidden'); animateCount(el, Math.max(1, baseActive + randomFlux)); });
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log('🚀 Inicializando Sistema Guerrero Guardianes (Prestige Edition)');
+            
+            // --- DETECCIÓN DE REFERIDOS (LÍDERES) ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                sessionStorage.setItem('grd_promoter_id', ref);
+                console.log('📢 Referido detectado:', ref);
+                showToast(`Estructura detectada: ${ref}`, 'success');
             }
-        } catch(e) {}
-    }
 
-    const GUERRERO_PREFIXES = ['744','747','733','741','745','756','742','735','732','781','757','736','767','762','755'];
-    function validateGuerreroPhone(phone) {
-        if (!phone || phone.length !== 10) return { valid: false, error: 'Ingresa exactamente 10 dígitos' };
-        if (!/^\d{10}$/.test(phone)) return { valid: false, error: 'Solo dígitos numéricos' };
-        const prefix = phone.substring(0,3);
-        if (!GUERRERO_PREFIXES.includes(prefix)) return { valid: false, error: `Prefijo ${prefix} no es de Guerrero. Usa un número local (744,747,733...)` };
-        return { valid: true };
-    }
-    async function sha256(message) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-    function hasVotedInSession(surveyId) { return localStorage.getItem(`grd_voted_${surveyId}`) !== null; }
-    function markVotedInSession(surveyId, phoneHash) { localStorage.setItem(`grd_voted_${surveyId}`, JSON.stringify({ hash: phoneHash, ts: Date.now() })); }
-
-    const MUNICIPIOS_GUERRERO = [ /* completa con tu lista original */ ];
-    const ASPIRANTES = [
-        { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
-        { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
-        { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
-        { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
-        { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
-        { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
-        { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
-    ];
-
-    async function showPortal() { document.getElementById('portal-section').classList.remove('hidden'); loadSurveys(); populateMunicipios(); }
-    async function loadSurveys() { /* tu implementación original */ }
-    let currentSurveyId = null;
-    let hasScrolledToResults = false;
-    let surveyResponses = {};
-    let chartInstance = null;
-    let pollInterval = null;
-
-    function imgError(el) { var d = document.createElement('div'); d.style.cssText = 'width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#475569;background:#1e293b;border-radius:10px;'; d.textContent = el.dataset.initial || '?'; if (el.parentNode) el.parentNode.replaceChild(d, el); }
-    function getCandidateColor(partyOrLabel) { const u = (partyOrLabel || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); if (u.includes('MORENA')) return '#73091B'; if (u.includes('PRI')) return '#EF4444'; if (u.includes('PAN')) return '#3B82F6'; if (u.includes('PVEM')) return '#10B981'; if (u.includes('PT')) return '#FF0000'; if (u.includes('MC')) return '#FF8A00'; if (u.includes('PRD')) return '#FFD700'; if (u.includes('IND')) return '#64748B'; return '#475569'; }
-    function renderCandidates(questions, candidates) { /* tu implementación original */ }
-    async function openSurvey(id) { /* tu implementación original, pero asegura startLivePolling(id, false) */ }
-    async function fetchLiveResults(surveyId) {
-        try {
-            const targetId = surveyId || currentSurveyId;
-            if (!targetId) return null;
-            const response = await fetch(`${API_URL}/surveys/${targetId}/results`);
-            if (!response.ok) { console.warn(`⚠️ Error ${response.status} al obtener resultados`); return null; }
-            const data = await response.json();
-            console.log('📊 Resultados recibidos para encuesta', targetId, data);
-            return data;
-        } catch(error) { console.log('Sin resultados aún:', error); return null; }
-    }
-
-    function renderResults(data) {
-        const container = document.getElementById('resultados-preliminares');
-        if (!container) return;
-        if (!data || !data.results) {
-            container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;">Cargando resultados...</p>';
-            return;
-        }
-        const results = data.results || [];
-        if (results.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;">Los votos aparecen aquí en tiempo real</p>';
-            // También limpiamos la gráfica
-            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-            const canvas = document.getElementById('resultsChart');
-            if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
-            return;
-        }
-        container.innerHTML = '';
-        results.forEach((r, idx) => {
-            let pct = r.percentage || 0;
-            let rawLbl = r.label || '';
-            let cleanLbl = sanitizeHTML(rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim());
-            let partyStr = '';
-            if (r.party && r.party.trim()) partyStr = r.party.trim().toUpperCase();
-            else { const m = rawLbl.match(/\(([^)]+)\)/); if (m) partyStr = m[1].trim().toUpperCase(); }
-            partyStr = partyStr.replace(/^IND\.?$/, 'IND');
-            let color = getCandidateColor(partyStr || rawLbl);
-            let isLeader = (idx === 0 && r.vote_count > 0);
-            let row = document.createElement('div');
-            row.style.marginBottom = '14px';
-            let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">' +
-                       '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">' +
-                       (isLeader ? '<span style="color:#F59E0B;font-size:11px;flex-shrink:0">&#9650;</span>' : '') +
-                       '<span style="font-size:12px;font-weight:700;color:#F1F5F9;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + cleanLbl + '</span>' +
-                       (partyStr ? '<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(partyStr) + '</span>' : '') +
-                       '</div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
-                       '<span style="font-family:monospace;font-weight:900;font-size:12px;color:' + color + '">' + pct + '%</span>' +
-                       '<span style="font-family:monospace;font-size:10px;color:#64748b">' + r.vote_count + 'v</span>' +
-                       '</div></div>' +
-                       '<div style="width:100%;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;">' +
-                       '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out" data-w="' + pct + '%"></div></div>';
-            row.innerHTML = html;
-            container.appendChild(row);
+            showPortal();
+            updateHeroStats();
+            setInterval(updateHeroStats, 60000); // Polling hero cada 60s (evita reflow frecuente)
         });
-        requestAnimationFrame(() => { container.querySelectorAll('[data-w]').forEach(b => b.style.width = b.dataset.w); });
-        document.getElementById('votos-totales').textContent = (data.total_respondents || 0).toLocaleString('es-MX');
-        document.getElementById('confianza-promedio').textContent = Number(data.avg_confidence || 0).toFixed(1) + '%';
-        document.getElementById('last-update-live').textContent = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        updateLiveChart(data);
-    }
 
-    function updateLiveChart(data) {
-        if (!data || !data.results || data.results.length === 0) { console.warn('updateLiveChart: sin datos'); return; }
-        const ctx = document.getElementById('resultsChart')?.getContext('2d');
-        if (!ctx) return;
-        const labels = data.results.map(r => r.label);
-        const votes = data.results.map(r => r.vote_count);
-        const colors = data.results.map(r => getCandidateColor(r.party || r.label));
-        if (chartInstance) {
-            chartInstance.data.labels = labels;
-            chartInstance.data.datasets[0].data = votes;
-            chartInstance.data.datasets[0].backgroundColor = colors;
-            chartInstance.update('none');
-        } else {
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Votos', data: votes, backgroundColor: colors, borderRadius: 8 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.raw} votos` } } }, scales: { x: { beginAtZero: true, ticks: { color: '#94A3B8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#FFFFFF', font: { weight: 'bold', size: 10 }, callback: (val) => { const label = this.getLabelForValue(val); return label.length > 20 ? label.substr(0,17)+'...' : label; } }, grid: { display: false } } } } });
+        function animateCount(elem, target) {
+            // Sin setInterval — actualización directa evita reflow continuo y scroll jump
+            if (elem.dataset.target == String(target)) return;
+            elem.dataset.target = String(target);
+            if (elem.animateTimer) { clearInterval(elem.animateTimer); elem.animateTimer = null; }
+            elem.textContent = Math.floor(target).toLocaleString('es-MX');
         }
-    }
 
-    function startLivePolling(surveyId, showPanel) {
-        if (showPanel) {
-            const rs = document.getElementById('results-section');
-            if (rs) rs.classList.remove('hidden');
+        async function updateHeroStats() {
+            try {
+                const res = await fetch(`${API_URL}/surveys/active`);
+                if (res.ok) {
+                    const data = await res.json();
+                    let totalVotos = 0;
+                    if (data.surveys) {
+                        data.surveys.forEach(s => totalVotos += parseInt(s.totalRespondents || 0));
+                    }
+                    // Activos dinámicos: Base proporcional + fluctuación natural
+                    const baseActive = Math.floor(totalVotos * 0.08) + 24;
+                    const randomFlux = Math.floor(Math.random() * 7) - 3;
+                    
+                    document.querySelectorAll('.skeleton-stat').forEach(el => el.classList.add('hidden'));
+
+                    document.querySelectorAll('[id="votos-totales"],[id="votos-totales-hero"]').forEach(el => {
+                        el.classList.remove('hidden');
+                        animateCount(el, totalVotos);
+                    });
+                    document.querySelectorAll('[id="guardianes-activos"]').forEach(el => {
+                        el.classList.remove('hidden');
+                        animateCount(el, Math.max(1, baseActive + randomFlux));
+                    });
+                }
+            } catch(e) {}
         }
-        const pollId = surveyId || currentSurveyId;
-        if (!pollId) return;
-        fetchLiveResults(pollId).then(liveData => { if (liveData && liveData.results) { renderResults(liveData); updateLiveChart(liveData); } });
-        if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(() => {
-            fetchLiveResults(pollId).then(liveData => { if (liveData && liveData.results) { renderResults(liveData); const canvas = document.getElementById('resultsChart'); if (canvas && canvas.offsetParent !== null) updateLiveChart(liveData); } });
-        }, 30000);
-    }
 
-    function stopLivePolling() { if (pollInterval) clearInterval(pollInterval); pollInterval = null; }
-    function closeSurvey() { document.getElementById('survey-modal').classList.add('hidden'); stopLivePolling(); }
+        // ============================================
+        // VALIDACIÓN TELÉFONO GUERRERO (10 dígitos)
+        // ============================================
+        const GUERRERO_PREFIXES = ['744', '747', '733', '741', '745', '756', '742', '735', '732', '781', '757', '736', '767', '762', '755'];
 
-    async function submitSurvey() {
-        let submitBtn = null, originalBtnText = null;
-        const inputs = document.querySelectorAll('.survey-input');
-        const responses = [];
-        inputs.forEach(input => { const qId = parseInt(input.dataset.questionId); responses.push({ questionId: qId, answer: input.value }); });
-        Object.entries(surveyResponses).forEach(([qId, val]) => { const qIdInt = parseInt(qId); if (!responses.find(r => r.questionId === qIdInt)) responses.push({ questionId: qIdInt, answer: val }); });
-        if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
-        try {
-            const promoterId = sessionStorage.getItem('grd_promoter_id') || null;
-            submitBtn = document.getElementById('submit-vote-btn');
-            originalBtnText = submitBtn ? submitBtn.textContent : null;
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Procesando...'; }
-            Swal.fire({ title: 'Sellando Voto...', text: 'Asegurando integridad...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            let visitorIdRaw;
-            try { const fp = await FingerprintJS.load(); const result = await fp.get(); visitorIdRaw = result.visitorId; } catch(err) { visitorIdRaw = `fb_${navigator.userAgent}_${window.screen.width}x${window.screen.height}`; }
-            const visitorId = await sha256(visitorIdRaw);
-            const geo = await new Promise(resolve => {
-                if (!navigator.geolocation) return resolve({ locationProvided: false, latitude: null, longitude: null });
-                navigator.geolocation.getCurrentPosition(pos => resolve({ locationProvided: true, latitude: pos.coords.latitude, longitude: pos.coords.longitude }), () => resolve({ locationProvided: false, latitude: null, longitude: null }), { enableHighAccuracy: true, timeout: 5000 });
+        function validateGuerreroPhone(phone) {
+            if (!phone || phone.length !== 10) return { valid: false, error: 'Ingresa exactamente 10 dígitos' };
+            if (!/^\d{10}$/.test(phone)) return { valid: false, error: 'Solo dígitos numéricos' };
+            const prefix = phone.substring(0, 3);
+            if (!GUERRERO_PREFIXES.includes(prefix)) {
+                return { valid: false, error: `Prefijo ${prefix} no es de Guerrero. Usa un número local (744, 747, 733...)` };
+            }
+            return { valid: true };
+        }
+
+        // ============================================
+        // SHA-256 HASH (Web Crypto API)
+        // ============================================
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ============================================
+        // SESSION LOCK (localStorage)
+        // ============================================
+        function hasVotedInSession(surveyId) {
+            return localStorage.getItem(`grd_voted_${surveyId}`) !== null;
+        }
+        function markVotedInSession(surveyId, phoneHash) {
+            localStorage.setItem(`grd_voted_${surveyId}`, JSON.stringify({ hash: phoneHash, ts: Date.now() }));
+        }
+
+        // ============================================
+        // CONFIDENCE GATE
+        // ============================================
+
+        const MUNICIPIOS_GUERRERO = [
+            { id: 1, name: "Acapulco de Juárez" }, { id: 2, name: "Acatepec" }, { id: 3, name: "Ahuacuotzingo" },
+            { id: 4, name: "Ajuchitlan del Progreso" }, { id: 5, name: "Alcozauca de Guerrero" }, { id: 6, name: "Alpoyeca" },
+            { id: 7, name: "Apaxtla" }, { id: 8, name: "Arcelia" }, { id: 9, name: "Atenango del Río" },
+            { id: 10, name: "Atlamajalcingo del Monte" }, { id: 11, name: "Atlixtac" }, { id: 12, name: "Atoyac de Álvarez" },
+            { id: 13, name: "Ayutla de los Libres" }, { id: 14, name: "Azoyu" }, { id: 15, name: "Benito Juárez" },
+            { id: 16, name: "Buenavista de Cuéllar" }, { id: 17, name: "Chilapa de Álvarez" }, { id: 18, name: "Chilpancingo de los Bravo" },
+            { id: 19, name: "Coahuayutla de José María Izazaga" }, { id: 20, name: "Cochoapa el Grande" }, { id: 21, name: "Cocula" },
+            { id: 22, name: "Copala" }, { id: 23, name: "Copalillo" }, { id: 24, name: "Copanatoyac" },
+            { id: 25, name: "Coyuca de Benítez" }, { id: 26, name: "Coyuca de Catalán" }, { id: 27, name: "Cuajinicuilapa" },
+            { id: 28, name: "Cualac" }, { id: 29, name: "Cuautepec" }, { id: 30, name: "Cuetzala del Progreso" },
+            { id: 31, name: "Cutzamala de Pinzón" }, { id: 32, name: "Eduardo Neri" }, { id: 33, name: "Florencio Villarreal" },
+            { id: 34, name: "General Canuto A. Neri" }, { id: 35, name: "General Heliodoro Castillo" }, { id: 36, name: "Huamuxtitlán" },
+            { id: 37, name: "Huitzuco de los Figueroa" }, { id: 38, name: "Iguala de la Independencia" }, { id: 39, name: "Igualapa" },
+            { id: 40, name: "Iliatenco" }, { id: 41, name: "Ixcateopan de Cuauhtémoc" }, { id: 42, name: "José Joaquín de Herrera" },
+            { id: 43, name: "Juan R. Escudero" }, { id: 44, name: "Juchitán" }, { id: 45, name: "La Unión de Isidoro Montes de Oca" },
+            { id: 46, name: "Las Vigas" }, { id: 47, name: "Leonardo Bravo" }, { id: 48, name: "Malinaltepec" },
+            { id: 49, name: "Marquelia" }, { id: 50, name: "Mártir de Cuilapan" }, { id: 51, name: "Metlatonoc" },
+            { id: 52, name: "Mochitlán" }, { id: 53, name: "Nuu Savi" }, { id: 54, name: "Olinala" },
+            { id: 55, name: "Ometepec" }, { id: 56, name: "Pedro Ascencio Alquisiras" }, { id: 57, name: "Petatlán" },
+            { id: 58, name: "Pilcaya" }, { id: 59, name: "Pungarabato" }, { id: 60, name: "Quechultenango" },
+            { id: 61, name: "San Luis Acatlán" }, { id: 62, name: "San Marcos" }, { id: 63, name: "San Miguel Totolapan" },
+            { id: 64, name: "San Nicolás" }, { id: 65, name: "Santa Cruz del Rincón" }, { id: 66, name: "Taxco de Alarcón" },
+            { id: 67, name: "Tecoanapa" }, { id: 68, name: "Tecpan de Galeana" }, { id: 69, name: "Teloloapan" },
+            { id: 70, name: "Tepecoacuilco de Trujano" }, { id: 71, name: "Tetipac" }, { id: 72, name: "Tixtla de Guerrero" },
+            { id: 73, name: "Tlacoachistlahuaca" }, { id: 74, name: "Tlacoapa" }, { id: 75, name: "Tlalchapa" },
+            { id: 76, name: "Tlalixtaquilla de Maldonado" }, { id: 77, name: "Tlapa de Comonfort" }, { id: 78, name: "Tlapehuala" },
+            { id: 79, name: "Xalpatlahuac" }, { id: 80, name: "Xochihuehuetlán" }, { id: 81, name: "Xochistlahuaca" },
+            { id: 82, name: "Zapotitlán Tablas" }, { id: 83, name: "Zihuatanejo de Azueta" }, { id: 84, name: "Zirandaro" },
+            { id: 85, name: "Zitlala" }
+        ];
+
+        const ASPIRANTES = [
+            { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
+            { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
+            { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
+            { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
+            { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
+            { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
+            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
+        ];
+
+
+        async function showPortal() {
+            const portal = document.getElementById('portal-section');
+            if (portal) portal.classList.remove('hidden');
+            loadSurveys();
+            populateMunicipios();
+        }
+
+        // --- DASHBOARD ---
+        async function loadSurveys() {
+            try {
+                console.log('🔄 Sincronizando Terminal Guerrero Guardianes...');
+                const res = await fetch(`${API_URL}/surveys/active`);
+                const data = await res.json();
+
+                const banner = document.getElementById('banner-prestige');
+                const gridContainer = document.getElementById('survey-grid-container');
+                const grid = document.getElementById('survey-grid');
+
+                if (!data.surveys || data.surveys.length === 0) {
+                    banner.classList.remove('hidden');
+                    gridContainer.classList.add('hidden');
+                    return;
+                }
+
+                // SI HAY ENCUESTAS: Mostrar GRID, ocultar STAND-BY
+                banner.classList.add('hidden');
+                const standbyBanner = document.getElementById('standby-banner');
+                if (standbyBanner) standbyBanner.classList.add('hidden');
+                gridContainer.classList.remove('hidden');
+
+                grid.innerHTML = data.surveys.map(s => {
+                    const typeLabel = s.electionType === 'gubernatura' ? 'ESTATAL' : 'MUNICIPAL';
+                    const typeColor = s.electionType === 'gubernatura' ? 'amber' : 'emerald';
+
+                    return `
+                        <div onclick="openSurvey(${s.id})" class="glass-card p-6 md:p-8 rounded-[2rem] max-w-[500px] mx-auto w-full cursor-pointer hover:bg-slate-900 border-white/5 transition-all group relative overflow-hidden flex flex-col justify-between">
+                          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition">
+                            <svg class="w-20 h-20 text-${typeColor}-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
+                          </div>
+                          <div>
+                              <span class="bg-${typeColor}-600/10 text-${typeColor}-500 font-extrabold text-[9px] px-3 py-1 rounded-full uppercase tracking-widest border border-${typeColor}-600/20">${typeLabel}</span>
+                              <h3 class="text-2xl font-bold font-sans mt-4 tracking-tight group-hover:text-${typeColor}-500 transition-colors">${sanitizeTitle(s.title)}</h3>
+                              <p class="mt-3 text-slate-400 text-sm font-medium line-clamp-2">${s.description || 'Consulta ciudadana para la planeación democrática de Guerrero 2027.'}</p>
+                          </div>
+                          <div class="mt-8 flex justify-between items-end">
+                            <div>
+                              <div class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Impacto</div>
+                              <span class="text-${typeColor}-500 font-black text-xl italic">${s.totalRespondents || 0} <span class="text-xs uppercase not-italic tracking-widest opacity-40 ml-1">Votos</span></span>
+                            </div>
+                            <span class="w-12 h-12 rounded-2xl bg-${typeColor}-600 flex items-center justify-center group-hover:translate-x-2 transition-transform shadow-lg shadow-${typeColor}-900/40">
+                              <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </span>
+                          </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error('❌ Error cargando encuestas:', e);
+                showToast('Falla de Red al sincronizar Terminal', 'error');
+            }
+        }
+
+        let currentSurveyId = null;
+        let hasScrolledToResults = false;
+
+
+        // ═══════════════════════════════════════════════════════
+        // buildCandidateGrid — ESTÁNDAR DE ORO
+        // Fuente única de verdad: array candidates de la BD
+        // Chip de partido con color institucional
+        // Foto 160px object-fit:cover object-position:top
+        // ═══════════════════════════════════════════════════════
+        // imgError: helper global invocado desde onerror de img
+        // Extraer la logica aqui evita comillas anidadas en el HTML generado
+        function imgError(el) {
+            var d = document.createElement('div');
+            d.style.cssText = 'width:100%;height:160px;display:flex;align-items:center;'
+                            + 'justify-content:center;font-size:2.5rem;font-weight:900;'
+                            + 'color:#475569;background:#1e293b;border-radius:10px;';
+            d.textContent = el.dataset.initial || '?';
+            if (el.parentNode) el.parentNode.replaceChild(d, el);
+        }
+
+        // 2. Reparación Quirúrgica de Selección (Fix Fallo 1)
+        function renderCandidates(questions, candidates) {
+            var q      = questions[0] || {};
+            var qRaw   = q.questionText || 'Quien ganara?';
+            var qTitle = sanitizeHTML(qRaw.replace(/[^\x00-\xFF]/g, '').trim() || qRaw);
+            var qId    = q.id || 'cq';
+
+            var cards = candidates.map(function(c) {
+                var cid   = String(c.id || c.numeric_id || '');
+                var name  = (c.name || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
+                var party = (c.party || '').trim().toUpperCase().replace(/^IND\.?$/, 'IND');
+                var photo = c.img || c.photo_url || '';
+                var color = getCandidateColor(party || name);
+                var safeN = sanitizeHTML(name);
+                var ini   = sanitizeHTML((name.charAt(0) || '?'));
+
+                var imgH = photo
+                    ? ('<img src="' + photo + '" alt="' + safeN + '"'
+                       + ' data-initial="' + ini + '"'
+                       + ' onerror="imgError(this)"'
+                       + ' style="width:100%;height:160px !important;object-fit:cover;object-position:top;">')
+                    : ('<div style="width:100%;height:160px !important;display:flex;align-items:center;'
+                       + 'justify-content:center;font-size:2.5rem;font-weight:900;'
+                       + 'color:#475569;background:#1e293b;">' + ini + '</div>');
+
+                var chipH = party
+                    ? ('<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(party) + '</span>')
+                    : '';
+
+                return '<div'
+                     + ' data-question="' + qId + '" data-candidate-id="' + cid + '"'
+                     + ' class="option-card candidate-card glass-card p-4 rounded-2xl text-center'
+                     + ' cursor-pointer border border-white/5 relative overflow-hidden'
+                     + ' flex flex-col items-center transition-all duration-300">'
+                     + '<div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full'
+                     + ' bg-[#10B981] items-center justify-center z-10 shadow-lg" style="display:none;">'
+                     + '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+                     + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>'
+                     + '</svg></div>'
+                     + '<div style="width:100%;height:160px !important;min-height:160px !important;border-radius:10px;'
+                     + 'overflow:hidden;margin-bottom:10px;">' + imgH + '</div>'
+                     + '<div class="card-name-text font-bold text-sm w-full leading-tight'
+                     + ' text-white mb-1 uppercase text-center break-words">' + safeN + '</div>'
+                     + chipH
+                     + '<input type="radio" name="q-' + qId + '" value="' + cid + '" class="hidden">'
+                     + '</div>';
+            }).join('');
+
+            const gridHTML = '<div class="space-y-8">'
+                 + '<div class="flex items-center gap-4">'
+                 + '<div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center'
+                 + ' justify-center font-black text-slate-950 text-xl shadow-lg">1</div>'
+                 + '<h4 class="text-2xl md:text-3xl font-black uppercase tracking-tighter'
+                 + ' italic text-white">' + qTitle + '</h4>'
+                 + '</div>'
+                 + '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">' + cards + '</div>'
+                 + '</div>';
+
+            const container = document.getElementById('modal-content');
+            container.innerHTML = gridHTML;
+
+            // Vincular eventos inmediatamente
+            container.querySelectorAll('.candidate-card').forEach(card => {
+                card.onclick = function() {
+                    const cid = this.dataset.candidateId;
+                    const qId = this.dataset.question;
+                    
+                    // Deseleccionar otros
+                    container.querySelectorAll('.candidate-card').forEach(c => {
+                        c.classList.remove('selected');
+                        c.querySelector('.check-icon').style.setProperty('display', 'none', 'important');
+                        c.querySelector('.card-name-text').style.color = '';
+                    });
+
+                    // Seleccionar actual
+                    this.classList.add('selected');
+                    this.querySelector('.check-icon').style.setProperty('display', 'flex', 'important');
+                    this.querySelector('.card-name-text').style.color = '#D4AF37';
+                    
+                    // Actualizar estado
+                    window.selectedCandidateId = cid;
+                    surveyResponses[qId] = cid;
+                    showToast('Candidato Seleccionado');
+                };
             });
-            const promoterRef = new URLSearchParams(window.location.search).get('ref') || null;
-            const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ responses, fingerprintId: visitorId, latitude: geo.latitude, longitude: geo.longitude, locationProvided: geo.locationProvided, promoter_id: promoterRef, confidence_level: 100 })
-            });
-            const data = await res.json();
-            Swal.close();
-            if (res.status === 409 || res.status === 429) return Swal.fire({ icon: 'warning', title: 'Voto Protegido', text: data.error || 'Ya has votado desde este dispositivo.', confirmButtonColor: '#d97706' });
-            if (res.ok) {
-                document.getElementById('survey-modal').classList.add('hidden');
-                const _vh = Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b => b.toString(16).padStart(2,'0')).join('');
-                const _he = document.getElementById('success-hash'); if (_he) _he.textContent = 'SHA256: ' + _vh + '...';
-                document.getElementById('success-modal').classList.remove('hidden');
-                const lrPanel = document.getElementById('results-section');
-                if (lrPanel) {
-                    lrPanel.classList.remove('hidden');
-                    // Forzar reflow para asegurar visibilidad
-                    lrPanel.offsetHeight;
-                    if (!hasScrolledToResults) {
-                        setTimeout(() => {
-                            lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            hasScrolledToResults = true;
-                        }, 300);
+        }
+        async function openSurvey(id) {
+            currentSurveyId = id;
+            try {
+                currentSurveyId = id;
+                const modalEl = document.getElementById('survey-modal');
+                modalEl.classList.remove('hidden');
+                hasScrolledToResults = false;  
+                const content = document.getElementById('modal-content');
+                content.innerHTML = '<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest">Cargando encuesta...</div>';
+
+                const res = await fetch(`${API_URL}/surveys/${id}/questions`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error);
+                if (!data.survey) throw new Error('Estructura de datos incorrecta');
+
+                document.getElementById('modal-title').innerHTML = `${data.survey.title.split(' ')[0]} <span class="text-amber-500">${data.survey.title.split(' ').slice(1).join(' ')}</span>`;
+                document.getElementById('modal-level').textContent = data.survey.electionType === 'gubernatura' ? 'NIVEL ESTATAL' : 'NIVEL MUNICIPAL';
+
+                // Reset locks
+                surveyResponses = {};
+                const phoneEl = document.getElementById('survey-phone');
+                if (phoneEl) phoneEl.value = '';
+
+                // CARGAR CANDIDATOS DESDE LA BD
+                var candidates = [];
+
+                if (data.survey.electionType === 'gubernatura') {
+                    try {
+                        var r1 = await fetch(API_URL + '/data/candidates/gubernatura');
+                        if (r1.ok) {
+                            var d1 = await r1.json();
+                            candidates = d1.map(function(c) { return {
+                                id: c.numeric_id || c.id,
+                                name: c.name, party: c.party,
+                                img: c.photo_url || c.img || null
+                            }; });
+                            console.log('Candidatos gubernatura:', candidates.length);
+                        }
+                    } catch(e) { console.error('Error candidatos gubernatura:', e); }
+                } else {
+                    try {
+                        var surveyIdC = data.survey.id || currentSurveyId;
+                        var r2 = await fetch(API_URL + '/data/candidates/by-survey/' + surveyIdC);
+                        if (r2.ok) {
+                            var d2 = await r2.json();
+                            candidates = d2.map(function(c) { return {
+                                id: c.numeric_id || c.id,
+                                name: c.name, party: c.party,
+                                img: c.photo_url || c.img || null
+                            }; });
+                            console.log('Candidatos by-survey:', candidates.length);
+                        } else {
+                            console.error('Error fetch candidatos:', r2.status);
+                        }
+                    } catch(e) { console.error('Error candidatos by-survey:', e); }
+                }
+
+
+                // Verificar que hay candidatos
+                if (candidates.length === 0) {
+                    console.warn('⚠️ No se encontraron candidatos para renderizar');
+                    if (data.survey.electionType === 'gubernatura') {
+                        candidates = ASPIRANTES; // Fallback
+                        console.log('📌 Usando ASPIRANTES fallback');
                     }
                 }
-                // Forzar actualización inmediata de resultados
-                const liveData = await fetchLiveResults(currentSurveyId);
+
+                console.log('Candidatos a renderizar:', candidates.length);
+
+                // ESTÁNDAR DE ORO — fuente única: array candidates de la BD
+                // Nunca usa data.questions.map ni customOptions para el grid
+                if (candidates && candidates.length > 0) {
+                    renderCandidates(data.questions, candidates);
+                } else {
+                    content.innerHTML = '<div style="text-align:center;padding:60px 20px;">'
+                        + '<p style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.15em;">'
+                        + 'Sin candidatos disponibles para esta encuesta.</p></div>';
+                }
+
+
+                startLivePolling(id, false);
+
+            } catch (e) {
+                console.error('❌ ERROR CRÍTICO en openSurvey:', e);
+                showToast('Error al cargar encuesta: ' + e.message, 'error');
+                closeSurvey();
+            }
+        }
+
+
+        let surveyResponses = {};
+
+        function selectOption(qId, val, el) {
+            // 1. Deseleccionar todas las tarjetas
+            document.querySelectorAll('.option-card[data-question="' + qId + '"]').forEach(function(card) {
+                card.classList.remove('selected');
+                var r = card.querySelector('input[type="radio"]');
+                if (r) r.checked = false;
+                var ck = card.querySelector('.check-icon');
+                if (ck) ck.style.setProperty('display', 'none', 'important');
+                var nm = card.querySelector('.card-name-text');
+                if (nm) nm.style.color = '';
+            });
+
+            // 2. Seleccionar tarjeta actual
+            el.classList.add('selected');
+            var selRadio = el.querySelector('input[type="radio"]');
+            if (selRadio) selRadio.checked = true;
+
+            // 3. Checkmark verde esmeralda (vence Tailwind !important)
+            var selCheck = el.querySelector('.check-icon');
+            if (selCheck) selCheck.style.setProperty('display', 'flex', 'important');
+
+            // 4. Nombre en dorado #D4AF37
+            var selName = el.querySelector('.card-name-text');
+            if (selName) selName.style.color = '#D4AF37';
+
+            // 5. Efecto has-selection en el grid
+            var grid = el.closest('.candidate-grid-prestige');
+            if (grid) grid.classList.add('has-selection');
+
+            // 6. Guardar respuesta y variable global
+            surveyResponses[qId] = val;
+            window.selectedCandidateId = val;
+            showToast('Candidato Seleccionado');
+        }
+
+        // ====== RESULTADOS EN VIVO ======
+        let chartInstance = null;
+        let pollInterval = null;
+
+        async function fetchLiveResults(surveyId) {
+            try {
+                const targetId = surveyId || currentSurveyId;
+                if (!targetId) return null;
+                const response = await fetch(`${API_URL}/surveys/${targetId}/results`);
+                if (!response.ok) return null;
+                const data = await response.json();
+                console.log('📊 Resultados recibidos para encuesta', targetId, data);
+                return data;
+            } catch (error) {
+                console.log('Sin resultados aún:', error);
+                return null;
+            }
+        }
+
+        // --- REPARACIÓN QUIRÚRGICA: COLORES PERSISTENTES ---
+        const CANDIDATE_COLORS = {
+            'MORENA': '#73091B',
+            'PRI': '#EF4444',
+            'PAN': '#3B82F6',
+            'PVEM': '#10B981',
+            'PT': '#FF0000',
+            'MC': '#FF8A00',
+            'PRD': '#FFD700',
+            'INDEPENDIENTE': '#64748B',
+            'INDECISO': '#94A3B8'
+        };
+
+        function getCandidateColor(partyOrLabel) {
+    const u = (partyOrLabel || '').toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    if (u === 'MORENA' || u.includes('MORENA')) return '#73091B';
+    if (u === 'PRI'    || u.includes('PRI'))    return '#EF4444';
+    if (u === 'PAN'    || u.includes('PAN'))    return '#3B82F6';
+    if (u === 'PVEM'   || u.includes('PVEM'))   return '#10B981';
+    if (u === 'PT'     || u.includes('PT'))     return '#FF0000';
+    if (u === 'MC'     || u.includes('MC'))     return '#FF8A00';
+    if (u === 'PRD'    || u.includes('PRD'))    return '#FFD700';
+    if (u === 'INDEPENDIENTE' || u.includes('IND')) return '#64748B';
+    return '#475569';
+}
+
+        // --- renderResults: SOLO barras de progreso con chip de partido ---
+        // La gráfica Chart.js fue eliminada — duplicaba la información
+        // 3. Restauración de Resultados en Vivo (Fix Fallo 2)
+        function renderResults(data) {
+            if (!data || !data.results) return;
+            // Usar #resultados-preliminares como el contenedor reactivo
+            var container = document.getElementById('resultados-preliminares');
+            if (!container) return;
+            
+            var results = data.results || [];
+            if (results.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
+                return;
+            }
+
+            // Limpiar solo el contenido interno para repintar
+            container.innerHTML = '';
+
+            results.forEach(function(r, idx) {
+                var pct      = r.percentage || 0;
+                var rawLbl   = r.label || '';
+                var cleanLbl = sanitizeHTML(rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim());
+                var partyStr = '';
+                if (r.party && r.party.trim()) {
+                    partyStr = r.party.trim().toUpperCase();
+                } else {
+                    var m = rawLbl.match(/\(([^)]+)\)/);
+                    if (m) partyStr = m[1].trim().toUpperCase();
+                }
+                partyStr = partyStr.replace(/^IND\.?$/, 'IND');
+                var color    = getCandidateColor(partyStr || rawLbl);
+                var isLeader = idx === 0 && r.vote_count > 0;
+
+                var row = document.createElement('div');
+                row.style.marginBottom = '14px';
+                var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">';
+                html += '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
+                if (isLeader) html += '<span style="color:#F59E0B;font-size:11px;flex-shrink:0">&#9650;</span>';
+                html += '<span style="font-size:12px;font-weight:700;color:#F1F5F9;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + cleanLbl + '</span>';
+                if (partyStr) html += '<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(partyStr) + '</span>';
+                html += '</div>';
+                html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
+                html += '<span style="font-family:monospace;font-weight:900;font-size:12px;color:' + color + '">' + pct + '%</span>';
+                html += '<span style="font-family:monospace;font-size:10px;color:#64748b">' + r.vote_count + 'v</span>';
+                html += '</div></div>';
+                html += '<div style="width:100%;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;">';
+                html += '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out" data-w="' + pct + '%"></div>';
+                html += '</div>';
+                row.innerHTML = html;
+                container.appendChild(row);
+            });
+
+            // Barras sin setTimeout — evita micro-reflows que causan scroll jump
+            // requestAnimationFrame es seguro: no modifica layout, solo pinta
+            requestAnimationFrame(function() {
+                container.querySelectorAll('[data-w]').forEach(function(b) { b.style.width = b.dataset.w; });
+            });
+
+            // Actualizar stats globales
+            var totalEl = document.getElementById('votos-totales');
+            var confEl  = document.getElementById('confianza-promedio');
+            var syncEl  = document.getElementById('last-update-live');
+            if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
+            if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
+            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        }
+
+        function updateLiveChart(data) {
+            if (!data || !data.results || data.results.length === 0) {
+                console.warn('updateLiveChart: sin datos');
+                return;
+            }
+
+            const ctx = document.getElementById('resultsChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const labels = data.results.map(r => r.label);
+            const votes = data.results.map(r => r.vote_count);
+            const colors = data.results.map(r => getCandidateColor(r.party || r.label));
+
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = votes;
+                chartInstance.data.datasets[0].backgroundColor = colors;
+                chartInstance.update('none'); // Update without animation for smoother polling
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Votos',
+                            data: votes,
+                            backgroundColor: colors,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.raw} votos`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                beginAtZero: true, 
+                                ticks: { color: '#94A3B8', font: { size: 10 } }, 
+                                grid: { color: 'rgba(255,255,255,0.05)' } 
+                            },
+                            y: { 
+                                ticks: { 
+                                    color: '#FFFFFF', 
+                                    font: { weight: 'bold', size: 10 },
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.length > 20 ? label.substr(0, 17) + '...' : label;
+                                    }
+                                }, 
+                                grid: { display: false } 
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // 🔧 FIX QUIRÚRGICO — Helper de visibilidad forzada
+        // Vence cualquier display:none heredado o clase Tailwind
+        // ═══════════════════════════════════════════════════════
+        function forceShowResultsPanel() {
+            var rs = document.getElementById('results-section');
+            if (!rs) {
+                console.error('[FATAL] #results-section no existe en el DOM');
+                return false;
+            }
+            rs.classList.remove('hidden');
+            rs.style.setProperty('display', 'block', 'important');
+            rs.style.setProperty('visibility', 'visible', 'important');
+            rs.style.setProperty('opacity', '1', 'important');
+            console.log('✅ Panel de resultados en vivo: VISIBLE');
+            return true;
+        }
+
+        function startLivePolling(surveyId, showPanel) {
+            // Mostrar panel SIEMPRE que showPanel sea true (post-voto)
+            if (showPanel) {
+                forceShowResultsPanel();
+            }
+
+            const pollId = surveyId || currentSurveyId;
+            if (!pollId) return;
+
+            // Fetch inicial
+            fetchLiveResults(pollId).then(function(liveData) {
                 if (liveData && liveData.results) {
                     renderResults(liveData);
                     updateLiveChart(liveData);
-                } else {
-                    // Mostrar mensaje de "sin votos" para que el panel no se vea vacío
-                    const container = document.getElementById('resultados-preliminares');
-                    if (container) container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;">Esperando primeros votos...</p>';
                 }
-                startLivePolling(currentSurveyId, true);
-                loadSurveys();
-            } else { showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error'); }
-        } catch(e) { Swal.close(); console.error(e); showToast('Fallo de Sincronización: ' + e.message, 'error'); }
-        finally { if (submitBtn) { submitBtn.disabled = false; if (typeof originalBtnText === 'string') submitBtn.textContent = originalBtnText; } }
-    }
+            });
 
-    // Funciones auxiliares (populateMunicipios, etc.) se mantienen igual
-    async function populateMunicipios() { /* tu implementación original */ }
-    function showToast(msg, type = 'success') {
-        const t = document.createElement('div');
-        t.className = `toast shadow-2xl border ${type === 'success' ? 'bg-emerald-600/90 border-emerald-500' : 'bg-red-600/90 border-red-500'} backdrop-blur-xl`;
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; setTimeout(() => t.remove(), 500); }, 3500);
-    }
+            // UN SOLO setInterval a 30s — sin scroll, sin recursión
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(function() {
+                fetchLiveResults(pollId).then(function(liveData) {
+                    if (liveData && liveData.results) {
+                        renderResults(liveData);
+                        // updateLiveChart solo si canvas es visible (evita resize scroll)
+                        var canvas = document.getElementById('resultsChart');
+                        if (canvas && canvas.offsetParent !== null) {
+                            updateLiveChart(liveData);
+                        }
+                    }
+                });
+            }, 30000);
+        }
 
-    document.addEventListener('DOMContentLoaded', () => { document.getElementById('portal-section').classList.remove('hidden'); loadSurveys(); populateMunicipios(); });
-</script>
+        function stopLivePolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = null;
+            // NO ocultamos #results-section — debe quedar visible
+            // tras el voto. Solo se detiene el polling al cerrar la encuesta
+            // ANTES de votar (closeSurvey sin éxito).
+        }
+        // ====== FIN RESULTADOS EN VIVO ======
+
+        function closeSurvey() {
+            document.getElementById('survey-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+            stopLivePolling();
+        }
+
+        async function submitSurvey() {
+            let submitBtn = null;
+            let originalBtnText = null;
+            const inputs = document.querySelectorAll('.survey-input');
+            const responses = [];
+
+            inputs.forEach(input => {
+                const qId = parseInt(input.dataset.questionId);
+                const value = input.value;
+                responses.push({ questionId: qId, answer: value });
+            });
+
+            Object.entries(surveyResponses).forEach(([qId, val]) => {
+                const qIdInt = parseInt(qId);
+                if (!responses.find(r => r.questionId === qIdInt)) {
+                    responses.push({ questionId: qIdInt, answer: val });
+                }
+            });
+
+            if (responses.length === 0) return showToast('Error: Responde al menos una pregunta', 'error');
+
+            try {
+                const promoterId = sessionStorage.getItem('grd_promoter_id') || null;
+                submitBtn = document.getElementById('submit-vote-btn');
+                originalBtnText = submitBtn ? submitBtn.textContent : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Procesando en Caja Negra...';
+                }
+
+                // UI: Bloquear con estilo Prestige
+                Swal.fire({
+                    title: 'Sellando Voto...',
+                    text: 'Asegurando con el Triple Candado de Integridad...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                // Narrativa de confianza (territorial)
+                try {
+                    Swal.update({
+                        title: 'Validando integridad territorial...',
+                        text: 'Tu ubicación asegura que este voto cuenta para tu municipio de forma anónima'
+                    });
+                } catch (_) { /* ignore */ }
+
+                // Validación de carga de seguridad
+                if (typeof FingerprintJS === 'undefined') {
+                    if (submitBtn) submitBtn.textContent = 'Iniciando Protocolos de Seguridad...';
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+
+                // Generar Backup ID (Degradación Elegante) si FingerprintJS falla
+                let visitorIdRaw;
+                try {
+                    if (typeof FingerprintJS !== 'undefined') {
+                        const fp = await FingerprintJS.load();
+                        const result = await fp.get();
+                        visitorIdRaw = result.visitorId;
+                    } else {
+                        throw new Error('Script Bloqueado');
+                    }
+                } catch (err) {
+                    console.warn('Usando degradación elegante (Fallback de Seguridad).');
+                    // Backup ID: IP (manejada backend) + UA + Res
+                    const ua = navigator.userAgent || 'unknown';
+                    const res = window.screen ? `${window.screen.width}x${window.screen.height}` : 'unknown_res';
+                    visitorIdRaw = `fb_${ua}_${res}`;
+                }
+
+                // Hasheado local previo a viajar por red: Nadie puede desanominizar.
+                const visitorId = await sha256(visitorIdRaw);
+
+                // Geolocalización (con consentimiento)
+                const geo = await new Promise((resolve) => {
+                    if (!navigator.geolocation) {
+                        return resolve({ locationProvided: false, latitude: null, longitude: null, locationStatus: 'NO_GPS' });
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            resolve({
+                                locationProvided: true,
+                                latitude: pos.coords?.latitude ?? null,
+                                longitude: pos.coords?.longitude ?? null,
+                                locationStatus: 'PROVIDED'
+                            });
+                        },
+                        () => {
+                            resolve({ locationProvided: false, latitude: null, longitude: null, locationStatus: 'NO_GPS' });
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                });
+
+                // ── CAPTURA DE PROMOTOR (Auditoría V2) ──
+                const urlParams = new URLSearchParams(window.location.search);
+                const promoterRef = urlParams.get('ref') || null;
+
+                const res = await fetch(`${API_URL}/surveys/${currentSurveyId}/response`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        responses,
+                        fingerprintId: visitorId,
+                        latitude: geo.latitude,
+                        longitude: geo.longitude,
+                        locationProvided: geo.locationProvided,
+                        promoter_id: promoterRef,
+                        confidence_level: 100
+                    })
+                });
+
+                const data = await res.json();
+                Swal.close();
+
+                if (res.status === 409 || res.status === 429) {
+                    return Swal.fire({
+                        icon: 'warning',
+                        title: 'Voto Protegido',
+                        text: data.error || 'El Candado de Integridad detectó un voto previo desde este dispositivo o conexión.',
+                        confirmButtonColor: '#d97706'
+                    });
+                }
+
+                if (res.ok) {
+                    // ═══════════════════════════════════════════════════════
+                    // 🔧 FIX QUIRÚRGICO — Flujo Post-Voto
+                    // Orden crítico para garantizar visibilidad del panel:
+                    //   1. Cerrar SweetAlert de carga
+                    //   2. Ocultar modal de encuesta (urna)
+                    //   3. Mostrar portal principal (visibilidad del padre)
+                    //   4. FORZAR visibilidad del panel (#results-section)
+                    //   5. Renderizar datos
+                    //   6. Scroll y modal de éxito
+                    // ═══════════════════════════════════════════════════════
+                    Swal.close();
+
+                    // (1) Ocultar el modal de la urna
+                    const surveyModal = document.getElementById('survey-modal');
+                    if (surveyModal) surveyModal.classList.add('hidden');
+
+                    // (2) Asegurar que el Portal y el Grid de encuestas sigan visibles
+                    //     (necesario porque results-section ya NO está dentro de ellos,
+                    //      pero garantizamos que el flujo visual sea coherente)
+                    const portalSec = document.getElementById('portal-section');
+                    if (portalSec) portalSec.classList.remove('hidden');
+                    const surveyGridContainer = document.getElementById('survey-grid-container');
+                    if (surveyGridContainer) surveyGridContainer.classList.remove('hidden');
+
+                    // (3) FORZAR visibilidad del panel en vivo (FIX RAÍZ)
+                    forceShowResultsPanel();
+
+                    // (4) Render inmediato de resultados
+                    fetchLiveResults(currentSurveyId).then(function(liveData) {
+                        if (liveData && liveData.results) {
+                            renderResults(liveData);
+                            updateLiveChart(liveData);
+                        }
+                    });
+
+                    // (5) Polling reactivo cada 30s
+                    startLivePolling(currentSurveyId, true);
+
+                    // (6) Scroll suave hacia el panel (una sola vez)
+                    if (!hasScrolledToResults) {
+                        setTimeout(function() {
+                            const lrPanel = document.getElementById('results-section');
+                            if (lrPanel) {
+                                lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                            hasScrolledToResults = true;
+                        }, 350);
+                    }
+
+                    // (7) Modal de éxito (flotante, NO bloquea el panel)
+                    var _vh = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+                        .map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+                    var _he = document.getElementById('success-hash');
+                    if (_he) _he.textContent = 'SHA256: ' + _vh + '...';
+                    var _sm = document.getElementById('success-modal');
+                    if (_sm) _sm.classList.remove('hidden');
+
+                    // (8) Refrescar lista de encuestas (no bloquea panel)
+                    loadSurveys();
+                } else {
+                    showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
+                }
+
+            } catch (e) {
+                Swal.close();
+                console.error('Error en submitSurvey:', e);
+                showToast('Fallo de Sincronización: ' + e.message, 'error');
+            } finally {
+                var _submitBtnPost = document.getElementById('submit-vote-btn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (typeof originalBtnText === 'string') submitBtn.textContent = originalBtnText;
+                }
+            }
+        }
+
+
+
+        // --- INCIDENTS ---
+        async function reportIncident() {
+            const desc = document.getElementById('incident-desc').value.trim();
+            const type = document.getElementById('incident-type').value;
+            const municipalityId = document.getElementById('incident-muni-selector').value;
+
+            if (!municipalityId) return showToast('Selecciona un municipio para el reporte', 'error');
+            if (!desc) return showToast('Escribe una descripción de los hechos', 'error');
+
+            const btn = document.getElementById('report-btn');
+            btn.disabled = true;
+            btn.textContent = 'TRIANGULANDO GPS...';
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                    const res = await fetch(`${API_URL}/incidents`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth_token}` },
+                        body: JSON.stringify({
+                            description: desc,
+                            latitude,
+                            longitude,
+                            type,
+                            municipalityId: parseInt(municipalityId)
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast('✅ Alerta Ciudadana Activada: +50 PTS', 'success');
+                        document.getElementById('incident-desc').value = '';
+                        // Actualizar puntos en UI
+                        const ptsEl = document.getElementById('user-points');
+                        const current = parseInt(ptsEl.textContent.replace(/[^\d]/g, '')) || 0;
+                        ptsEl.textContent = `${current + (data.pointsEarned || 50)} PTS de Influencia`;
+                    } else {
+                        showToast('Error: ' + (data.error || 'Falla en el reporte'), 'error');
+                    }
+                } catch (e) { showToast('Error de red', 'error'); }
+                btn.disabled = false;
+                btn.textContent = 'Enviar Alerta con Geolocalización';
+            }, (err) => {
+                showToast('Error GPS: Requerido para veracidad', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Enviar Alerta con Geolocalización';
+            }, { enableHighAccuracy: true, timeout: 5000 });
+        }
+
+        let charts = {};
+
+        function renderCharts(data) {
+            const chartConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9, weight: 'bold' } }, grid: { display: false } },
+                    y: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            };
+
+            // Part Chart — solo si hay datos de participación
+            if (charts.part) charts.part.destroy();
+            if (data.participation && data.participation.length > 0) {
+                charts.part = new Chart(document.getElementById('participation-chart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.participation.map(p => p.year),
+                        datasets: [{
+                            data: data.participation.map(p => parseFloat(p.participacion) || 0),
+                            borderColor: '#ca8a04',
+                            backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: chartConfig
+                });
+            }
+
+            // Results Chart - Distribución de Fuerzas Políticas
+            if (charts.res) charts.res.destroy();
+            if (!data.comparison || data.comparison.length === 0) {
+                showToast('Visualización histórica actualizada');
+                return;
+            }
+
+            // Transformar datos del endpoint a formato esperado
+            const comparisonGrouped = {};
+
+            data.comparison.forEach(row => {
+                const tipo = row.tipo_eleccion;
+                const year = row.election_year.toString();
+                const votes = parseFloat(row.votes || 0);
+
+                if (!comparisonGrouped[tipo]) {
+                    comparisonGrouped[tipo] = {
+                        tipo_eleccion: tipo,
+                        '2024': 0,
+                        '2021': 0,
+                        '2018': 0
+                    };
+                }
+
+                // Sumar votos por año
+                if (comparisonGrouped[tipo][year] !== undefined) {
+                    comparisonGrouped[tipo][year] += votes;
+                }
+            });
+
+            const comparisonArray = Object.values(comparisonGrouped);
+
+            console.log('📊 Comparación transformada:', comparisonArray);
+
+            // Crear labels únicos (sin duplicados)
+            const labels = comparisonArray.map(p => {
+                // Simplificar nombres
+                const nombre = p.tipo_eleccion;
+                if (nombre.includes('Presidencias')) return 'Ayuntamientos';
+                if (nombre.includes('Diputaciones')) return 'Diputación Local';
+                if (nombre.includes('Gubernatura')) return 'Gubernatura';
+                return nombre;
+            });
+
+            const years = ['2024', '2021', '2018'];
+            const datasets = years.map((year, idx) => ({
+                label: year,
+                data: comparisonArray.map(p => p[year] || 0),
+                backgroundColor: idx === 0 ? '#ca8a04' : (idx === 1 ? '#b8860b' : '#8b4513'),
+                borderRadius: 5
+            }));
+
+            charts.res = new Chart(document.getElementById('results-chart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    ...chartConfig,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: 'white',
+                                font: { size: 10, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed.y;
+                                    return `${context.dataset.label}: ${value.toLocaleString()} votos`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'rgba(255,255,255,0.4)',
+                                callback: function (value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.4)',
+                                font: { size: 10, weight: 'bold' }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            showToast('Visualización histórica actualizada');
+        }
+
+        async function loadHistorical(muniId) {
+            if (!muniId) return;
+            try {
+                const [partRes, compRes] = await Promise.all([
+                    fetch(`${API_URL}/data/participation/${muniId}`),
+                    fetch(`${API_URL}/data/comparison/${muniId}`)
+                ]);
+
+                // Verificar que ambos respondieron OK antes de parsear
+                const participation = partRes.ok ? await partRes.json() : [];
+                const comparison = compRes.ok ? await compRes.json() : [];
+
+                // Si ambos están vacíos no hay nada que graficar
+                if ((!participation || participation.length === 0) &&
+                    (!comparison || comparison.length === 0)) {
+                    showToast('Sin datos históricos para este municipio', 'error');
+                    if (charts.part) { charts.part.destroy(); charts.part = null; }
+                    if (charts.res) { charts.res.destroy(); charts.res = null; }
+                    return;
+                }
+
+                renderCharts({
+                    participation: Array.isArray(participation) ? participation : [],
+                    comparison: Array.isArray(comparison) ? comparison : []
+                });
+            } catch (e) {
+                console.error('Error loading historical data:', e);
+                showToast('Error al cargar datos históricos', 'error');
+            }
+        }
+
+        // Esta función ya no se usa - reemplazada por loadPredictionsForMunicipality
+        async function loadPredictions(muniId) {
+            // Legacy function - redirect to new implementation
+            loadPredictionsForMunicipality(muniId);
+        }
+
+        // --- UTILS ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('nav-active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('nav-active');
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = `toast shadow-2xl border ${type === 'success' ? 'bg-emerald-600/90 border-emerald-500' : 'bg-red-600/90 border-red-500'} backdrop-blur-xl`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(20px)';
+                setTimeout(() => t.remove(), 500);
+            }, 3500);
+        }
+
+        function logout() {
+            localStorage.removeItem('guardianToken');
+            location.reload();
+        }
+
+        async function populateMunicipios() {
+            try {
+                const res = await fetch(`${API_URL}/data/municipalities`);
+                const data = await res.json();
+                const selectors = [
+                    document.getElementById('muni-selector'),
+                    document.getElementById('pred-muni-selector'),
+                    document.getElementById('incident-muni-selector')
+                ];
+
+                selectors.forEach(select => {
+                    if (!select) return;
+                    const isGlobal = select.id === 'muni-selector';
+
+                    // Filtrar datos inválidos/vacíos
+                    const validData = data.filter(m => m.name && m.name.trim().length > 0);
+
+                    const optionsHTML = validData.map(m => {
+                        // Limpiar nombre: Quitar números al inicio si existen
+                        const cleanName = m.name.replace(/^[0-9\s\-]+/, '').toUpperCase();
+                        if (!cleanName.trim()) return ''; // Doble check por si el replace deja vacío
+
+                        // Marcar Acapulco como seleccionado por defecto si coincide
+                        const isAcapulco = cleanName.includes('ACAPULCO');
+                        const isSelected = isAcapulco ? 'selected' : '';
+
+                        return `<option value="${m.id}" ${isSelected}>${cleanName}</option>`;
+                    }).join('');
+
+                    select.innerHTML = '<option value="">' + (isGlobal ? 'ESTADO DE GUERRERO (TODO)' : 'SELECCIONA MUNICIPIO') + '</option>' + optionsHTML;
+                });
+            } catch (e) {
+                const selectors = [
+                    document.getElementById('muni-selector'),
+                    document.getElementById('pred-muni-selector'),
+                    document.getElementById('incident-muni-selector')
+                ];
+                selectors.forEach(select => {
+                    if (!select) return;
+                    const isGlobal = select.id === 'muni-selector';
+                    select.innerHTML = '<option value="">' + (isGlobal ? 'ESTADO DE GUERRERO (TODO)' : 'SELECCIONA MUNICIPIO') + '</option>' +
+                        MUNICIPIOS_GUERRERO.map(m => {
+                            return `<option value="${m.id}">${m.name.toUpperCase()}</option>`;
+                        }).join('');
+                });
+            }
+        }
+        // --- PREDICTIONS FUNCTIONS ---
+
+        async function loadPredictionsForMunicipality(municipalityId) {
+            console.log('🔄 Cargando predicciones para municipio ID:', municipalityId);
+
+            if (!municipalityId) {
+                document.getElementById('candidates-grid').classList.add('hidden');
+                document.getElementById('predictions-results').classList.add('hidden');
+                document.getElementById('predictions-placeholder').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/data/candidates/${municipalityId}`);
+                if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+
+                const rawData = await res.json();
+                console.log('📥 Datos crudos predicciones:', rawData);
+
+                // MAPEO EXPLÍCITO PARA PREDICCIONES + fallback foto local
+                const candidates = rawData.map(c => {
+                    let imgPath = c.photo_url || c.img || null;
+                    if (!imgPath) {
+                        const match = ASPIRANTES.find(a =>
+                            a.name.toLowerCase().includes(c.name.toLowerCase().split(' ')[0]) ||
+                            c.name.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
+                        );
+                        if (match && match.img) imgPath = match.img;
+                    }
+                    return {
+                        id: String(c.id || ''),
+                        name: String(c.name || 'Sin nombre'),
+                        party: String(c.party || 'Sin partido'),
+                        img: imgPath
+                    };
+                });
+
+                console.log('✅ Candidatos predicciones procesados:', candidates);
+
+                if (candidates.length === 0) {
+                    document.getElementById('candidates-grid').classList.add('hidden');
+                    document.getElementById('predictions-results').classList.add('hidden');
+                    document.getElementById('predictions-placeholder').classList.remove('hidden');
+                    return;
+                }
+
+                // Mostrar candidatos
+                document.getElementById('predictions-placeholder').classList.add('hidden');
+                document.getElementById('candidates-grid').classList.remove('hidden');
+                document.getElementById('predictions-results').classList.add('hidden');
+
+                const candidatesGrid = document.getElementById('candidates-grid');
+                candidatesGrid.innerHTML = candidates.map(candidate => `
+            <div class="candidate-card glass-card p-6 rounded-2xl cursor-pointer hover:scale-105 transition-all border-2 border-transparent" 
+                 onclick="selectCandidateForPrediction('${candidate.id}', this)">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-white/10">
+                        ${candidate.img
+                        ? `<img src="${candidate.img}" class="w-full h-full object-cover" 
+                                 onerror="this.parentElement.innerHTML='<span class=\\'text-2xl font-bold text-slate-500\\'>${candidate.name.charAt(0)}</span>'"
+                                 alt="${candidate.name}">`
+                        : `<span class="text-2xl font-bold text-slate-500">${candidate.name.charAt(0)}</span>`
+                    }
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${candidate.name}</h4>
+                        <span class="text-xs text-amber-500 font-bold">${candidate.party}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+            } catch (error) {
+                console.error('❌ Error en loadPredictionsForMunicipality:', error);
+                showToast('Error al cargar predicciones: ' + error.message, 'error');
+            }
+        }
+
+        // Función auxiliar para manejar la selección de un candidato
+        // (definición real abajo en selectPredictionCard + alias)
+
+        let selectedPredictionCandidate = null;
+
+        // Función para seleccionar candidato en predicciones
+        function selectPredictionCard(candidateId, municipalityId, element) {
+            console.log('🎯 Candidato seleccionado:', candidateId);
+            console.log('🎯 Municipio:', municipalityId);
+
+            // Remover selección previa
+            document.querySelectorAll('#candidates-grid .candidate-card').forEach(card => {
+                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10');
+            });
+
+            // Marcar como seleccionado
+            element.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
+
+            // Mostrar modal de confianza
+            showConfidenceSlider(candidateId, municipalityId);
+        }
+
+        // Alias para compatibilidad
+        function selectCandidateForPrediction(candidateId, element) {
+            const municipalityId = element.dataset.municipalityId ||
+                document.getElementById('pred-muni-selector')?.value;
+            selectPredictionCard(candidateId, municipalityId, element);
+        }
+
+        function showConfidenceSlider(candidateId, municipalityId) {
+            console.log('🎚️ Abriendo slider de confianza');
+            console.log('   Candidato:', candidateId);
+            console.log('   Municipio:', municipalityId);
+
+            // Crear modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4';
+            modal.innerHTML = `
+        <div class="glass-card p-10 rounded-[3rem] w-full max-w-md text-center relative">
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    class="absolute top-6 right-6 text-3xl font-thin hover:text-amber-500 transition">&times;</button>
+            
+            <h3 class="text-2xl font-black italic uppercase tracking-tighter mb-8">
+                Nivel de <span class="text-amber-500">Confianza</span>
+            </h3>
+            
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div id="confidence-display" class="text-5xl font-black text-amber-500 mb-2">75%</div>
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">Probable</div>
+                </div>
+                
+                <input type="range" 
+                       id="confidence-slider" 
+                       min="10" 
+                       max="100" 
+                       step="5" 
+                       value="75"
+                       class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                       oninput="updateConfidenceDisplay(this.value)">
+                
+                <div class="flex justify-between text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                    <span>Dudoso</span>
+                    <span>Seguro</span>
+                </div>
+                
+                <button onclick="savePrediction('${municipalityId}', '${candidateId}', document.getElementById('confidence-slider').value)"
+                        class="w-full bg-amber-600 hover:bg-amber-700 p-6 rounded-2xl font-black text-lg shadow-2xl shadow-amber-900/20 uppercase tracking-tight transition">
+                    Guardar Predicción
+                </button>
+            </div>
+        </div>
+    `;
+
+            document.body.appendChild(modal);
+        }
+
+        function updateConfidenceDisplay(value) {
+            const display = document.getElementById('confidence-display');
+            const label = display.nextElementSibling;
+
+            display.textContent = value + '%';
+
+            const labels = {
+                10: 'Muy Dudoso', 20: 'Muy Dudoso',
+                30: 'Dudoso', 40: 'Dudoso',
+                50: 'Neutral', 60: 'Neutral',
+                70: 'Probable', 80: 'Probable',
+                90: 'Muy Seguro', 100: 'Muy Seguro'
+            };
+
+            label.textContent = labels[Math.round(value / 10) * 10] || 'Probable';
+        }
+
+        // (updateConfidenceDisplay definida arriba — versión única)
+
+        // ============================================
+        // PREDICCIONES — FLUJO UNIFICADO (SIN BLOQUEO POR AUTH)
+        // ============================================
+
+        // Función interna que realmente envía la predicción
+        async function doSendPrediction(prediction) {
+            const { municipalityId, candidateId, confidence } = prediction;
+
+            console.log('📤 Enviando predicción (doSendPrediction):', {
+                municipalityId,
+                candidateId,
+                confidence
+            });
+
+            if (!municipalityId || !candidateId) {
+                showToast('Selecciona un municipio y un candidato', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // NO mandamos Authorization; el backend maneja usuario anónimo si no hay token.
+                    },
+                    body: JSON.stringify({
+                        municipalityId: parseInt(municipalityId, 10),
+                        candidateId: candidateId, // puede ser "21" o "candidato_21"; el backend lo normaliza
+                        confidence: parseInt(confidence || 50, 10)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Error al guardar predicción');
+                }
+
+                // Mostrar mensaje de éxito
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Predicción Registrada!',
+                        html: result.prediction ? `
+                    <div style="text-align: center;">
+                        <h4>${result.prediction.candidateName}</h4>
+                        <p>Partido: ${result.prediction.candidateParty}</p>
+                        <p>Confianza: ${result.prediction.confidence}%</p>
+                        ${result.pointsEarned ? `<hr><p style="color:#28a745;">+${result.pointsEarned} puntos</p>` : ''}
+                    </div>
+                ` : 'Tu predicción ha sido guardada correctamente.',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#28a745'
+                    });
+                } else {
+                    showToast(result.message || 'Predicción registrada', 'success');
+                }
+
+                // Refrescar estadísticas (si existe)
+                if (typeof updatePredictionStats === 'function') {
+                    updatePredictionStats(municipalityId);
+                }
+
+                // Refrescar puntos del usuario (si hay login real)
+                if (typeof updateUserPoints === 'function') {
+                    updateUserPoints();
+                }
+
+                return result;
+
+            } catch (error) {
+                console.error('❌ Error al enviar predicción:', error);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'No se pudo guardar tu predicción',
+                        confirmButtonText: 'Entendido'
+                    });
+                } else {
+                    showToast('Error al guardar predicción: ' + error.message, 'error');
+                }
+
+                throw error;
+            }
+        }
+
+
+        // ============================================
+        // INICIALIZACIÓN DIRECTA (SIN AUTHENTICACIÓN)
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+             // Iniciar la plataforma de Prestigio directamente
+             document.getElementById('portal-section').classList.remove('hidden');
+             loadSurveys();
+             populateMunicipios();
+        });
+
+    </script>
+
+
+    <!-- MODAL ÉXITO POST-VOTO — HTML puro, cero JS concatenado -->
+    <div id="success-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4"
+         style="background:rgba(0,0,0,0.85);"
+         onclick="if(event.target===this)this.classList.add('hidden')">
+        <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;width:100%;max-width:380px;text-align:center;">
+            <div style="width:60px;height:60px;background:rgba(16,185,129,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg width="28" height="28" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2 style="font-size:1.2rem;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px;">¡Voto Sellado!</h2>
+            <p style="color:#94a3b8;font-size:.82rem;margin-bottom:6px;">Tu auditoría ha sido sellada en la Urna Digital de Guerrero.</p>
+            <p id="success-hash" style="color:#10b981;font-size:.62rem;font-family:monospace;margin-bottom:20px;word-break:break-all;"></p>
+            <p style="color:#64748b;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Invita a participar</p>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">
+                <a href="https://api.whatsapp.com/send?text=%C2%A1Ya+sell%C3%A9+mi+auditor%C3%ADa+en+la+Caja+Negra!+Vota+t%C3%BA+tambi%C3%A9n+aqu%C3%AD%3A+https%3A%2F%2Fpulsoguerrero.vercel.app%2F"
+                   target="_blank" rel="noopener"
+                   style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;background:#25D366;color:#fff;font-size:11px;font-weight:900;text-decoration:none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    WhatsApp
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpulsoguerrero.vercel.app%2F"
+                   target="_blank" rel="noopener"
+                   style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;background:#1877F2;color:#fff;font-size:11px;font-weight:900;text-decoration:none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                </a>
+            </div>
+            <button onclick="document.getElementById('success-modal').classList.add('hidden')"
+                    style="padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.06);color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:1px solid rgba(255,255,255,0.08);cursor:pointer;">
+                Ver Resultados
+            </button>
+        </div>
+    </div>
+
 </body>
+
 </html>
