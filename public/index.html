@@ -1078,7 +1078,7 @@
                      + ' cursor-pointer border border-white/5 relative overflow-hidden'
                      + ' flex flex-col items-center transition-all duration-300">'
                      + '<div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full'
-                     + ' bg-emerald-500 hidden items-center justify-center z-10 shadow-lg">'
+                     + ' bg-emerald-500 items-center justify-center z-10 shadow-lg" style="display:none;">'
                      + '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
                      + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>'
                      + '</svg></div>'
@@ -1197,33 +1197,37 @@
         let surveyResponses = {};
 
         function selectOption(qId, val, el) {
-            // 1. Deseleccionar todas las tarjetas de esta pregunta
-            document.querySelectorAll(`.option-card[data-question="${qId}"]`).forEach(c => {
-                c.classList.remove('selected', 'ring-4', 'ring-emerald-500', 'bg-[#1E293B]/80');
-                const radio = c.querySelector('input[type="radio"]');
-                if (radio) radio.checked = false;
-                // Ocultar checkmark
-                const checkIcon = c.querySelector('.check-icon');
-                if (checkIcon) checkIcon.style.display = 'none';
+            // 1. Deseleccionar todas las tarjetas
+            document.querySelectorAll('.option-card[data-question="' + qId + '"]').forEach(function(card) {
+                card.classList.remove('selected');
+                var r = card.querySelector('input[type="radio"]');
+                if (r) r.checked = false;
+                var ck = card.querySelector('.check-icon');
+                if (ck) ck.style.setProperty('display', 'none', 'important');
+                var nm = card.querySelector('.card-name-text');
+                if (nm) nm.style.color = '';
             });
 
-            // 2. Seleccionar la tarjeta clickeada
+            // 2. Seleccionar tarjeta actual
             el.classList.add('selected');
-            const radio = el.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+            var selRadio = el.querySelector('input[type="radio"]');
+            if (selRadio) selRadio.checked = true;
 
-            // 3. Mostrar checkmark
-            const checkIcon = el.querySelector('.check-icon');
-            if (checkIcon) checkIcon.style.display = 'flex';
+            // 3. Checkmark verde esmeralda (vence Tailwind !important)
+            var selCheck = el.querySelector('.check-icon');
+            if (selCheck) selCheck.style.setProperty('display', 'flex', 'important');
 
-            // 4. Activar efecto de enfoque (has-selection)
-            const grid = el.closest('.candidate-grid-prestige');
-            if (grid) {
-                grid.classList.add('has-selection');
-            }
+            // 4. Nombre en dorado #D4AF37
+            var selName = el.querySelector('.card-name-text');
+            if (selName) selName.style.color = '#D4AF37';
 
-            // 5. Guardar respuesta
+            // 5. Efecto has-selection en el grid
+            var grid = el.closest('.candidate-grid-prestige');
+            if (grid) grid.classList.add('has-selection');
+
+            // 6. Guardar respuesta y variable global
             surveyResponses[qId] = val;
+            window.selectedCandidateId = val;
             showToast('Candidato Seleccionado');
         }
 
@@ -1405,18 +1409,22 @@
             const pollId = surveyId || currentSurveyId;
             if (!pollId) return;
 
-            // Fetch inicial
-            fetchLiveResults(pollId).then(data => {
-                var _p=document.getElementById('live-results-panel');
-                if (data && data.success && _p && !_p.classList.contains('hidden')) { renderResults(data); updateLiveChart(data); }
+            // Fetch inicial — renderiza siempre sin importar visibilidad del panel
+            fetchLiveResults(pollId).then(function(liveData) {
+                if (liveData && liveData.success) {
+                    renderResults(liveData);
+                    updateLiveChart(liveData);
+                }
             });
 
-            // Polling Quirúrgico cada 30 segundos
+            // Polling cada 30 segundos
             if (pollInterval) clearInterval(pollInterval);
-            pollInterval = setInterval(() => {
-                fetchLiveResults(pollId).then(data => {
-                    var _p=document.getElementById('live-results-panel');
-                if (data && data.success && _p && !_p.classList.contains('hidden')) { renderResults(data); updateLiveChart(data); }
+            pollInterval = setInterval(function() {
+                fetchLiveResults(pollId).then(function(liveData) {
+                    if (liveData && liveData.success) {
+                        renderResults(liveData);
+                        updateLiveChart(liveData);
+                    }
                 });
             }, 30000);
         }
@@ -1586,21 +1594,29 @@
                     var cntRow = document.getElementById('countdown-row');
                     if (cntRow) cntRow.style.display = 'none';
 
-                    // Cargar y renderizar resultados
+                    // Mostrar panel inmediatamente
+                    var lrPanel = document.getElementById('live-results-panel');
+                    if (lrPanel) lrPanel.classList.remove('hidden');
+                    var rrBlock = document.getElementById('results-reveal-block');
+                    if (rrBlock) rrBlock.classList.remove('hidden');
+                    var cdRow = document.getElementById('countdown-row');
+                    if (cdRow) cdRow.style.display = 'none';
+
+                    // Cargar resultados y mostrar
                     fetchLiveResults(currentSurveyId).then(function(liveData) {
-                        if (liveData && liveData.results && liveData.results.length > 0) {
+                        if (liveData && liveData.success) {
                             renderResults(liveData);
                             updateLiveChart(liveData);
                         } else {
                             var barsEl = document.getElementById('resultados-preliminares');
                             if (barsEl) barsEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
                         }
-                        if (panel) setTimeout(function() {
-                            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (lrPanel) setTimeout(function() {
+                            lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }, 300);
                     });
 
-                    // Iniciar polling permanente
+                    // Polling permanente post-voto
                     startLivePolling(currentSurveyId, true);
                     loadSurveys();
                 } else {
