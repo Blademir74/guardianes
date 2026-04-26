@@ -1348,7 +1348,7 @@
         window.liveResultsInterval = setInterval(function() {
             if (typeof currentSurveyId !== 'undefined' && currentSurveyId) {
                 fetchLiveResults(currentSurveyId).then(data => {
-                    if (data && data.success) renderResults(data);
+                    if (data && data.results) renderResults(data);
                 });
             }
         }, 30000);
@@ -1417,9 +1417,7 @@
         }
 
         function startLivePolling(surveyId, showPanel) {
-            const panel = document.getElementById('live-results-panel');
-            if (!panel) return;
-
+           
             if (showPanel) {
                 var rs = document.getElementById('results-section');
                 if (rs) rs.classList.remove('hidden');
@@ -1430,7 +1428,7 @@
 
             // Fetch inicial — renderiza siempre sin importar visibilidad del panel
             fetchLiveResults(pollId).then(function(liveData) {
-                if (liveData && liveData.success) {
+                if (liveData && liveData.results) {   // ← cambiar .success por .results
                     renderResults(liveData);
                     updateLiveChart(liveData);
                 }
@@ -1611,7 +1609,7 @@
 
                     // Actualizar resultados inmediatamente
                     fetchLiveResults(currentSurveyId).then(function(liveData) {
-                        if (liveData && liveData.success) {
+                          if (liveData && liveData.results) { 
                             renderResults(liveData);
                         }
                     });
