@@ -1134,11 +1134,11 @@
                 if (data.survey.electionType === 'gubernatura') {
                     // Cargar candidatos de gubernatura
                     try {
-                        const candidatesRes = await fetch(`${API_URL}/data/candidates/gubernatura`);
-                        if (candidatesRes.ok) {
-                            const candidatesData = await candidatesRes.json();
+                        let _candsRes = await fetch(`${API_URL}/data/candidates/gubernatura`);
+                        if (_candsRes && _candsRes.ok) {
+                            let _candsData = await _candsRes.json();
                             console.log('✅ Candidatos gubernatura:', candidatesData);
-                            candidates = candidatesData.map(c => ({
+                            candidates = _candsData.map(c => ({
                                 id: c.numeric_id || c.id,
                                 name: c.name,
                                 party: c.party,
@@ -1154,11 +1154,11 @@
                     // Candidatos municipales via /by-survey — evita contaminación entre encuestas
                     try {
                         const surveyIdForCandidates = data.survey.id || currentSurveyId;
-                        const candidatesRes = await fetch(`${API_URL}/data/candidates/by-survey/${surveyIdForCandidates}`);
-                        if (candidatesRes.ok) {
-                            const candidatesData = await candidatesRes.json();
+                        let _candsRes2 = await fetch(`${API_URL}/data/candidates/by-survey/${surveyIdForCandidates}`);
+                        if (_candsRes && _candsRes.ok) {
+                            let _candsData2 = await _candsRes.json();
                             console.log(`✅ Candidatos by-survey (${surveyIdForCandidates}):`, candidatesData.length);
-                            candidates = candidatesData.map(c => ({
+                            candidates = _candsData.map(c => ({
                                 id: c.numeric_id || c.id,
                                 name: c.name,
                                 party: c.party,
@@ -1588,8 +1588,8 @@
                     if (_sm) _sm.classList.remove('hidden');
 
                     // Ocultar botón de envío
-                    var submitBtn = document.getElementById('submit-vote-btn');
-                    if (submitBtn) submitBtn.style.display = 'none';
+                    var _sb = document.getElementById('submit-vote-btn');
+                    if (_sb) _sb.style.display = 'none';
 
                     // Revelar panel de resultados inmediatamente
                     var panel = document.getElementById('live-results-panel');
@@ -1625,7 +1625,7 @@
                 console.error('Error en submitSurvey:', e);
                 showToast('Fallo de Sincronización: ' + e.message, 'error');
             } finally {
-                const submitBtn = document.getElementById('submit-vote-btn');
+                var _submitBtnPost = document.getElementById('submit-vote-btn');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     if (typeof originalBtnText === 'string') submitBtn.textContent = originalBtnText;
