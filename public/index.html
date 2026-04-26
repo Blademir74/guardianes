@@ -775,13 +775,7 @@
             try { return str.replace(/[^\x00-\xFF]/g, '').trim() || str.trim(); }
             catch(e) { return str.trim(); }
         }
-        function sanitizeHTML(str) {
-            if (!str) return '';
-            var d = document.createElement('div');
-            d.textContent = String(str);
-            return d.innerHTML;
-        }
-
+ 
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000/api'
             : 'https://pulsoguerrero.vercel.app/api';
