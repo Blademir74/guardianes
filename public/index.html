@@ -1127,51 +1127,38 @@
                 const phoneEl = document.getElementById('survey-phone');
                 if (phoneEl) phoneEl.value = '';
 
-                // ✅ CARGAR CANDIDATOS DINÁMICAMENTE DESDE LA BD
-                let candidates = [];
-                let candidateGridRendered = false;
+                // CARGAR CANDIDATOS DESDE LA BD
+                var candidates = [];
 
                 if (data.survey.electionType === 'gubernatura') {
-                    // Cargar candidatos de gubernatura
                     try {
-                        let _candsRes = await fetch(`${API_URL}/data/candidates/gubernatura`);
-                        if (_candsRes && _candsRes.ok) {
-                            let _candsData = await _candsRes.json();
-                            console.log('✅ Candidatos gubernatura:', candidatesData);
-                            candidates = _candsData.map(c => ({
+                        var r1 = await fetch(API_URL + '/data/candidates/gubernatura');
+                        if (r1.ok) {
+                            var d1 = await r1.json();
+                            candidates = d1.map(function(c) { return {
                                 id: c.numeric_id || c.id,
-                                name: c.name,
-                                party: c.party,
+                                name: c.name, party: c.party,
                                 img: c.photo_url || c.img || null
-                            }));
-                        } else {
-                            console.error('❌ Error fetch gubernatura:', candidatesRes.status);
+                            }; });
+                            console.log('Candidatos gubernatura:', candidates.length);
                         }
-                    } catch (e) {
-                        console.error('❌ Error cargando candidatos gubernatura:', e);
-                    }
+                    } catch(e) { console.error('Error candidatos gubernatura:', e); }
                 } else {
-                    // Candidatos municipales via /by-survey — evita contaminación entre encuestas
                     try {
-                        const surveyIdForCandidates = data.survey.id || currentSurveyId;
-                        let _candsRes2 = await fetch(`${API_URL}/data/candidates/by-survey/${surveyIdForCandidates}`);
-                        if (_candsRes && _candsRes.ok) {
-                            let _candsData2 = await _candsRes.json();
-                            console.log(`✅ Candidatos by-survey (${surveyIdForCandidates}):`, candidatesData.length);
-                            candidates = _candsData.map(c => ({
+                        var surveyIdC = data.survey.id || currentSurveyId;
+                        var r2 = await fetch(API_URL + '/data/candidates/by-survey/' + surveyIdC);
+                        if (r2.ok) {
+                            var d2 = await r2.json();
+                            candidates = d2.map(function(c) { return {
                                 id: c.numeric_id || c.id,
-                                name: c.name,
-                                party: c.party,
+                                name: c.name, party: c.party,
                                 img: c.photo_url || c.img || null
-                            }));
+                            }; });
+                            console.log('Candidatos by-survey:', candidates.length);
                         } else {
-                            console.error('❌ Error fetch candidatos by-survey:', candidatesRes.status);
-                            candidates = [];
+                            console.error('Error fetch candidatos:', r2.status);
                         }
-                    } catch (e) {
-                        console.error('❌ Error cargando candidatos by-survey:', e);
-                        candidates = [];
-                    }
+                    } catch(e) { console.error('Error candidatos by-survey:', e); }
                 }
 
 
