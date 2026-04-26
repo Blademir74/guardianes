@@ -1107,9 +1107,7 @@
                 currentSurveyId = id;
                 const modalEl = document.getElementById('survey-modal');
                 modalEl.classList.remove('hidden');
-                // SINGLE-PAGE SCROLL: Quitar overflow = 'hidden' y hacer scroll suave hacia la Urna
-                setTimeout(() => modalEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-
+                
                 const content = document.getElementById('modal-content');
                 content.innerHTML = '<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest">Cargando encuesta...</div>';
 
@@ -1343,15 +1341,6 @@
             if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
         }
 
-        // Implementar setInterval global para actualización reactiva
-        if (window.liveResultsInterval) clearInterval(window.liveResultsInterval);
-        window.liveResultsInterval = setInterval(function() {
-            if (typeof currentSurveyId !== 'undefined' && currentSurveyId) {
-                fetchLiveResults(currentSurveyId).then(data => {
-                    if (data && data.results) renderResults(data);
-                });
-            }
-        }, 30000);
         function updateLiveChart(data) {
             if (!data || !data.results || data.results.length === 0) {
                 console.warn('updateLiveChart: sin datos');
@@ -1486,8 +1475,8 @@
 
             try {
                 const promoterId = sessionStorage.getItem('grd_promoter_id') || null;
-                const submitBtn = document.getElementById('submit-vote-btn');
-                const originalBtnText = submitBtn ? submitBtn.textContent : null;
+                submitBtn = document.getElementById('submit-vote-btn');
+                originalBtnText = submitBtn ? submitBtn.textContent : null;
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Procesando en Caja Negra...';
@@ -1607,7 +1596,6 @@
                     var lrPanel = document.getElementById('results-section');
                     if (lrPanel) {
                         lrPanel.classList.remove('hidden');
-                        lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
 
                     // Actualizar resultados inmediatamente
