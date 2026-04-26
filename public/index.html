@@ -981,6 +981,7 @@
         }
 
         let currentSurveyId = null;
+        let hasScrolledToResults = false;
 
 
         // ═══════════════════════════════════════════════════════
@@ -1092,7 +1093,7 @@
                 currentSurveyId = id;
                 const modalEl = document.getElementById('survey-modal');
                 modalEl.classList.remove('hidden');
-                
+                hasScrolledToResults = false;  
                 const content = document.getElementById('modal-content');
                 content.innerHTML = '<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest">Cargando encuesta...</div>';
 
@@ -1225,6 +1226,7 @@
                 const response = await fetch(`${API_URL}/surveys/${targetId}/results`);
                 if (!response.ok) return null;
                 const data = await response.json();
+                console.log('📊 Resultados recibidos para encuesta', targetId, data);
                 return data;
             } catch (error) {
                 console.log('Sin resultados aún:', error);
@@ -1586,7 +1588,14 @@
                     var lrPanel = document.getElementById('results-section');
                     if (lrPanel) {
                         lrPanel.classList.remove('hidden');
+                        // Mostrar panel y hacer scroll suave solo una vez después del voto
+                        if (lrPanel && !hasScrolledToResults) {
+                        setTimeout(() => {
+                        lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        hasScrolledToResults = true;
+                        }, 300); // pequeño retraso para que el DOM se estabilice
                     }
+                }
 
                     // Actualizar resultados inmediatamente
                     fetchLiveResults(currentSurveyId).then(function(liveData) {
