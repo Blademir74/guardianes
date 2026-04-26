@@ -603,6 +603,12 @@
 
 <body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
     <script>
+        // 1. Definición de Utilidades Críticas (Evitar ReferenceError)
+        const sanitizeHTML = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
         console.log('✅ Candado de Integridad Triple Activado.');
     </script>
     <!-- NAVBAR PRESTIGE -->
@@ -1015,10 +1021,11 @@
             if (el.parentNode) el.parentNode.replaceChild(d, el);
         }
 
-        function buildCandidateGrid(questions, candidates) {
+        // 2. Reparación Quirúrgica de Selección (Fix Fallo 1)
+        function renderCandidates(questions, candidates) {
             var q      = questions[0] || {};
             var qRaw   = q.questionText || 'Quien ganara?';
-            var qTitle = qRaw.replace(/[^\x00-\xFF]/g, '').trim() || qRaw;
+            var qTitle = sanitizeHTML(qRaw.replace(/[^\x00-\xFF]/g, '').trim() || qRaw);
             var qId    = q.id || 'cq';
 
             var cards = candidates.map(function(c) {
@@ -1027,34 +1034,33 @@
                 var party = (c.party || '').trim().toUpperCase().replace(/^IND\.?$/, 'IND');
                 var photo = c.img || c.photo_url || '';
                 var color = getCandidateColor(party || name);
-                var safeN = name.replace(/"/g, '&quot;');
-                var ini   = (name.charAt(0) || '?').replace(/"/g, '');
+                var safeN = sanitizeHTML(name);
+                var ini   = sanitizeHTML((name.charAt(0) || '?'));
 
                 var imgH = photo
                     ? ('<img src="' + photo + '" alt="' + safeN + '"'
                        + ' data-initial="' + ini + '"'
                        + ' onerror="imgError(this)"'
-                       + ' style="width:100%;height:160px;object-fit:cover;object-position:top;">')
-                    : ('<div style="width:100%;height:160px;display:flex;align-items:center;'
+                       + ' style="width:100%;height:160px !important;object-fit:cover;object-position:top;">')
+                    : ('<div style="width:100%;height:160px !important;display:flex;align-items:center;'
                        + 'justify-content:center;font-size:2.5rem;font-weight:900;'
                        + 'color:#475569;background:#1e293b;">' + ini + '</div>');
 
                 var chipH = party
-                    ? ('<span class="party-chip" style="background:' + color + ';">' + party + '</span>')
+                    ? ('<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(party) + '</span>')
                     : '';
 
                 return '<div'
-                     + ' onclick="selectOption(' + JSON.stringify(qId) + ',' + JSON.stringify(cid) + ',this)"'
                      + ' data-question="' + qId + '" data-candidate-id="' + cid + '"'
                      + ' class="option-card candidate-card glass-card p-4 rounded-2xl text-center'
                      + ' cursor-pointer border border-white/5 relative overflow-hidden'
                      + ' flex flex-col items-center transition-all duration-300">'
                      + '<div class="check-icon absolute top-3 right-3 w-6 h-6 rounded-full'
-                     + ' bg-emerald-500 items-center justify-center z-10 shadow-lg" style="display:none;">'
+                     + ' bg-[#10B981] items-center justify-center z-10 shadow-lg" style="display:none;">'
                      + '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
                      + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>'
                      + '</svg></div>'
-                     + '<div style="width:100%;height:160px;min-height:160px;border-radius:10px;'
+                     + '<div style="width:100%;height:160px !important;min-height:160px !important;border-radius:10px;'
                      + 'overflow:hidden;margin-bottom:10px;">' + imgH + '</div>'
                      + '<div class="card-name-text font-bold text-sm w-full leading-tight'
                      + ' text-white mb-1 uppercase text-center break-words">' + safeN + '</div>'
@@ -1063,7 +1069,7 @@
                      + '</div>';
             }).join('');
 
-            return '<div class="space-y-8">'
+            const gridHTML = '<div class="space-y-8">'
                  + '<div class="flex items-center gap-4">'
                  + '<div class="w-12 h-12 rounded-2xl bg-amber-600 flex items-center'
                  + ' justify-center font-black text-slate-950 text-xl shadow-lg">1</div>'
@@ -1072,6 +1078,34 @@
                  + '</div>'
                  + '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">' + cards + '</div>'
                  + '</div>';
+
+            const container = document.getElementById('modal-content');
+            container.innerHTML = gridHTML;
+
+            // Vincular eventos inmediatamente
+            container.querySelectorAll('.candidate-card').forEach(card => {
+                card.onclick = function() {
+                    const cid = this.dataset.candidateId;
+                    const qId = this.dataset.question;
+                    
+                    // Deseleccionar otros
+                    container.querySelectorAll('.candidate-card').forEach(c => {
+                        c.classList.remove('selected');
+                        c.querySelector('.check-icon').style.setProperty('display', 'none', 'important');
+                        c.querySelector('.card-name-text').style.color = '';
+                    });
+
+                    // Seleccionar actual
+                    this.classList.add('selected');
+                    this.querySelector('.check-icon').style.setProperty('display', 'flex', 'important');
+                    this.querySelector('.card-name-text').style.color = '#D4AF37';
+                    
+                    // Actualizar estado
+                    window.selectedCandidateId = cid;
+                    surveyResponses[qId] = cid;
+                    showToast('Candidato Seleccionado');
+                };
+            });
         }
         async function openSurvey(id) {
             currentSurveyId = id;
@@ -1148,7 +1182,7 @@
                 // ESTÁNDAR DE ORO — fuente única: array candidates de la BD
                 // Nunca usa data.questions.map ni customOptions para el grid
                 if (candidates && candidates.length > 0) {
-                    content.innerHTML = buildCandidateGrid(data.questions, candidates);
+                    renderCandidates(data.questions, candidates);
                 } else {
                     content.innerHTML = '<div style="text-align:center;padding:60px 20px;">'
                         + '<p style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.15em;">'
@@ -1251,22 +1285,26 @@
 
         // --- renderResults: SOLO barras de progreso con chip de partido ---
         // La gráfica Chart.js fue eliminada — duplicaba la información
+        // 3. Restauración de Resultados en Vivo (Fix Fallo 2)
         function renderResults(data) {
             if (!data || !data.results) return;
+            // Usar #resultados-preliminares como el contenedor reactivo
             var container = document.getElementById('resultados-preliminares');
             if (!container) return;
-            container.innerHTML = '';
+            
             var results = data.results || [];
-
             if (results.length === 0) {
                 container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
                 return;
             }
 
+            // Limpiar solo el contenido interno para repintar
+            container.innerHTML = '';
+
             results.forEach(function(r, idx) {
                 var pct      = r.percentage || 0;
                 var rawLbl   = r.label || '';
-                var cleanLbl = rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                var cleanLbl = sanitizeHTML(rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim());
                 var partyStr = '';
                 if (r.party && r.party.trim()) {
                     partyStr = r.party.trim().toUpperCase();
@@ -1284,7 +1322,7 @@
                 html += '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
                 if (isLeader) html += '<span style="color:#F59E0B;font-size:11px;flex-shrink:0">&#9650;</span>';
                 html += '<span style="font-size:12px;font-weight:700;color:#F1F5F9;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + cleanLbl + '</span>';
-                if (partyStr) html += '<span class="party-chip" style="background:' + color + ';">' + partyStr + '</span>';
+                if (partyStr) html += '<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(partyStr) + '</span>';
                 html += '</div>';
                 html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
                 html += '<span style="font-family:monospace;font-weight:900;font-size:12px;color:' + color + '">' + pct + '%</span>';
@@ -1297,10 +1335,12 @@
                 container.appendChild(row);
             });
 
+            // Animación de barras
             setTimeout(function() {
                 container.querySelectorAll('[data-w]').forEach(function(b) { b.style.width = b.dataset.w; });
             }, 120);
 
+            // Actualizar stats globales
             var totalEl = document.getElementById('votos-totales');
             var confEl  = document.getElementById('confianza-promedio');
             var syncEl  = document.getElementById('last-update-live');
@@ -1308,6 +1348,16 @@
             if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
             if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
         }
+
+        // Implementar setInterval global para actualización reactiva
+        if (window.liveResultsInterval) clearInterval(window.liveResultsInterval);
+        window.liveResultsInterval = setInterval(function() {
+            if (typeof currentSurveyId !== 'undefined' && currentSurveyId) {
+                fetchLiveResults(currentSurveyId).then(data => {
+                    if (data && data.success) renderResults(data);
+                });
+            }
+        }, 30000);
         function updateLiveChart(data) {
             if (!data || !data.results) return;
 
@@ -1541,15 +1591,14 @@
                 }
 
                 if (res.ok) {
+                    // 4. Fix de 'Voto Registro' y Modal de Éxito
                     Swal.close();
 
-                    // Nombre del candidato votado
-                    var selectedName = (function() {
-                        var el = document.querySelector('.option-card.selected .card-name-text');
-                        return el ? el.textContent.trim() : 'tu candidato';
-                    })();
+                    // Ocultar contenedor de encuesta (Urna)
+                    const surveyGrid = document.getElementById('survey-modal');
+                    if (surveyGrid) surveyGrid.classList.add('hidden');
 
-                    // Mostrar modal de éxito (HTML puro, sin concatenación JS)
+                    // Mostrar Modal de Éxito
                     var _vh = Array.from(crypto.getRandomValues(new Uint8Array(10)))
                         .map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
                     var _he = document.getElementById('success-hash');
@@ -1557,41 +1606,21 @@
                     var _sm = document.getElementById('success-modal');
                     if (_sm) _sm.classList.remove('hidden');
 
-                    // Ocultar botón de envío
-                    var _sb = document.getElementById('submit-vote-btn');
-                    if (_sb) _sb.style.display = 'none';
-
-                    // Revelar panel de resultados inmediatamente
-                    var panel = document.getElementById('live-results-panel');
-                    if (panel) panel.classList.remove('hidden');
-                    var revealBlock = document.getElementById('results-reveal-block');
-                    if (revealBlock) revealBlock.classList.remove('hidden');
-                    var cntRow = document.getElementById('countdown-row');
-                    if (cntRow) cntRow.style.display = 'none';
-
-                    // Mostrar resultados inmediatamente
+                    // Asegurar que el Panel de Resultados sea visible
                     var lrPanel = document.getElementById('results-section');
-                    if (lrPanel) lrPanel.classList.remove('hidden');
-                    var rrBlock = document.getElementById('results-reveal-block');
-                    if (rrBlock) rrBlock.classList.remove('hidden');
-                    var cdRow = document.getElementById('countdown-row');
-                    if (cdRow) cdRow.style.display = 'none';
+                    if (lrPanel) {
+                        lrPanel.classList.remove('hidden');
+                        lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
 
-                    // Cargar resultados y mostrar
+                    // Actualizar resultados inmediatamente
                     fetchLiveResults(currentSurveyId).then(function(liveData) {
                         if (liveData && liveData.success) {
                             renderResults(liveData);
-                            updateLiveChart(liveData);
-                        } else {
-                            var barsEl = document.getElementById('resultados-preliminares');
-                            if (barsEl) barsEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
                         }
-                        if (lrPanel) setTimeout(function() {
-                            lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 300);
                     });
 
-                    // Polling permanente post-voto
+                    // Mantener actualización reactiva cada 30s
                     startLivePolling(currentSurveyId, true);
                     loadSurveys();
                 } else {
