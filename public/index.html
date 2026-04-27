@@ -1331,6 +1331,7 @@
             if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
             if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
             if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            console.log('[RESULTS] Pintados:', results.length, 'candidatos en #resultados-preliminares');
         }
 
         function updateLiveChart(data) {
@@ -1410,11 +1411,19 @@
                 console.error('[FATAL] #results-section no existe en el DOM');
                 return false;
             }
+            // Asegurar que los ancestros también son visibles
+            var el = rs;
+            while (el && el !== document.body) {
+                if (getComputedStyle(el).display === 'none') {
+                    el.style.setProperty('display', 'block', 'important');
+                }
+                el = el.parentElement;
+            }
             rs.classList.remove('hidden');
             rs.style.setProperty('display', 'block', 'important');
             rs.style.setProperty('visibility', 'visible', 'important');
             rs.style.setProperty('opacity', '1', 'important');
-            console.log('✅ Panel de resultados en vivo: VISIBLE');
+            console.log('[RESULTS] Panel visible. Estado:', rs.style.display, rs.className);
             return true;
         }
 
@@ -1607,12 +1616,13 @@
                     const surveyModal = document.getElementById('survey-modal');
                     if (surveyModal) surveyModal.classList.add('hidden');
 
-                    // (2) Asegurar que el Portal y el Grid de encuestas sigan visibles
-                    //     (necesario porque results-section ya NO está dentro de ellos,
-                    //      pero garantizamos que el flujo visual sea coherente)
-                    const portalSec = document.getElementById('portal-section');
-                    if (portalSec) portalSec.classList.remove('hidden');
-                    const surveyGridContainer = document.getElementById('survey-grid-container');
+                    // (2) Asegurar visibilidad de la página principal
+                    var portalSec = document.getElementById('portal-section');
+                    if (portalSec) {
+                        portalSec.classList.remove('hidden');
+                        portalSec.style.setProperty('display', 'block', 'important');
+                    }
+                    var surveyGridContainer = document.getElementById('survey-grid-container');
                     if (surveyGridContainer) surveyGridContainer.classList.remove('hidden');
 
                     // (3) FORZAR visibilidad del panel en vivo (FIX RAÍZ)
