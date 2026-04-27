@@ -1223,7 +1223,7 @@
         let chartInstance = null;
         let pollInterval = null;
 
-        async async function fetchLiveResults(surveyId) {
+        async function fetchLiveResults(surveyId) {
             try {
                 const targetId = surveyId || currentSurveyId;
                 if (!targetId) return null;
