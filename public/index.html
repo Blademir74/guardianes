@@ -704,7 +704,7 @@
              Antes: anidado dentro de un padre .hidden → invisible.
              Ahora: visibilidad controlada SOLO por su propia clase.
         ═══════════════════════════════════════════════════════ -->
-        <section id="results-section" class="max-w-3xl mx-auto px-4 pb-16 hidden" style="display:none;">
+        <section id="results-section" class="max-w-3xl mx-auto px-4 pb-16 hidden">
             <div class="glass-card rounded-[2rem] p-6 border border-white/5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-black uppercase tracking-tight text-white">
@@ -1223,7 +1223,7 @@
         let chartInstance = null;
         let pollInterval = null;
 
-        async function fetchLiveResults(surveyId) {
+        async async function fetchLiveResults(surveyId) {
             try {
                 const targetId = surveyId || currentSurveyId;
                 if (!targetId) return null;
