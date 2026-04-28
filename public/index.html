@@ -757,7 +757,7 @@
                      para que aparezca debajo de la encuesta sin saltar de página.
                      Permanente: el modal de éxito (z-9999) flota encima sin borrar este panel.
                 ═══════════════════════════════════════════════════════ -->
-                <section id="results-section" style="display:none;" class="w-full mt-8 pb-4">
+                <section id="results-section" style="display:block;" class="w-full mt-8 pb-4">
                     <div class="glass-card rounded-[2rem] p-6 border border-white/5">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-black uppercase tracking-tight text-white">
@@ -1193,7 +1193,7 @@
                 }
 
 
-                startLivePolling(id, false);
+                startLivePolling(id, true);  // true = mostrar panel desde apertura de encuesta
 
             } catch (e) {
                 console.error('❌ ERROR CRÍTICO en openSurvey:', e);
@@ -1474,23 +1474,18 @@
         // ═══════════════════════════════════════════════════════
         function forceShowResultsPanel() {
             var rs = document.getElementById('results-section');
-            if (!rs) {
-                console.error('[FATAL] #results-section no existe en el DOM');
-                return false;
-            }
-            // Asegurar que los ancestros también son visibles
-            var el = rs;
-            while (el && el !== document.body) {
-                if (getComputedStyle(el).display === 'none') {
-                    el.style.setProperty('display', 'block', 'important');
-                }
-                el = el.parentElement;
-            }
+            if (!rs) { console.error('[FATAL] #results-section no existe en el DOM'); return false; }
             rs.classList.remove('hidden');
             rs.style.setProperty('display', 'block', 'important');
             rs.style.setProperty('visibility', 'visible', 'important');
             rs.style.setProperty('opacity', '1', 'important');
-            console.log('[RESULTS] Panel visible. Estado:', rs.style.display, rs.className);
+            // Asegurar que el padre (#survey-modal) también sea visible
+            var parent = document.getElementById('survey-modal');
+            if (parent) {
+                parent.classList.remove('hidden');
+                parent.style.setProperty('display', 'block', 'important');
+            }
+            console.log('[RESULTS] Panel visible permanente.');
             return true;
         }
 
@@ -1553,7 +1548,21 @@
         // ====== FIN RESULTADOS EN VIVO ======
 
         function closeSurvey() {
-            document.getElementById('survey-modal').classList.add('hidden');
+            var modal = document.getElementById('survey-modal');
+            if (modal) modal.classList.add('hidden');
+
+            // Restaurar secciones colapsadas post-voto para próxima apertura
+            var mc = document.getElementById('modal-content');
+            if (mc) mc.style.display = '';
+            var sbParent = document.getElementById('submit-vote-btn');
+            if (sbParent) sbParent.parentElement.style.display = '';
+
+            // Limpiar panel para próxima sesión
+            var rp = document.getElementById('resultados-preliminares');
+            if (rp) rp.innerHTML = '';
+            var rs = document.getElementById('results-section');
+            if (rs) rs.style.setProperty('display', 'block', 'important');
+
             document.body.style.overflow = '';
             stopLivePolling();
         }
@@ -1683,35 +1692,23 @@
                 }
 
                 if (res.ok) {
-                    // ═══════════════════════════════════════════════════════
-                    // 🔧 FIX QUIRÚRGICO — Flujo Post-Voto
-                    // Orden crítico para garantizar visibilidad del panel:
-                    //   1. Cerrar SweetAlert de carga
-                    //   2. Ocultar modal de encuesta (urna)
-                    //   3. Mostrar portal principal (visibilidad del padre)
-                    //   4. FORZAR visibilidad del panel (#results-section)
-                    //   5. Renderizar datos
-                    //   6. Scroll y modal de éxito
-                    // ═══════════════════════════════════════════════════════
                     Swal.close();
 
-                    // (1) Ocultar el modal de la urna
-                    const surveyModal = document.getElementById('survey-modal');
-                    if (surveyModal) surveyModal.classList.add('hidden');
+                    // POST-VOTO: NO ocultar el modal completo (el panel vive dentro).
+                    // Solo colapsar la sección de candidatos y el botón de sellar.
+                    var modalContent = document.getElementById('modal-content');
+                    if (modalContent) modalContent.style.display = 'none';
+                    var submitBtn2 = document.getElementById('submit-vote-btn');
+                    if (submitBtn2) submitBtn2.parentElement.style.display = 'none';
 
-                    // (2) Asegurar visibilidad de la página principal
-                    var portalSec = document.getElementById('portal-section');
-                    if (portalSec) {
-                        portalSec.classList.remove('hidden');
-                        portalSec.style.setProperty('display', 'block', 'important');
+                    // El panel ya es display:block permanente — solo asegurar
+                    var rs = document.getElementById('results-section');
+                    if (rs) {
+                        rs.style.setProperty('display', 'block', 'important');
+                        rs.style.setProperty('visibility', 'visible', 'important');
                     }
-                    var surveyGridContainer = document.getElementById('survey-grid-container');
-                    if (surveyGridContainer) surveyGridContainer.classList.remove('hidden');
 
-                    // (3) FORZAR visibilidad del panel en vivo (FIX RAÍZ)
-                    forceShowResultsPanel();
-
-                    // (4) Render inmediato de resultados
+                    // Render inmediato de resultados
                     fetchLiveResults(currentSurveyId).then(function(liveData) {
                         if (liveData && liveData.results) {
                             renderResults(liveData);
@@ -1719,12 +1716,10 @@
                         }
                     });
 
-                    // (5) Polling reactivo cada 30s
-                    startLivePolling(currentSurveyId, true);
+                    // Polling reactivo cada 30s
+                    startLivePolling(currentSurveyId, false);
 
-                    // (6) [SCROLL ELIMINADO — prohibido por spec: no mover cursor del ciudadano]
-
-                    // (7) Modal de éxito (flotante, NO bloquea el panel)
+                    // Modal de éxito flotante (z-9999 — NO toca el panel)
                     var _vh = Array.from(crypto.getRandomValues(new Uint8Array(10)))
                         .map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
                     var _he = document.getElementById('success-hash');
@@ -1732,7 +1727,7 @@
                     var _sm = document.getElementById('success-modal');
                     if (_sm) _sm.classList.remove('hidden');
 
-                    // (8) Refrescar lista de encuestas (no bloquea panel)
+                    // Refrescar lista de encuestas (no bloquea panel)
                     loadSurveys();
                 } else {
                     showToast('❌ Error: ' + (data.error || 'Falla en el envío'), 'error');
