@@ -42,12 +42,33 @@
             font-weight: 900;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: #ffffff;
+            color: #ffffff !important; /* Letras blancas garantizadas */
             border: 1px solid rgba(255,255,255,0.15);
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             margin-top: 4px;
             white-space: nowrap;
             flex-shrink: 0;
+            /* Sin paréntesis — el texto ya viene limpio desde renderResults */
+        }
+
+        /* ── Canvas Chart.js — Altura garantizada al forzar display ── */
+        #resultsChart {
+            width: 100% !important;
+            min-height: 240px;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        /* ── Panel de Validación — permanece visible post-voto ── */
+        #results-section[style*="display: block"] {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* ── Modal de éxito — aislado, nunca oculta el panel ── */
+        #success-modal {
+            /* z-index superior al panel pero no borra su DOM */
+            z-index: 9999;
         }
         /* Botones de compartir */
         .share-btn {
@@ -603,10 +624,13 @@
 
 <body class="bg-[#0A0F1C] text-slate-50 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 overflow-x-hidden">
     <script>
-        // 1. Definición de Utilidades Críticas (Evitar ReferenceError)
+        // ── BLINDAJE GLOBAL — Utilidades críticas al inicio absoluto del script ──
+        // Definidas aquí para evitar ReferenceError en cualquier función posterior.
+        // Tolerancia cero a crashes por emojis o caracteres no-ASCII en títulos.
         const sanitizeHTML = (str) => {
+            if (!str) return '';
             const div = document.createElement('div');
-            div.textContent = str;
+            div.textContent = String(str);
             return div.innerHTML;
         };
         console.log('✅ Candado de Integridad Triple Activado.');
@@ -1266,72 +1290,118 @@
     return '#475569';
 }
 
-        // --- renderResults: SOLO barras de progreso con chip de partido ---
-        // La gráfica Chart.js fue eliminada — duplicaba la información
-        // 3. Restauración de Resultados en Vivo (Fix Fallo 2)
+        // ═══════════════════════════════════════════════════════
+        // renderResults — ATÓMICA v2.0 (Estándar de Oro)
+        // Fuente de color: r.colorHex (backend) > getCandidateColor (fallback)
+        // Sin scroll. Sin funciones duplicadas. DOM inmutable.
+        // ═══════════════════════════════════════════════════════
         function renderResults(data) {
             if (!data || !data.results) return;
-            // Usar #resultados-preliminares como el contenedor reactivo
+
+            // 1. Limpiar contenedor UNA SOLA VEZ al inicio (atomic)
             var container = document.getElementById('resultados-preliminares');
             if (!container) return;
-            
+            container.innerHTML = '';
+
+            // 2. Mapeo de datos desde el JSON del API
             var results = data.results || [];
             if (results.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;padding:20px;text-transform:uppercase;letter-spacing:.1em;">Los votos aparecen aqui en tiempo real</p>';
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:11px;'
+                    + 'padding:20px;text-transform:uppercase;letter-spacing:.1em;">'
+                    + 'Los votos aparecen aquí en tiempo real</p>';
                 return;
             }
 
-            // Limpiar solo el contenido interno para repintar
-            container.innerHTML = '';
-
+            // 3. Iterar y renderizar con color institucional
+            var fragment = document.createDocumentFragment();
             results.forEach(function(r, idx) {
-                var pct      = r.percentage || 0;
+                var pct      = parseFloat(r.percentage) || 0;
+                var votes    = parseInt(r.vote_count, 10) || 0;
                 var rawLbl   = r.label || '';
+
+                // Nombre limpio (sin partido entre paréntesis)
                 var cleanLbl = sanitizeHTML(rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim());
+
+                // Partido: campo explícito del backend > extraído del label
                 var partyStr = '';
                 if (r.party && r.party.trim()) {
-                    partyStr = r.party.trim().toUpperCase();
+                    partyStr = r.party.trim().toUpperCase().replace(/^IND\.?$/, 'IND');
                 } else {
                     var m = rawLbl.match(/\(([^)]+)\)/);
-                    if (m) partyStr = m[1].trim().toUpperCase();
+                    if (m) partyStr = m[1].trim().toUpperCase().replace(/^IND\.?$/, 'IND');
                 }
-                partyStr = partyStr.replace(/^IND\.?$/, 'IND');
-                var color    = getCandidateColor(partyStr || rawLbl);
-                var isLeader = idx === 0 && r.vote_count > 0;
 
+                // COLOR: r.colorHex del backend tiene prioridad (colores institucionales exactos)
+                var color = (r.colorHex && /^#[0-9A-Fa-f]{3,8}$/.test(r.colorHex))
+                    ? r.colorHex
+                    : getCandidateColor(partyStr || rawLbl);
+
+                var isLeader = idx === 0 && votes > 0;
+
+                // 4. Nombre en Negrita + Badge de partido (letras blancas, sin paréntesis)
                 var row = document.createElement('div');
-                row.style.marginBottom = '14px';
-                var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">';
-                html += '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
-                if (isLeader) html += '<span style="color:#F59E0B;font-size:11px;flex-shrink:0">&#9650;</span>';
-                html += '<span style="font-size:12px;font-weight:700;color:#F1F5F9;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + cleanLbl + '</span>';
-                if (partyStr) html += '<span class="party-chip" style="background:' + color + ';">' + sanitizeHTML(partyStr) + '</span>';
-                html += '</div>';
-                html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
-                html += '<span style="font-family:monospace;font-weight:900;font-size:12px;color:' + color + '">' + pct + '%</span>';
-                html += '<span style="font-family:monospace;font-size:10px;color:#64748b">' + r.vote_count + 'v</span>';
-                html += '</div></div>';
-                html += '<div style="width:100%;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;">';
-                html += '<div style="width:0%;height:100%;background:' + color + ';border-radius:999px;transition:width 1s ease-out" data-w="' + pct + '%"></div>';
-                html += '</div>';
-                row.innerHTML = html;
-                container.appendChild(row);
+                row.style.cssText = 'margin-bottom:16px;';
+
+                var header = '<div style="display:flex;justify-content:space-between;'
+                    + 'align-items:center;margin-bottom:7px;gap:8px;">'
+                    + '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
+
+                if (isLeader) {
+                    header += '<span style="color:#F59E0B;font-size:12px;flex-shrink:0;'
+                        + 'text-shadow:0 0 8px rgba(245,158,11,.6);">&#9650;</span>';
+                }
+
+                // Nombre en NEGRITA
+                header += '<span style="font-size:13px;font-weight:900;color:#F1F5F9;'
+                    + 'text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;'
+                    + 'white-space:nowrap;">' + cleanLbl + '</span>';
+
+                // Badge de partido: color institucional, texto blanco, SIN paréntesis
+                if (partyStr) {
+                    header += '<span class="party-chip" style="background:' + color + ';'
+                        + 'color:#ffffff;">' + sanitizeHTML(partyStr) + '</span>';
+                }
+
+                header += '</div>'
+                    + '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+                    + '<span style="font-family:monospace;font-weight:900;font-size:13px;'
+                    + 'color:' + color + '">' + pct.toFixed(1) + '%</span>'
+                    + '<span style="font-family:monospace;font-size:10px;color:#64748b">'
+                    + votes.toLocaleString('es-MX') + 'v</span>'
+                    + '</div></div>';
+
+                // Barra de progreso con color institucional estricto
+                var bar = '<div style="width:100%;height:10px;background:rgba(255,255,255,.06);'
+                    + 'border-radius:999px;overflow:hidden;">'
+                    + '<div style="width:0%;height:100%;background:' + color + ';'
+                    + 'border-radius:999px;transition:width 1.1s cubic-bezier(.4,0,.2,1);" '
+                    + 'data-w="' + pct.toFixed(2) + '%"></div>'
+                    + '</div>';
+
+                row.innerHTML = header + bar;
+                fragment.appendChild(row);
             });
 
-            // Barras sin setTimeout — evita micro-reflows que causan scroll jump
-            // requestAnimationFrame es seguro: no modifica layout, solo pinta
+            // DOM write único — sin reflows intermedios
+            container.appendChild(fragment);
+
+            // Animar barras con rAF (no modifica layout, solo estilos de pintura)
             requestAnimationFrame(function() {
-                container.querySelectorAll('[data-w]').forEach(function(b) { b.style.width = b.dataset.w; });
+                container.querySelectorAll('[data-w]').forEach(function(b) {
+                    b.style.width = b.dataset.w;
+                });
             });
 
-            // Actualizar stats globales
+            // 5. Actualizar contadores globales de Votos Totales y Confianza Promedio
             var totalEl = document.getElementById('votos-totales');
             var confEl  = document.getElementById('confianza-promedio');
             var syncEl  = document.getElementById('last-update-live');
             if (totalEl) totalEl.textContent = (data.total_respondents || 0).toLocaleString('es-MX');
             if (confEl)  confEl.textContent  = Number(data.avg_confidence || 0).toFixed(1) + '%';
-            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-            console.log('[RESULTS] Pintados:', results.length, 'candidatos en #resultados-preliminares');
+            if (syncEl)  syncEl.textContent  = new Date().toLocaleTimeString('es-MX',
+                { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            console.log('[RESULTS] Pintados:', results.length, 'candidatos | Total:', data.total_respondents);
         }
 
         function updateLiveChart(data) {
@@ -1427,16 +1497,19 @@
             return true;
         }
 
+        // ═══════════════════════════════════════════════════════
+        // startLivePolling — UN SOLO setInterval (30s unificado)
+        // Sin scroll. Sin recursión. Sin duplicados de interval.
+        // fetchResults es el alias público para retrocompatibilidad.
+        // ═══════════════════════════════════════════════════════
         function startLivePolling(surveyId, showPanel) {
-            // Mostrar panel SIEMPRE que showPanel sea true (post-voto)
-            if (showPanel) {
-                forceShowResultsPanel();
-            }
+            // Mostrar panel solo cuando se indique (post-voto)
+            if (showPanel) forceShowResultsPanel();
 
-            const pollId = surveyId || currentSurveyId;
+            var pollId = surveyId || currentSurveyId;
             if (!pollId) return;
 
-            // Fetch inicial
+            // Fetch inicial inmediato
             fetchLiveResults(pollId).then(function(liveData) {
                 if (liveData && liveData.results) {
                     renderResults(liveData);
@@ -1444,20 +1517,33 @@
                 }
             });
 
-            // UN SOLO setInterval a 30s — sin scroll, sin recursión
-            if (pollInterval) clearInterval(pollInterval);
+            // Limpiar intervalo previo — garantiza UN SOLO timer activo en memoria
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+
+            // UN ÚNICO setInterval de 30s — sin scroll, sin recursión
             pollInterval = setInterval(function() {
-                fetchLiveResults(pollId).then(function(liveData) {
-                    if (liveData && liveData.results) {
-                        renderResults(liveData);
-                        // updateLiveChart solo si canvas es visible (evita resize scroll)
-                        var canvas = document.getElementById('resultsChart');
-                        if (canvas && canvas.offsetParent !== null) {
-                            updateLiveChart(liveData);
-                        }
+                var activeId = pollId || currentSurveyId;
+                if (!activeId) return;
+                fetchLiveResults(activeId).then(function(liveData) {
+                    if (!liveData || !liveData.results) return;
+                    renderResults(liveData);
+                    // Chart solo si el canvas es visible para evitar resize-scroll
+                    var canvas = document.getElementById('resultsChart');
+                    if (canvas && canvas.offsetParent !== null) {
+                        updateLiveChart(liveData);
                     }
                 });
             }, 30000);
+
+            console.log('[POLLING] Intervalo único activo (30s) para surveyId:', pollId);
+        }
+
+        // Alias público requerido por el spec (activeSurveyId → currentSurveyId)
+        function fetchResults(id) {
+            return fetchLiveResults(id || currentSurveyId);
         }
 
         function stopLivePolling() {
@@ -1639,16 +1725,7 @@
                     // (5) Polling reactivo cada 30s
                     startLivePolling(currentSurveyId, true);
 
-                    // (6) Scroll suave hacia el panel (una sola vez)
-                    if (!hasScrolledToResults) {
-                        setTimeout(function() {
-                            const lrPanel = document.getElementById('results-section');
-                            if (lrPanel) {
-                                lrPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                            hasScrolledToResults = true;
-                        }, 350);
-                    }
+                    // (6) [SCROLL ELIMINADO — prohibido por spec: no mover cursor del ciudadano]
 
                     // (7) Modal de éxito (flotante, NO bloquea el panel)
                     var _vh = Array.from(crypto.getRandomValues(new Uint8Array(10)))
