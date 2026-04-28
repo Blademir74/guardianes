@@ -51,12 +51,16 @@
             /* Sin paréntesis — el texto ya viene limpio desde renderResults */
         }
 
-        /* ── Canvas Chart.js — Altura garantizada al forzar display ── */
-        #resultsChart {
-            width: 100% !important;
-            min-height: 240px;
-            display: block;
-            margin-bottom: 16px;
+        /* ── SVG Chart container — altura auto-ajustable, sin resize loop ── */
+        #chart-container {
+            width: 100%;
+            min-height: 80px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: rgba(15,23,42,0.4);
+            padding: 12px 8px;
+            box-sizing: border-box;
         }
 
         /* ── Panel de Validación — permanece visible post-voto ── */
@@ -768,7 +772,10 @@
                                 <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Tiempo Real</span>
                             </div>
                         </div>
-                        <canvas id="resultsChart" style="width:100%;height:260px;display:block;margin-bottom:16px;min-height:240px;"></canvas>
+                        <!-- Chart SVG nativo — altura fija, sin responsive loop -->
+                        <div id="chart-container" style="width:100%;height:220px;margin-bottom:16px;position:relative;overflow:hidden;border-radius:12px;background:rgba(15,23,42,0.4);padding:12px 8px;">
+                            <svg id="resultsChartSVG" width="100%" height="100%" style="display:block;"></svg>
+                        </div>
                         <div id="resultados-preliminares" class="space-y-3 bg-[#0F172A]/30 p-5 rounded-2xl border border-white/5 mb-4"></div>
                         <div class="grid grid-cols-3 gap-2">
                             <div class="bg-[#1E293B]/40 p-3 rounded-2xl text-center border border-white/5">
@@ -1241,7 +1248,6 @@
         }
 
         // ====== RESULTADOS EN VIVO ======
-        let chartInstance = null;
         let pollInterval = null;
 
         async function fetchLiveResults(surveyId) {
@@ -1401,71 +1407,87 @@
             console.log('[RESULTS] Pintados:', results.length, 'candidatos | Total:', data.total_respondents);
         }
 
+        // ═══════════════════════════════════════════════════════
+        // updateLiveChart — SVG NATIVO (Chart.js eliminado)
+        // Chart.js con responsive:true + maintainAspectRatio:false
+        // causaba loop infinito de resize → scroll y crash del navegador.
+        // SVG con dimensiones fijas resuelve el problema definitivamente.
+        // ═══════════════════════════════════════════════════════
         function updateLiveChart(data) {
-            if (!data || !data.results || data.results.length === 0) {
-                console.warn('updateLiveChart: sin datos');
-                return;
-            }
+            if (!data || !data.results || data.results.length === 0) return;
 
-            const ctx = document.getElementById('resultsChart')?.getContext('2d');
-            if (!ctx) return;
+            var svg = document.getElementById('resultsChartSVG');
+            if (!svg) return;
 
-            const labels = data.results.map(r => r.label);
-            const votes = data.results.map(r => r.vote_count);
-            const colors = data.results.map(r => getCandidateColor(r.party || r.label));
+            var results = data.results.slice(0, 8); // máx 8 candidatos
+            var n = results.length;
+            if (n === 0) return;
 
-            if (chartInstance) {
-                chartInstance.data.labels = labels;
-                chartInstance.data.datasets[0].data = votes;
-                chartInstance.data.datasets[0].backgroundColor = colors;
-                chartInstance.update('none'); // Update without animation for smoother polling
-            } else {
-                chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Votos',
-                            data: votes,
-                            backgroundColor: colors,
-                            borderRadius: 8
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return ` ${context.raw} votos`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { 
-                                beginAtZero: true, 
-                                ticks: { color: '#94A3B8', font: { size: 10 } }, 
-                                grid: { color: 'rgba(255,255,255,0.05)' } 
-                            },
-                            y: { 
-                                ticks: { 
-                                    color: '#FFFFFF', 
-                                    font: { weight: 'bold', size: 10 },
-                                    callback: function(value) {
-                                        const label = this.getLabelForValue(value);
-                                        return label.length > 20 ? label.substr(0, 17) + '...' : label;
-                                    }
-                                }, 
-                                grid: { display: false } 
-                            }
-                        }
-                    }
-                });
-            }
+            var W = svg.parentElement.clientWidth - 16 || 340;
+            var rowH = 28;
+            var labelW = 110;
+            var barAreaW = W - labelW - 50;
+            var totalH = n * (rowH + 8) + 10;
+
+            svg.setAttribute('viewBox', '0 0 ' + W + ' ' + totalH);
+            svg.setAttribute('height', totalH);
+            svg.style.height = totalH + 'px';
+            // Ajustar el contenedor padre a la altura real (sin scroll)
+            var cont = document.getElementById('chart-container');
+            if (cont) cont.style.height = (totalH + 24) + 'px';
+
+            var maxVotes = Math.max.apply(null, results.map(function(r) { return parseInt(r.vote_count, 10) || 0; })) || 1;
+
+            var html = '';
+            results.forEach(function(r, i) {
+                var votes = parseInt(r.vote_count, 10) || 0;
+                var pct   = parseFloat(r.percentage) || 0;
+                var rawLbl = r.label || '';
+                var name  = rawLbl.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                // Truncar nombre largo
+                var display = name.length > 16 ? name.substr(0, 14) + '…' : name;
+
+                var partyStr = '';
+                if (r.party && r.party.trim()) {
+                    partyStr = r.party.trim().toUpperCase().replace(/^IND\.?$/, 'IND');
+                } else {
+                    var m = rawLbl.match(/\(([^)]+)\)/);
+                    if (m) partyStr = m[1].trim().toUpperCase();
+                }
+
+                var color = (r.colorHex && /^#[0-9A-Fa-f]{3,8}$/.test(r.colorHex))
+                    ? r.colorHex : getCandidateColor(partyStr || rawLbl);
+
+                var y = i * (rowH + 8) + 4;
+                var barW = Math.max(2, Math.round((votes / maxVotes) * barAreaW));
+                var cy = y + rowH / 2;
+
+                // Nombre (etiqueta izquierda)
+                html += '<text x="0" y="' + (cy + 4) + '" '
+                    + 'font-size="10" font-weight="700" fill="#CBD5E1" '
+                    + 'font-family="Inter,sans-serif" dominant-baseline="auto">'
+                    + sanitizeHTML(display) + '</text>';
+
+                // Fondo de barra
+                html += '<rect x="' + labelW + '" y="' + y + '" '
+                    + 'width="' + barAreaW + '" height="' + rowH + '" '
+                    + 'rx="6" fill="rgba(255,255,255,0.04)"/>';
+
+                // Barra de valor con color institucional
+                if (barW > 0) {
+                    html += '<rect x="' + labelW + '" y="' + y + '" '
+                        + 'width="' + barW + '" height="' + rowH + '" '
+                        + 'rx="6" fill="' + color + '" opacity="0.9"/>';
+                }
+
+                // Porcentaje al final de la barra
+                html += '<text x="' + (labelW + barAreaW + 6) + '" y="' + (cy + 4) + '" '
+                    + 'font-size="10" font-weight="900" fill="' + color + '" '
+                    + 'font-family="monospace" dominant-baseline="auto">'
+                    + pct.toFixed(1) + '%</text>';
+            });
+
+            svg.innerHTML = html;
         }
 
         // ═══════════════════════════════════════════════════════
