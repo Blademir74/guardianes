@@ -937,15 +937,10 @@
             { id: 85, name: "Zitlala" }
         ];
 
-        const ASPIRANTES = [
-            { id: "felix_salgado", name: "Félix Salgado Macedonio", party: "Morena", img: "/img/felix_salgado.jpg" },
-            { id: "beatriz_mojica", name: "Beatriz Mojica Morga", party: "Morena", img: "/img/beatriz_mojica.jpg" },
-            { id: "esthela_damian", name: "Esthela Damián Peralta", party: "Morena", img: "/img/esthela_damian.jpg" },
-            { id: "karen_castrejon", name: "Karen Castrejón Trujillo", party: "PVEM", img: "/img/karen_castrejon.jpg" },
-            { id: "manuel_anorve", name: "Manuel Añorve Baños", party: "PRI", img: "/img/manuel_anorve.jpg" },
-            { id: "pedro_segura", name: "Pedro Segura Valladares", party: "Independiente", img: "/img/pedro_segura.jpg" },
-            { id: "aun_no_decido", name: "Aún no decido", party: "Indeciso", img: null }
-        ];
+        // ASPIRANTES — eliminado el hardcoding
+        // Los candidatos de gubernatura vienen exclusivamente de /api/data/candidates/gubernatura
+        // Si la BD no tiene candidatos, se muestra stand-by en lugar de datos falsos
+        const ASPIRANTES = []; // vacío — fuente única: BD
 
 
         async function showPortal() {
@@ -1179,12 +1174,17 @@
 
                 // Verificar que hay candidatos
                 if (candidates.length === 0) {
-                    console.warn('⚠️ No se encontraron candidatos para renderizar');
-                    if (data.survey.electionType === 'gubernatura') {
-                        candidates = ASPIRANTES; // Fallback
-                        console.log('📌 Usando ASPIRANTES fallback');
-                    }
-                }
+    console.warn('⚠️ Sin candidatos en BD para esta encuesta');
+    // Sin fallback hardcodeado — mostrar mensaje de stand-by
+    const modalContent = document.getElementById('modal-content');
+    if (modalContent) {
+        modalContent.innerHTML = '<div style="text-align:center;padding:60px 20px;">'
+            + '<p style="color:#64748b;font-size:13px;text-transform:uppercase;'
+            + 'letter-spacing:.1em;">Candidatos en configuración.<br>'
+            + 'Vuelve pronto.</p></div>';
+    }
+    return;
+}
 
                 console.log('Candidatos a renderizar:', candidates.length);
 

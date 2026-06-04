@@ -685,9 +685,28 @@
                 console.log(`[LANDING] Pregunta activa ID: ${activeQuestionId}`);
             }
 
-            // Candidatos vienen en qData.candidates (surveys.js corregido los incluye)
-            const candidates = qData.candidates || [];
-            console.log(`[LANDING] Candidatos recibidos: ${candidates.length}`);
+            // Candidatos desde /questions — si llegan vacíos, fallback a /by-survey
+            let candidates = qData.candidates || [];
+            console.log(`[LANDING] Candidatos desde /questions: ${candidates.length}`);
+
+            if (candidates.length === 0) {
+                console.warn('[LANDING] /questions no trajo candidatos — usando /by-survey fallback');
+                try {
+                    const fbRes = await fetch(`/api/data/candidates/by-survey/${activeSurveyId}`);
+                    if (fbRes.ok) {
+                        candidates = await fbRes.json();
+                        console.log(`[LANDING] Fallback /by-survey: ${candidates.length} candidatos`);
+                    }
+                } catch(fbErr) {
+                    console.error('[LANDING] Fallback también falló:', fbErr.message);
+                }
+            }
+
+            if (candidates.length === 0) {
+                console.warn('[LANDING] Sin candidatos — activando stand-by.');
+                renderBattleGrid([]);
+                return;
+            }
 
             // Asegurar que candidatesLoaded usa el ID numérico real para el voto
             candidatesLoaded = candidates.map(c => ({
@@ -795,8 +814,12 @@
 
             // Éxito — mostrar confirmación + countdown + resultados
             // Compartir URLs
+            // Texto de compartir dinámico — usa el título de la encuesta activa
+            var _surveyTitle = document.getElementById('survey-headline')
+                ? document.getElementById('survey-headline').textContent.replace('TÚ DECIDES','').trim()
+                : 'Guerrero 2027';
             var _lUrl = encodeURIComponent('https://pulsoguerrero.vercel.app/landing.html');
-            var _lTxt = encodeURIComponent('Taxco de Alarcón 2027: Termómetro ciudadano de aspirantes Participa:');
+            var _lTxt = encodeURIComponent(_surveyTitle + ': Tu voz cuenta. Vota ahora:');
             var _waL = document.getElementById('land-share-wa');
             var _fbL = document.getElementById('land-share-fb');
             if (_waL) _waL.href = 'https://wa.me/?text=' + _lTxt + '%20' + _lUrl;
